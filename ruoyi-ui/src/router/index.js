@@ -93,6 +93,20 @@ export const constantRoutes = [
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [
   {
+    path: '/system/statistical',
+    component: Layout,
+    hidden: false,
+    permissions: ['system:statistics:view'],
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/system/statistical/index'),
+        name: 'Statistical',
+        meta: { title: '课程统计', icon: 'chart' }
+      }
+    ]
+  },
+  {
     path: '/system/user-auth',
     component: Layout,
     hidden: true,
