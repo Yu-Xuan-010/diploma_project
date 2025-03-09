@@ -95,14 +95,20 @@ export const dynamicRoutes = [
   {
     path: '/system/statistical',
     component: Layout,
-    hidden: false,
-    permissions: ['system:statistics:view'],
+    name: 'Statistical',
+    meta: { title: '统计分析', icon: 'chart' },
     children: [
       {
         path: 'index',
         component: () => import('@/views/system/statistical/index'),
-        name: 'Statistical',
+        name: 'CourseStatistics',
         meta: { title: '课程统计', icon: 'chart' }
+      },
+      {
+        path: 'popularity',
+        component: () => import('@/views/system/popularity/index'),
+        name: 'CoursePopularity',
+        meta: { title: '课程热度分析', icon: 'chart' }
       }
     ]
   },
@@ -173,6 +179,19 @@ export const dynamicRoutes = [
         component: () => import('@/views/tool/gen/editTable'),
         name: 'GenEdit',
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
+      }
+    ]
+  },
+  {
+    path: '/system/settings',
+    component: Layout,
+    hidden: false,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/system/settings/index'),
+        name: 'Settings',
+        meta: { title: '系统设置', icon: 'system', permissions: ['system:settings:list'] }
       }
     ]
   }
