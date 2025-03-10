@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.web.controller.sen.mapper.CourseCommentMapper">
+    
+    <resultMap type="com.ruoyi.web.controller.sen.domain.CourseComment" id="CourseCommentResult">
+        <id     property="id"        column="id"         />
+        <result property="userId"    column="user_id"    />
+        <result property="courseId"  column="course_id"  />
+        <result property="content"   column="content"    />
+        <result property="createdAt" column="created_at" />
+        <result property="status"    column="status"     />
+        <result property="userName"  column="username"  />
+        <result property="courseName" column="course_name"/>
+    </resultMap>
+
+    <sql id="selectCourseCommentVo">
+        select cc.id, cc.user_id, cc.course_id, cc.content, cc.created_at, cc.status,
+               u.username, c.name as course_name
+        from course_comment cc
+                 left join user u on cc.user_id = u.id
+                 left join course c on cc.course_id = c.id
+    </sql>
+
+    <select id="selectCourseCommentList" parameterType="com.ruoyi.web.controller.sen.domain.CourseComment" resultMap="CourseCommentResult">
+        <include refid="selectCourseCommentVo"/>
+        <where>
+            <if test="courseId != null "> and cc.course_id = #{courseId}</if>
+            <if test="userId != null "> and cc.user_id = #{userId}</if>
+            <if test="status != null "> and cc.status = #{status}</if>
+            <if test="content != null  and content != ''"> and cc.content like concat('%', #{content}, '%')</if>
+            <if test="courseName != null and courseName != ''"> and c.name like concat('%', #{courseName}, '%')</if>
+            <if test="userName != null and userName != ''"> and u.user_name like concat('%', #{userName}, '%')</if>
+        </where>
+        order by cc.created_at desc
+    </select>
+    
+    <select id="selectCourseCommentById" parameterType="Long" resultMap="CourseCommentResult">
+        <include refid="selectCourseCommentVo"/>
+        where cc.id = #{id}
+    </select>
+        
+    <insert id="insertCourseComment" parameterType="com.ruoyi.web.controller.sen.domain.CourseComment" useGeneratedKeys="true" keyProperty="id">
+        insert into course_comment
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="courseId != null">course_id,</if>
+            <if test="content != null">content,</if>
+            <if test="createdAt != null">created_at,</if>
+            <if test="status != null">status,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="courseId != null">#{courseId},</if>
+            <if test="content != null">#{content},</if>
+            <if test="createdAt != null">#{createdAt},</if>
+            <if test="status != null">#{status},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCourseComment" parameterType="com.ruoyi.web.controller.sen.domain.CourseComment">
+        update course_comment
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCourseCommentById" parameterType="Long">
+        delete from course_comment where id = #{id}
+    </delete>
+
+    <delete id="deleteCourseCommentByIds" parameterType="String">
+        delete from course_comment where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper> 
