@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
+  "name": "sen",
   "version": "3.8.9",
   "description": "课程管理系统",
-  "author": "若依",
+  "author": "sen",
   "license": "MIT",
   "scripts": {
     "dev": "vue-cli-service serve",
