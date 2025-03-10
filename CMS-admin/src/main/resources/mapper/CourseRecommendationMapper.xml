@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sen.web.controller.sen.mapper.CourseRecommendationMapper">
+    
+    <resultMap type="CourseRecommendation" id="CourseRecommendationResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="courseId"    column="course_id"    />
+        <result property="reason"    column="reason"    />
+        <result property="createdAt"    column="created_at"    />
+    </resultMap>
+
+    <sql id="selectCourseRecommendationVo">
+        select id, user_id, course_id, reason, created_at from course_recommendation
+    </sql>
+
+    <select id="selectCourseRecommendationList" parameterType="CourseRecommendation" resultMap="CourseRecommendationResult">
+        <include refid="selectCourseRecommendationVo"/>
+        <where>  
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="courseId != null "> and course_id = #{courseId}</if>
+            <if test="reason != null  and reason != ''"> and reason = #{reason}</if>
+            <if test="createdAt != null "> and created_at = #{createdAt}</if>
+        </where>
+    </select>
+    
+    <select id="selectCourseRecommendationById" parameterType="Long" resultMap="CourseRecommendationResult">
+        <include refid="selectCourseRecommendationVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertCourseRecommendation" parameterType="CourseRecommendation" useGeneratedKeys="true" keyProperty="id">
+        insert into course_recommendation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="courseId != null">course_id,</if>
+            <if test="reason != null">reason,</if>
+            <if test="createdAt != null">created_at,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="courseId != null">#{courseId},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="createdAt != null">#{createdAt},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCourseRecommendation" parameterType="CourseRecommendation">
+        update course_recommendation
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="reason != null">reason = #{reason},</if>
+            <if test="createdAt != null">created_at = #{createdAt},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCourseRecommendationById" parameterType="Long">
+        delete from course_recommendation where id = #{id}
+    </delete>
+
+    <delete id="deleteCourseRecommendationByIds" parameterType="String">
+        delete from course_recommendation where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

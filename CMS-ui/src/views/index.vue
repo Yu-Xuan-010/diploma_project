@@ -51,10 +51,96 @@
       <el-col :xs="24" :sm="24" :md="12" :lg="8">
         <el-card class="update-log">
           <div slot="header" class="clearfix">
-            <span>联系信息</span>
+            <span>系统特点</span>
           </div>
           <div class="body">
-            邮箱：2660010050@qq.com
+            <ul>
+              <li>课程分类与检索：智能分类，快速定位所需课程</li>
+              <li>学习进度跟踪：实时记录，清晰展示学习情况</li>
+              <li>个性化推荐系统：基于学习行为，智能推荐课程</li>
+              <li>用户反馈与评价：互动交流，持续优化学习体验</li>
+              <li>数据可视化分析：直观展示学习数据，助力学习规划</li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <el-card class="update-log">
+          <div slot="header" class="clearfix">
+            <span>用户指南</span>
+          </div>
+          <div class="body">
+            <ul>
+              <li>注册/登录：点击右上角"立即注册"或"登录"按钮</li>
+              <li>查找课程：使用搜索框或课程分类浏览</li>
+              <li>加入课程：点击课程详情页的"加入课程"按钮</li>
+              <li>学习进度：在"我的课程"中查看详细进度</li>
+              <li>课程推荐：系统根据您的学习记录自动推荐</li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <el-card class="update-log">
+          <div slot="header" class="clearfix">
+            <span>常见问题</span>
+          </div>
+          <div class="body">
+            <ul>
+              <li>修改信息：在个人中心进行信息更新</li>
+              <li>课程访问：确保网络正常，使用推荐浏览器</li>
+              <li>进度保存：系统自动保存，无需手动操作</li>
+              <li>技术支持：遇到问题请联系客服</li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-divider />
+    <el-row :gutter="20">
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <el-card class="update-log">
+          <div slot="header" class="clearfix">
+            <span>最新公告</span>
+          </div>
+          <div class="body">
+            <ul>
+              <li>2024-03-20：系统升级维护通知</li>
+              <li>2024-03-18：新增10门精品课程</li>
+              <li>2024-03-15：优化课程推荐算法</li>
+              <li>2024-03-10：新增移动端适配功能</li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <el-card class="update-log">
+          <div slot="header" class="clearfix">
+            <span>热门课程</span>
+          </div>
+          <div class="body">
+            <ul>
+              <li>高等数学（上）</li>
+              <li>大学物理</li>
+              <li>程序设计基础</li>
+              <li>英语听说训练</li>
+              <li>线性代数</li>
+            </ul>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="24" :md="12" :lg="8">
+        <el-card class="update-log">
+          <div slot="header" class="clearfix">
+            <span>用户反馈</span>
+          </div>
+          <div class="body">
+            <ul>
+              <li>张同学：课程内容非常实用，讲解清晰</li>
+              <li>李同学：推荐系统很准确，帮助很大</li>
+              <li>王同学：界面设计简洁美观，使用方便</li>
+              <li>刘同学：学习进度跟踪功能很实用</li>
+            </ul>
           </div>
         </el-card>
       </el-col>
@@ -130,16 +216,17 @@ export default {
   }
 
   .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
-      padding-inline-start: 40px;
+    margin-bottom: 20px;
+    .body {
+      ul {
+        padding-left: 20px;
+        li {
+          margin-bottom: 10px;
+          color: #666;
+          line-height: 1.6;
+        }
+      }
     }
   }
 }
 </style>
-
