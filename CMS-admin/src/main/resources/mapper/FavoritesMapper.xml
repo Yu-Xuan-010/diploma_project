@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sen.web.controller.sen.mapper.FavoritesMapper">
+    
+    <resultMap type="Favorites" id="FavoritesResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="courseId"    column="course_id"    />
+        <result property="createdAt"    column="created_at"    />
+    </resultMap>
+
+    <sql id="selectFavoritesVo">
+        select id, user_id, course_id, created_at from favorites
+    </sql>
+
+    <select id="selectFavoritesList" parameterType="Favorites" resultMap="FavoritesResult">
+        <include refid="selectFavoritesVo"/>
+        <where>  
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="courseId != null "> and course_id = #{courseId}</if>
+            <if test="createdAt != null "> and created_at = #{createdAt}</if>
+        </where>
+    </select>
+    
+    <select id="selectFavoritesById" parameterType="Long" resultMap="FavoritesResult">
+        <include refid="selectFavoritesVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertFavorites" parameterType="Favorites" useGeneratedKeys="true" keyProperty="id">
+        insert into favorites
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="courseId != null">course_id,</if>
+            <if test="createdAt != null">created_at,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="courseId != null">#{courseId},</if>
+            <if test="createdAt != null">#{createdAt},</if>
+         </trim>
+    </insert>
+
+    <update id="updateFavorites" parameterType="Favorites">
+        update favorites
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="createdAt != null">created_at = #{createdAt},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFavoritesById" parameterType="Long">
+        delete from favorites where id = #{id}
+    </delete>
+
+    <delete id="deleteFavoritesByIds" parameterType="String">
+        delete from favorites where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
