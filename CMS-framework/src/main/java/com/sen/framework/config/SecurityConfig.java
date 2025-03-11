@@ -115,6 +115,26 @@ public class SecurityConfig
                     // 静态资源，可匿名访问
                     .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js", "/profile/**").permitAll()
                     .antMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**").permitAll()
+                    
+                    // 前台API路径控制 - 所有登录用户都可访问
+                    .antMatchers("/api/front/**").authenticated()
+                    // 教师上传课程和课时的权限控制
+                    .antMatchers("/api/front/course/upload/**", "/api/front/lesson/upload/**").hasRole("TEACHER")
+                    
+                    // 后台API路径控制 - sys_user表中的用户可访问
+                    .antMatchers("/api/admin/**").hasAnyRole("SYS_USER", "超级管理员", "普通角色")
+                    
+                    // role_id=1的管理员可访问所有后台接口
+                    .antMatchers("/api/admin/**").hasRole("超级管理员")
+                    
+                    // role_id=2的管理员可访问特定后台接口
+                    .antMatchers(
+                        "/api/admin/course/**",    // 课程管理
+                        "/api/admin/user/**",      // 用户管理
+                        "/api/admin/statistics/**", // 统计分析
+                        "/api/admin/feedback/**"    // 反馈管理
+                    ).hasAnyRole("超级管理员", "MANAGER")
+                    
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })
