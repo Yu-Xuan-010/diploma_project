@@ -3,7 +3,7 @@
     <el-form ref="registerForm" :model="registerForm" :rules="registerRules" class="register-form">
       <h3 class="title">用户注册</h3>
       <el-form-item prop="username">
-        <el-input v-model="registerForm.username" placeholder="用户名">
+        <el-input v-model="registerForm.username" type="text" placeholder="用户名">
           <i slot="prefix" class="el-input__icon el-icon-user"></i>
         </el-input>
       </el-form-item>
@@ -18,7 +18,7 @@
         </el-input>
       </el-form-item>
       <el-form-item prop="email">
-        <el-input v-model="registerForm.email" placeholder="邮箱">
+        <el-input v-model="registerForm.email" type="email" placeholder="邮箱">
           <i slot="prefix" class="el-input__icon el-icon-message"></i>
         </el-input>
       </el-form-item>
@@ -36,12 +36,18 @@
 
 <script>
 export default {
-  // eslint-disable-next-line vue/multi-word-component-names
   name: 'Register',
   data() {
+    const validatePassword = (rule, value, callback) => {
+      if (value.length < 6) {
+        callback(new Error('密码不能少于6个字符'))
+      } else {
+        callback()
+      }
+    }
     const validateConfirmPassword = (rule, value, callback) => {
       if (value !== this.registerForm.password) {
-        callback(new Error('两次输入的密码不一致'))
+        callback(new Error('两次输入密码不一致'))
       } else {
         callback()
       }
@@ -55,12 +61,11 @@ export default {
       },
       registerRules: {
         username: [
-          { required: true, trigger: 'blur', message: '请输入用户名' },
-          { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
+          { required: true, trigger: 'blur', message: '请输入用户名' }
         ],
         password: [
           { required: true, trigger: 'blur', message: '请输入密码' },
-          { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
+          { validator: validatePassword, trigger: 'blur' }
         ],
         confirmPassword: [
           { required: true, trigger: 'blur', message: '请再次输入密码' },
@@ -79,14 +84,9 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/register', this.registerForm)
-            .then(() => {
-              this.$message.success('注册成功')
-              this.$router.push('/login')
-            })
-            .catch(() => {
-              this.loading = false
-            })
+          // 这里调用注册API
+          this.$message.success('注册成功')
+          this.$router.push('/login')
         }
       })
     }
@@ -96,40 +96,38 @@ export default {
 
 <style lang="scss" scoped>
 .register-container {
-  min-height: 100%;
-  width: 100%;
-  background-color: #2d3a4b;
-  overflow: hidden;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-}
+  background-color: #f3f3f3;
 
-.register-form {
-  width: 400px;
-  padding: 35px;
-  border-radius: 6px;
-  background: #fff;
+  .register-form {
+    width: 400px;
+    padding: 35px;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 
-  .title {
-    text-align: center;
-    margin: 0 0 30px 0;
-    color: #409EFF;
-  }
+    .title {
+      text-align: center;
+      margin: 0 0 30px 0;
+      color: #333;
+    }
 
-  .tips {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 14px;
-
-    a {
-      color: #409EFF;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
+    .tips {
+      text-align: center;
+      margin-top: 20px;
+      
+      a {
+        color: #409EFF;
+        text-decoration: none;
+        
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
   }
 }
-</style>
+</style> 

@@ -1,89 +1,69 @@
 import request from '@/utils/request'
 
-// 获取用户个人资料
-export function getUserProfile() {
+// 用户登录
+export function login(data) {
   return request({
-    url: '/user/profile',
-    method: 'get'
-  })
-}
-
-// 更新用户个人资料
-export function updateUserProfile(data) {
-  return request({
-    url: '/user/profile',
-    method: 'put',
-    data: data
-  })
-}
-
-// 上传用户头像
-export function uploadUserAvatar(data) {
-  return request({
-    url: '/user/avatar',
+    url: '/api/auth/login',
     method: 'post',
-    data: data,
+    data,
     headers: {
-      'Content-Type': 'multipart/form-data'
+      'Content-Type': 'application/json'
     }
   })
 }
 
-// 修改用户密码
+// 用户注册
+export function register(data) {
+  return request({
+    url: '/api/auth/register',
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+// 获取用户信息
+export function getUserInfo() {
+  return request({
+    url: '/api/user/profile',
+    method: 'get'
+  })
+}
+
+// 修改用户信息
+export function updateUserInfo(data) {
+  return request({
+    url: '/api/user/update',
+    method: 'put',
+    data
+  })
+}
+
+// 修改密码
 export function updatePassword(data) {
   return request({
-    url: '/user/password',
+    url: '/api/user/password',
     method: 'put',
-    data: data
+    data
   })
 }
 
-// 获取用户学习成就
-export function getUserAchievements() {
+// 发送验证码
+export function sendVerifyCode(email) {
   return request({
-    url: '/user/achievements',
-    method: 'get'
+    url: '/api/user/verify-code',
+    method: 'post',
+    data: { email }
   })
 }
 
-// 获取用户学习统计数据
-export function getLearningStats() {
+// 重置密码
+export function resetPassword(data) {
   return request({
-    url: '/user/learning/stats',
-    method: 'get'
-  })
-}
-
-// 获取用户学习时间分布
-export function getLearningTimeDistribution() {
-  return request({
-    url: '/user/learning/time-distribution',
-    method: 'get'
-  })
-}
-
-// 获取用户积分历史
-export function getPointsHistory(query) {
-  return request({
-    url: '/user/points/history',
-    method: 'get',
-    params: query
-  })
-}
-
-// 获取用户课程兴趣标签
-export function getInterestTags() {
-  return request({
-    url: '/user/interests',
-    method: 'get'
-  })
-}
-
-// 更新用户课程兴趣标签
-export function updateInterestTags(data) {
-  return request({
-    url: '/user/interests',
-    method: 'put',
-    data: data
+    url: '/api/user/reset-password',
+    method: 'post',
+    data
   })
 }

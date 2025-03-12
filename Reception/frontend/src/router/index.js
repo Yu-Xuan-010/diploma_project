@@ -1,12 +1,14 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import { getToken } from '@/utils/auth'
+import store from '@/store'
 
 /* Layout */
 import Layout from '@/layout'
 
 Vue.use(VueRouter)
 
-// 公共路由
+// 公共路由（不需要登录就可以访问）
 export const constantRoutes = [
   {
     path: '/redirect',
@@ -21,17 +23,17 @@ export const constantRoutes = [
   },
   {
     path: '/login',
-    component: () => import('@/views/Login.vue'),
+    component: () => import('@/views/login/index'),
     hidden: true
   },
   {
     path: '/register',
-    component: () => import('@/views/Register.vue'),
+    component: () => import('@/views/register/index'),
     hidden: true
   },
   {
     path: '/forget-password',
-    component: () => import('@/views/ForgotPassword.vue'),
+    component: () => import('@/views/forget-password/index'),
     hidden: true
   },
   {
@@ -47,41 +49,39 @@ export const constantRoutes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/index',
+    redirect: '/home',
     children: [
       {
-        path: 'index',
-        component: () => import('@/views/home/index'),
+        path: 'home',
         name: 'Home',
-        meta: { title: '首页', icon: 'dashboard' }
+        component: () => import('@/views/home/index'),
+        meta: { title: '首页', icon: 'dashboard', requireAuth: true }
       }
     ]
   }
 ]
 
-// 动态路由
-export const dynamicRoutes = [
-  // 课程学习
+// 需要登录才能访问的路由
+export const asyncRoutes = [
   {
     path: '/course',
     component: Layout,
     children: [
       {
-        path: 'index',
-        component: () => import('@/views/course/index'),
-        name: 'Course',
-        meta: { title: '课程中心', icon: 'education' }
+        path: 'list',
+        name: 'CourseList',
+        component: () => import('@/views/course/list'),
+        meta: { title: '课程列表', icon: 'education', requireAuth: true }
       },
       {
         path: 'detail/:id',
-        component: () => import('@/views/course/detail'),
         name: 'CourseDetail',
-        meta: { title: '课程详情' },
+        component: () => import('@/views/course/detail'),
+        meta: { title: '课程详情', requireAuth: true },
         hidden: true
       }
     ]
   },
-  // 个人学习
   {
     path: '/learning',
     component: Layout,
@@ -100,7 +100,6 @@ export const dynamicRoutes = [
       }
     ]
   },
-  // 互动与反馈
   {
     path: '/discussion',
     component: Layout,
@@ -113,18 +112,22 @@ export const dynamicRoutes = [
       }
     ]
   },
-  // 账户管理
   {
     path: '/profile',
     component: Layout,
     children: [
       {
         path: 'index',
-        component: () => import('@/views/account/profile'),
         name: 'Profile',
-        meta: { title: '个人中心', icon: 'user' }
+        component: () => import('@/views/profile/index'),
+        meta: { title: '个人中心', icon: 'user', requireAuth: true }
       }
     ]
+  },
+  {
+    path: '*',
+    component: () => import('@/views/error/404'),
+    hidden: true
   }
 ]
 
@@ -138,12 +141,61 @@ VueRouter.prototype.replace = function push(location) {
   return routerReplace.call(this, location).catch(err => err)
 }
 
-const routes = constantRoutes.concat(dynamicRoutes)
-
-const router = new VueRouter({
+const createRouter = () => new VueRouter({
   mode: 'history',
-  base: process.env.BASE_URL,
-  routes
+  scrollBehavior: () => ({ y: 0 }),
+  routes: constantRoutes.concat(asyncRoutes)
+})
+
+const router = createRouter()
+
+// 重置路由
+export function resetRouter() {
+  const newRouter = createRouter()
+  router.matcher = newRouter.matcher
+}
+
+// 全局路由守卫
+router.beforeEach(async (to, from, next) => {
+  // 获取token
+  const hasToken = getToken()
+
+  if (hasToken) {
+    if (to.path === '/login') {
+      // 如果已登录，重定向到首页
+      next({ path: '/' })
+    } else {
+      // 确认用户是否已获取用户信息
+      const hasUserInfo = store.getters.userInfo && Object.keys(store.getters.userInfo).length > 0
+      if (hasUserInfo) {
+        next()
+      } else {
+        try {
+          // 获取用户信息
+          await store.dispatch('user/getUserInfo')
+          
+          // 动态添加可访问路由
+          const accessRoutes = await store.dispatch('permission/generateRoutes', asyncRoutes)
+          router.addRoutes(accessRoutes)
+
+          // 确保addRoutes完整的hack方法
+          next({ ...to, replace: true })
+        } catch (error) {
+          // 移除token并跳转登录页
+          await store.dispatch('user/resetToken')
+          next(`/login?redirect=${to.path}`)
+        }
+      }
+    }
+  } else {
+    if (['/login', '/register', '/forget-password'].indexOf(to.path) !== -1) {
+      // 在免登录白名单，直接进入
+      next()
+    } else {
+      // 其他没有访问权限的页面将被重定向到登录页面
+      next(`/login?redirect=${to.path}`)
+    }
+  }
 })
 
 export default router

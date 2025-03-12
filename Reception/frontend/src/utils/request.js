@@ -1,20 +1,27 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
-import store from '@/store'
 import { getToken } from '@/utils/auth'
 
 // 创建 axios 实例
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 10000
+  baseURL: 'http://192.168.151.141:5000',
+  timeout: 5000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  }
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    if (store.getters.token) {
-      config.headers.Authorization = 'Bearer ' + getToken()
+    const token = getToken()
+    if (token) {
+      config.headers['Authorization'] = 'Bearer ' + token
     }
+    // 添加跨域请求头
+    config.headers['Access-Control-Allow-Origin'] = '*'
     return config
   },
   error => {
@@ -27,21 +34,21 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code !== 200) {
+    if (res.code && res.code !== 200) {
       Message({
-        message: res.message || '错误',
+        message: res.message || '系统错误',
         type: 'error',
         duration: 5 * 1000
       })
-      return Promise.reject(new Error(res.message || '错误'))
+      return Promise.reject(new Error(res.message || '系统错误'))
     } else {
-      return res.data
+      return res
     }
   },
   error => {
-    console.log('err' + error)
+    console.log('err', error)
     Message({
-      message: error.message,
+      message: error.response?.data?.message || '系统错误',
       type: 'error',
       duration: 5 * 1000
     })

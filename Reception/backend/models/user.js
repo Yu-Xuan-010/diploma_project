@@ -1,4 +1,6 @@
-const db = require('../config/db');
+const db = require('../config/db.config');
+
+
 
 class User {
     static async create({ username, password, email }) {
