@@ -1,3 +1,0 @@
-ALTER TABLE user
-ADD COLUMN verify_code VARCHAR(6) DEFAULT NULL COMMENT '验证码',
-ADD COLUMN verify_code_expire_time DATETIME DEFAULT NULL COMMENT '验证码过期时间'; 

@@ -1,41 +1,57 @@
 package com.cms.reception.common;
 
-import lombok.Data;
-
-@Data
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
+    private int code; // 状态码
+    private String message; // 返回信息
+    private T data; // 返回数据
 
-    private Result(Integer code, String message, T data) {
+    // 成功响应
+    public static <T> Result<T> success(T data) {
+        return new Result<>(200, "成功", data);
+    }
+
+    public static <T> Result<T> success(String message, T data) {
+        return new Result<>(200, message, data);
+    }
+
+    // 失败响应
+    public static <T> Result<T> error(String message) {
+        return new Result<>(400, message, null);
+    }
+
+    public static <T> Result<T> error(int code, String message) {
+        return new Result<>(code, message, null);
+    }
+
+    // 构造函数
+    public Result(int code, String message, T data) {
         this.code = code;
         this.message = message;
         this.data = data;
     }
 
-    public static <T> Result<T> success(T data) {
-        return new Result<>(200, "success", data);
+    // Getter 和 Setter
+    public int getCode() {
+        return code;
     }
 
-    public static <T> Result<T> success() {
-        return success(null);
+    public void setCode(int code) {
+        this.code = code;
     }
 
-    public static <T> Result<T> error(String message) {
-        return new Result<>(500, message, null);
+    public String getMessage() {
+        return message;
     }
 
-    public static <T> Result<T> error(Integer code, String message) {
-        return new Result<>(code, message, null);
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    @Override
-    public String toString() {
-        return "Result{" +
-                "code=" + code +
-                ", message='" + message + '\'' +
-                ", data=" + data +
-                '}';
+    public T getData() {
+        return data;
     }
-}
+
+    public void setData(T data) {
+        this.data = data;
+    }
+} 

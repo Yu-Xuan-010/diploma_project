@@ -1,17 +1,17 @@
 <template>
-  <div class="profile">
-    <h1>Profile Page</h1>
+  <div class="register">
+    <h1>Register Page</h1>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'Profile'
+  name: 'Register'
 }
 </script>
 
 <style scoped>
-.profile {
+.register {
   text-align: center;
 }
-</style>
+</style> 

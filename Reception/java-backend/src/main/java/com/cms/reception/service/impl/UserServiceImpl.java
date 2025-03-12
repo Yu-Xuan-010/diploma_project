@@ -1,23 +1,24 @@
 package com.cms.reception.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.cms.reception.entity.User;
-import com.cms.reception.mapper.UserMapper;
+import com.cms.reception.common.Result;
+import com.cms.reception.model.User;
+import com.cms.reception.repository.UserRepository;
 import com.cms.reception.service.UserService;
-import com.cms.reception.utils.JwtUtil;
+import com.cms.reception.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
-    private UserMapper userMapper;
+    private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -26,103 +27,100 @@ public class UserServiceImpl implements UserService {
     private JwtUtil jwtUtil;
 
     @Override
-    @Transactional
-    public User register(User user) {
-        // 检查用户名是否已存在
-        if (checkUsername(user.getUsername())) {
-            throw new RuntimeException("用户名已存在");
+    public Result login(User user) {
+        User dbUser = userRepository.findByUsername(user.getUsername());
+        if (dbUser == null || !passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
+            return Result.error("用户名或密码错误");
         }
+        // 更新最后登录时间
+        dbUser.setLastLogin(new Date());
+        userRepository.update(dbUser);
 
-        // 加密密码
+        // 生成 JWT
+        String token = jwtUtil.generateToken(dbUser.getUsername());
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", token);
+        data.put("user", dbUser);
+        return Result.success(data);
+    }
+
+    @Override
+    public Result register(User user) {
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            return Result.error("用户名已存在");
+        }
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            return Result.error("邮箱已被注册");
+        }
+        // 设置默认值
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setStatus("ACTIVE");
-        user.setRole("STUDENT");
-        user.setLoginAttempts(0);
         user.setCreatedAt(new Date());
         user.setUpdatedAt(new Date());
-
-        // 保存用户
-        userMapper.insert(user);
-        return user;
+        user.setStatus("ACTIVE"); // 默认状态为 ACTIVE
+        user.setRole("STUDENT"); // 默认角色为 STUDENT
+        user.setLoginAttempts(0); // 登录尝试次数初始化为 0
+        user.setGender("OTHER"); // 默认性别为 OTHER
+        userRepository.save(user);
+        return Result.success("注册成功");
     }
 
     @Override
-    public String login(String username, String password) {
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username));
+    public Result getProfile() {
+        // 从 SecurityContext 中获取当前用户
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username);
+        return Result.success(user);
+    }
 
+    @Override
+    public Result updateProfile(User user) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User dbUser = userRepository.findByUsername(username);
+        if (dbUser == null) {
+            return Result.error("用户不存在");
+        }
+        // 更新用户信息
+        dbUser.setEmail(user.getEmail());
+        dbUser.setAvatar(user.getAvatar());
+        dbUser.setPhoneNumber(user.getPhoneNumber());
+        dbUser.setRealName(user.getRealName());
+        dbUser.setGender(user.getGender());
+        dbUser.setBirthday(user.getBirthday());
+        dbUser.setAddress(user.getAddress());
+        dbUser.setUpdatedAt(new Date());
+        userRepository.update(dbUser);
+        return Result.success("个人信息更新成功");
+    }
+
+    @Override
+    public Result resetPassword(String username, String code, String newPassword) {
+        User user = userRepository.findByUsername(username);
         if (user == null) {
-            throw new RuntimeException("用户名或密码错误");
+            return Result.error("用户不存在");
         }
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+        // 验证码校验逻辑（需根据实际需求实现）
+        if (!code.equals(user.getVerifyCode()) || new Date().after(user.getVerifyCodeExpireTime())) {
+            return Result.error("验证码无效或已过期");
         }
-
-        if ("INACTIVE".equals(user.getStatus())) {
-            throw new RuntimeException("账号已被禁用");
-        }
-
-        // 生成token
-        return jwtUtil.generateToken(user.getId());
-    }
-
-    @Override
-    public User getUserInfo(Long userId) {
-        return userMapper.selectById(userId);
-    }
-
-    @Override
-    public boolean checkUsername(String username) {
-        return userMapper.selectCount(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username)) > 0;
-    }
-
-    @Override
-    public void sendVerifyCode(String username) {
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username));
-
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
-        }
-
-        // 生成6位随机验证码
-        String code = String.format("%06d", new Random().nextInt(1000000));
-        
-        // TODO: 发送验证码到用户邮箱或手机
-        // 这里暂时只打印验证码
-        System.out.println("验证码: " + code);
-        
-        // 将验证码保存到用户信息中
-        user.setVerifyCode(code);
-        user.setVerifyCodeExpireTime(new Date(System.currentTimeMillis() + 5 * 60 * 1000)); // 5分钟有效期
-        userMapper.updateById(user);
-    }
-
-    @Override
-    @Transactional
-    public void resetPassword(String username, String code, String newPassword) {
-        User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                .eq(User::getUsername, username));
-
-        if (user == null) {
-            throw new RuntimeException("用户不存在");
-        }
-
-        if (user.getVerifyCode() == null || !user.getVerifyCode().equals(code)) {
-            throw new RuntimeException("验证码错误");
-        }
-
-        if (user.getVerifyCodeExpireTime() == null || user.getVerifyCodeExpireTime().before(new Date())) {
-            throw new RuntimeException("验证码已过期");
-        }
-
         // 更新密码
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setVerifyCode(null);
-        user.setVerifyCodeExpireTime(null);
         user.setUpdatedAt(new Date());
-        userMapper.updateById(user);
+        userRepository.updatePassword(username, user.getPassword(), user.getUpdatedAt());
+        return Result.success("密码重置成功");
     }
-}
+
+    @Override
+    public Result sendCode(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        // 生成验证码（示例：6位随机数）
+        String code = String.valueOf((int) (Math.random() * 900000 + 100000));
+        user.setVerifyCode(code);
+        user.setVerifyCodeExpireTime(new Date(System.currentTimeMillis() + 5 * 60 * 1000)); // 5分钟有效
+        userRepository.updateVerifyCode(username, code, user.getVerifyCodeExpireTime());
+        // 发送验证码（需根据实际需求实现，如通过短信或邮件发送）
+        return Result.success("验证码已发送");
+    }
+} 

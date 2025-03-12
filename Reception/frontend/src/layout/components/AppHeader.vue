@@ -34,7 +34,7 @@ export default {
   computed: {
     ...mapGetters(['userInfo']),
     isLoggedIn() {
-      return !!this.userInfo.userName // 假设 userInfo.userName 存在表示用户已登录
+      return !!this.userInfo.username
     }
   },
   methods: {
