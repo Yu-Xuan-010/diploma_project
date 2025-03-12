@@ -1,32 +1,40 @@
-import { login, register, getUserInfo } from '@/api/user'
+import { login, logout, getUserInfo as getInfo, register } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
 const state = {
   token: getToken(),
-  userInfo: null
+  name: '',
+  avatar: '',
+  introduction: '',
+  roles: []
 }
 
 const mutations = {
   SET_TOKEN: (state, token) => {
     state.token = token
   },
-  SET_USER_INFO: (state, userInfo) => {
-    state.userInfo = userInfo
+  SET_NAME: (state, name) => {
+    state.name = name
+  },
+  SET_AVATAR: (state, avatar) => {
+    state.avatar = avatar
+  },
+  SET_INTRODUCTION: (state, introduction) => {
+    state.introduction = introduction
+  },
+  SET_ROLES: (state, roles) => {
+    state.roles = roles
   }
 }
 
 const actions = {
-  // 用户登录
-  login({ commit }, userInfo) {
-    const { username, password } = userInfo
+  // 用户注册
+  register({ commit }, userInfo) {
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password })
+      register(userInfo)
         .then(response => {
-          const { token } = response
-          commit('SET_TOKEN', token)
-          setToken(token)
-          resolve()
+          resolve(response)
         })
         .catch(error => {
           reject(error)
@@ -34,11 +42,15 @@ const actions = {
     })
   },
 
-  // 用户注册
-  register({ commit }, userInfo) {
+  // 用户登录
+  login({ commit }, userInfo) {
+    const { username, password } = userInfo
     return new Promise((resolve, reject) => {
-      register(userInfo)
-        .then(() => {
+      login({ username: username.trim(), password: password })
+        .then(response => {
+          const { data } = response
+          commit('SET_TOKEN', data.token)
+          setToken(data.token)
           resolve()
         })
         .catch(error => {
@@ -48,15 +60,27 @@ const actions = {
   },
 
   // 获取用户信息
-  getUserInfo({ commit }) {
+  getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
-      getUserInfo()
+      getInfo(state.token)
         .then(response => {
-          if (!response) {
-            reject('验证失败，请重新登录')
+          const { data } = response
+
+          if (!data) {
+            reject('验证失败，请重新登录。')
           }
-          commit('SET_USER_INFO', response)
-          resolve(response)
+
+          const { roles, name, avatar, introduction } = data
+
+          if (!roles || roles.length <= 0) {
+            reject('getInfo: 角色必须是非空数组!')
+          }
+
+          commit('SET_ROLES', roles)
+          commit('SET_NAME', name)
+          commit('SET_AVATAR', avatar)
+          commit('SET_INTRODUCTION', introduction)
+          resolve(data)
         })
         .catch(error => {
           reject(error)
@@ -64,24 +88,29 @@ const actions = {
     })
   },
 
-  // 重置Token
-  resetToken({ commit }) {
-    return new Promise(resolve => {
-      commit('SET_TOKEN', '')
-      commit('SET_USER_INFO', null)
-      removeToken()
-      resetRouter()
-      resolve()
+  // 用户登出
+  logout({ commit, state, dispatch }) {
+    return new Promise((resolve, reject) => {
+      logout(state.token)
+        .then(() => {
+          commit('SET_TOKEN', '')
+          commit('SET_ROLES', [])
+          removeToken()
+          resetRouter()
+          resolve()
+        })
+        .catch(error => {
+          reject(error)
+        })
     })
   },
 
-  // 登出
-  logout({ commit }) {
+  // 重置token
+  resetToken({ commit }) {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
-      commit('SET_USER_INFO', null)
+      commit('SET_ROLES', [])
       removeToken()
-      resetRouter()
       resolve()
     })
   }

@@ -8,7 +8,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码">
+          <el-input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter.native="handleLogin">
             <i slot="prefix" class="el-input__icon el-icon-lock"></i>
           </el-input>
         </el-form-item>
@@ -38,7 +38,16 @@
           username: [{ required: true, trigger: 'blur', message: '请输入用户名' }],
           password: [{ required: true, trigger: 'blur', message: '请输入密码' }]
         },
-        loading: false
+        loading: false,
+        redirect: undefined
+      }
+    },
+    watch: {
+      $route: {
+        handler: function(route) {
+          this.redirect = route.query && route.query.redirect
+        },
+        immediate: true
       }
     },
     methods: {
@@ -48,9 +57,11 @@
             this.loading = true
             this.$store.dispatch('user/login', this.loginForm)
               .then(() => {
-                this.$router.push({ path: this.$route.query.redirect || '/' })
+                this.$message.success('登录成功')
+                this.$router.push({ path: this.redirect || '/' })
               })
-              .catch(() => {
+              .catch(error => {
+                this.$message.error(error.message || '登录失败')
                 this.loading = false
               })
           }

@@ -1,39 +1,33 @@
 <template>
   <div class="forget-password-container">
-    <el-form ref="forgetForm" :model="forgetForm" :rules="forgetRules" class="forget-form">
+    <el-form ref="forgetPasswordForm" :model="forgetPasswordForm" :rules="forgetPasswordRules" class="forget-password-form">
       <h3 class="title">重置密码</h3>
-      <el-form-item prop="email">
-        <el-input v-model="forgetForm.email" type="email" placeholder="请输入注册邮箱">
-          <i slot="prefix" class="el-input__icon el-icon-message"></i>
+      <el-form-item prop="username">
+        <el-input v-model="forgetPasswordForm.username" type="text" placeholder="用户名">
+          <i slot="prefix" class="el-input__icon el-icon-user"></i>
         </el-input>
       </el-form-item>
-      <el-form-item prop="code" v-if="showVerifyCode">
-        <el-row :gutter="20">
-          <el-col :span="16">
-            <el-input v-model="forgetForm.code" placeholder="请输入验证码">
-              <i slot="prefix" class="el-input__icon el-icon-key"></i>
-            </el-input>
-          </el-col>
-          <el-col :span="8">
-            <el-button style="width: 100%" :disabled="isCodeSending" @click="sendCode">
-              {{ codeButtonText }}
-            </el-button>
-          </el-col>
-        </el-row>
+      <el-form-item prop="code">
+        <el-input v-model="forgetPasswordForm.code" type="text" placeholder="验证码">
+          <i slot="prefix" class="el-input__icon el-icon-key"></i>
+        </el-input>
+        <el-button type="primary" :disabled="codeButtonDisabled" @click="sendCode">
+          {{ codeButtonText }}
+        </el-button>
       </el-form-item>
-      <el-form-item prop="newPassword" v-if="showNewPassword">
-        <el-input v-model="forgetForm.newPassword" type="password" placeholder="请输入新密码">
+      <el-form-item prop="newPassword">
+        <el-input v-model="forgetPasswordForm.newPassword" type="password" placeholder="新密码">
           <i slot="prefix" class="el-input__icon el-icon-lock"></i>
         </el-input>
       </el-form-item>
-      <el-form-item prop="confirmPassword" v-if="showNewPassword">
-        <el-input v-model="forgetForm.confirmPassword" type="password" placeholder="请确认新密码">
+      <el-form-item prop="confirmPassword">
+        <el-input v-model="forgetPasswordForm.confirmPassword" type="password" placeholder="确认新密码">
           <i slot="prefix" class="el-input__icon el-icon-lock"></i>
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleSubmit">
-          {{ submitButtonText }}
+        <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleResetPassword">
+          重置密码
         </el-button>
       </el-form-item>
       <div class="tips">
@@ -44,6 +38,8 @@
 </template>
 
 <script>
+import { sendVerifyCode, resetPassword } from '@/api/user'
+
 export default {
   name: 'ForgetPassword',
   data() {
@@ -55,24 +51,22 @@ export default {
       }
     }
     const validateConfirmPassword = (rule, value, callback) => {
-      if (value !== this.forgetForm.newPassword) {
+      if (value !== this.forgetPasswordForm.newPassword) {
         callback(new Error('两次输入密码不一致'))
       } else {
         callback()
       }
     }
     return {
-      step: 1,
-      forgetForm: {
-        email: '',
+      forgetPasswordForm: {
+        username: '',
         code: '',
         newPassword: '',
         confirmPassword: ''
       },
-      forgetRules: {
-        email: [
-          { required: true, trigger: 'blur', message: '请输入邮箱地址' },
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+      forgetPasswordRules: {
+        username: [
+          { required: true, trigger: 'blur', message: '请输入用户名' }
         ],
         code: [
           { required: true, trigger: 'blur', message: '请输入验证码' }
@@ -82,60 +76,58 @@ export default {
           { validator: validatePassword, trigger: 'blur' }
         ],
         confirmPassword: [
-          { required: true, trigger: 'blur', message: '请确认新密码' },
+          { required: true, trigger: 'blur', message: '请再次输入新密码' },
           { validator: validateConfirmPassword, trigger: 'blur' }
         ]
       },
       loading: false,
-      isCodeSending: false,
-      countdown: 60
-    }
-  },
-  computed: {
-    showVerifyCode() {
-      return this.step >= 2
-    },
-    showNewPassword() {
-      return this.step >= 3
-    },
-    submitButtonText() {
-      return this.step === 1 ? '下一步' : this.step === 2 ? '验证' : '重置密码'
-    },
-    codeButtonText() {
-      return this.isCodeSending ? `${this.countdown}秒后重试` : '获取验证码'
+      countdown: 60,
+      codeButtonDisabled: false,
+      codeButtonText: '获取验证码'
     }
   },
   methods: {
     sendCode() {
-      this.isCodeSending = true
-      this.countdown = 60
+      if (!this.forgetPasswordForm.username) {
+        this.$message.error('请先输入用户名')
+        return
+      }
+      this.codeButtonDisabled = true
+      this.codeButtonText = `${this.countdown}秒后重试`
       const timer = setInterval(() => {
-        if (this.countdown > 0) {
-          this.countdown--
-        } else {
-          this.isCodeSending = false
+        this.countdown--
+        this.codeButtonText = `${this.countdown}秒后重试`
+        if (this.countdown <= 0) {
           clearInterval(timer)
+          this.codeButtonDisabled = false
+          this.codeButtonText = '获取验证码'
+          this.countdown = 60
         }
       }, 1000)
-      // 这里调用发送验证码API
+      sendVerifyCode(this.forgetPasswordForm.username)
+        .then(() => {
+          this.$message.success('验证码已发送')
+        })
+        .catch(error => {
+          console.error('发送验证码失败:', error)
+          this.$message.error(error.message || '发送验证码失败')
+        })
     },
-    handleSubmit() {
-      this.$refs.forgetForm.validate(valid => {
+    handleResetPassword() {
+      this.$refs.forgetPasswordForm.validate(valid => {
         if (valid) {
           this.loading = true
-          if (this.step === 1) {
-            // 验证邮箱
-            this.step = 2
-            this.loading = false
-          } else if (this.step === 2) {
-            // 验证验证码
-            this.step = 3
-            this.loading = false
-          } else {
-            // 重置密码
-            this.$message.success('密码重置成功')
-            this.$router.push('/login')
-          }
+          const { username, code, newPassword } = this.forgetPasswordForm
+          resetPassword({ username, code, newPassword })
+            .then(() => {
+              this.$message.success('密码重置成功，请登录')
+              this.$router.push('/login')
+            })
+            .catch(error => {
+              console.error('重置密码失败:', error)
+              this.$message.error(error.message || '重置密码失败')
+              this.loading = false
+            })
         }
       })
     }
@@ -151,7 +143,7 @@ export default {
   justify-content: center;
   background-color: #f3f3f3;
 
-  .forget-form {
+  .forget-password-form {
     width: 400px;
     padding: 35px;
     border-radius: 6px;

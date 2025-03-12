@@ -27,10 +27,20 @@ export default {
   height: 100%;
 }
 
-html,
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
 body {
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 </style>

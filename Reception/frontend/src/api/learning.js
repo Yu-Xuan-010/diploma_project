@@ -1,233 +1,227 @@
 import request from '@/utils/request'
 
 // 学习计划相关接口
-export function getLearningPlan() {
+export function getStudyPlans(params) {
   return request({
-    url: '/learning/plan',
-    method: 'get'
+    url: '/api/learning/plans',
+    method: 'get',
+    params
   })
 }
 
-export function updateLearningPlan(data) {
+export function createStudyPlan(data) {
   return request({
-    url: '/learning/plan',
-    method: 'put',
-    data: data
-  })
-}
-
-export function createLearningTask(data) {
-  return request({
-    url: '/learning/task',
+    url: '/api/learning/plans',
     method: 'post',
-    data: data
+    data
   })
 }
 
-export function updateLearningTask(id, data) {
+export function updateStudyPlan(id, data) {
   return request({
-    url: `/learning/task/${id}`,
+    url: `/api/learning/plans/${id}`,
     method: 'put',
-    data: data
+    data
   })
 }
 
-export function deleteLearningTask(id) {
+export function deleteStudyPlan(id) {
   return request({
-    url: `/learning/task/${id}`,
+    url: `/api/learning/plans/${id}`,
     method: 'delete'
   })
 }
 
-export function completeLearningTask(id) {
-  return request({
-    url: `/learning/task/${id}/complete`,
-    method: 'post'
-  })
-}
-
 // 学习进度相关接口
-export function getLearningProgress(query) {
+export function getLearningProgress(courseId) {
   return request({
-    url: '/learning/progress',
-    method: 'get',
-    params: query
+    url: `/api/learning/progress/${courseId}`,
+    method: 'get'
   })
 }
 
-export function getLearningStatistics(timeRange) {
+export function getLearningOverview() {
   return request({
-    url: '/learning/statistics',
-    method: 'get',
-    params: timeRange
+    url: '/api/learning/overview',
+    method: 'get'
+  })
+}
+
+export function getLearningStatistics() {
+  return request({
+    url: '/api/learning/statistics',
+    method: 'get'
   })
 }
 
 export function getChapterProgress(courseId) {
   return request({
-    url: `/learning/progress/course/${courseId}`,
+    url: `/api/learning/progress/course/${courseId}`,
     method: 'get'
   })
 }
 
 export function updateLearningRecord(data) {
   return request({
-    url: '/learning/record',
+    url: '/api/learning/record',
     method: 'post',
-    data: data
+    data
   })
 }
 
-export function getLearningHistory(query) {
+export function getLearningHistory(params) {
   return request({
-    url: '/learning/history',
+    url: '/api/learning/history',
     method: 'get',
-    params: query
+    params
   })
 }
 
-// 笔记和标记相关接口
-export function getNotesList(query) {
+// 笔记相关接口
+export function getNotesList(params) {
   return request({
-    url: '/learning/notes',
+    url: '/api/learning/notes',
     method: 'get',
-    params: query
+    params
   })
 }
 
 export function createNote(data) {
   return request({
-    url: '/learning/note',
+    url: '/api/learning/notes',
     method: 'post',
-    data: data
+    data
   })
 }
 
 export function updateNote(id, data) {
   return request({
-    url: `/learning/note/${id}`,
+    url: `/api/learning/notes/${id}`,
     method: 'put',
-    data: data
+    data
   })
 }
 
 export function deleteNote(id) {
   return request({
-    url: `/learning/note/${id}`,
+    url: `/api/learning/notes/${id}`,
     method: 'delete'
   })
 }
 
-export function getBookmarks(query) {
+// 书签相关接口
+export function getBookmarks(params) {
   return request({
-    url: '/learning/bookmarks',
+    url: '/api/learning/bookmarks',
     method: 'get',
-    params: query
+    params
   })
 }
 
 export function addBookmark(data) {
   return request({
-    url: '/learning/bookmark',
+    url: '/api/learning/bookmarks',
     method: 'post',
-    data: data
+    data
   })
 }
 
 export function removeBookmark(id) {
   return request({
-    url: `/learning/bookmark/${id}`,
+    url: `/api/learning/bookmarks/${id}`,
     method: 'delete'
   })
 }
 
-// 考试和作业相关接口
-export function getExamList(query) {
+// 考试相关接口
+export function getExamList(params) {
   return request({
-    url: '/learning/exams',
+    url: '/api/learning/exams',
     method: 'get',
-    params: query
+    params
   })
 }
 
 export function getExamDetail(id) {
   return request({
-    url: `/learning/exam/${id}`,
+    url: `/api/learning/exams/${id}`,
     method: 'get'
   })
 }
 
 export function submitExam(id, data) {
   return request({
-    url: `/learning/exam/${id}/submit`,
+    url: `/api/learning/exams/${id}/submit`,
     method: 'post',
-    data: data
+    data
   })
 }
 
-export function getHomeworkList(query) {
+// 作业相关接口
+export function getHomeworkList(params) {
   return request({
-    url: '/learning/homework',
+    url: '/api/learning/homework',
     method: 'get',
-    params: query
+    params
   })
 }
 
 export function submitHomework(id, data) {
   return request({
-    url: `/learning/homework/${id}/submit`,
+    url: `/api/learning/homework/${id}/submit`,
     method: 'post',
-    data: data,
+    data,
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
 }
 
-// 学习资源相关接口
-export function getResourceList(query) {
+// 资源相关接口
+export function getResourceList(courseId, params) {
   return request({
-    url: '/learning/resources',
+    url: `/api/learning/resources/${courseId}`,
     method: 'get',
-    params: query
+    params
   })
 }
 
-export function downloadResource(id) {
+export function downloadResource(resourceId) {
   return request({
-    url: `/learning/resource/${id}/download`,
+    url: `/api/learning/resources/${resourceId}/download`,
     method: 'get',
     responseType: 'blob'
   })
 }
 
-// 学习提醒相关接口
-export function getLearningReminders() {
+// 提醒相关接口
+export function getLearningReminders(params) {
   return request({
-    url: '/learning/reminders',
-    method: 'get'
+    url: '/api/learning/reminders',
+    method: 'get',
+    params
   })
 }
 
 export function createReminder(data) {
   return request({
-    url: '/learning/reminder',
+    url: '/api/learning/reminders',
     method: 'post',
-    data: data
+    data
   })
 }
 
 export function updateReminder(id, data) {
   return request({
-    url: `/learning/reminder/${id}`,
+    url: `/api/learning/reminders/${id}`,
     method: 'put',
-    data: data
+    data
   })
 }
 
 export function deleteReminder(id) {
   return request({
-    url: `/learning/reminder/${id}`,
+    url: `/api/learning/reminders/${id}`,
     method: 'delete'
   })
 }
@@ -235,23 +229,40 @@ export function deleteReminder(id) {
 // 学习报告相关接口
 export function generateLearningReport(params) {
   return request({
-    url: '/learning/report/generate',
+    url: '/api/learning/reports/generate',
     method: 'get',
-    params: params
+    params
   })
 }
 
-export function getLearningReportList(query) {
+export function getLearningReportList(params) {
   return request({
-    url: '/learning/reports',
+    url: '/api/learning/reports',
     method: 'get',
-    params: query
+    params
   })
 }
 
 export function getLearningReportDetail(id) {
   return request({
-    url: `/learning/report/${id}`,
+    url: `/api/learning/reports/${id}`,
     method: 'get'
+  })
+}
+
+// 获取学习计划
+export function getLearningPlan() {
+  return request({
+    url: '/api/learning/plan',
+    method: 'get'
+  })
+}
+
+// 更新学习计划
+export function updateLearningPlan(data) {
+  return request({
+    url: '/api/learning/plan',
+    method: 'put',
+    data
   })
 }

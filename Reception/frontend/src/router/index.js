@@ -11,17 +11,6 @@ Vue.use(VueRouter)
 // 公共路由（不需要登录就可以访问）
 export const constantRoutes = [
   {
-    path: '/redirect',
-    component: Layout,
-    hidden: true,
-    children: [
-      {
-        path: '/redirect/:path(.*)',
-        component: () => import('@/views/redirect')
-      }
-    ]
-  },
-  {
     path: '/login',
     component: () => import('@/views/login/index'),
     hidden: true
@@ -32,33 +21,36 @@ export const constantRoutes = [
     hidden: true
   },
   {
-    path: '/forget-password',
-    component: () => import('@/views/forget-password/index'),
-    hidden: true
-  },
-  {
     path: '/404',
     component: () => import('@/views/error/404'),
     hidden: true
   },
   {
-    path: '/401',
-    component: () => import('@/views/error/401'),
-    hidden: true
-  },
-  {
     path: '/',
     component: Layout,
-    redirect: '/home',
+    redirect: '/dashboard',
     children: [
       {
-        path: 'home',
-        name: 'Home',
-        component: () => import('@/views/home/index'),
-        meta: { title: '首页', icon: 'dashboard', requireAuth: true }
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/dashboard/index'),
+        meta: { title: '首页', icon: 'dashboard' }
       }
     ]
-  }
+  },
+  {
+    path: '/profile',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Profile',
+        component: () => import('@/views/profile/index'),
+        meta: { title: '个人中心', icon: 'user' }
+      }
+    ]
+  },
+  { path: '*', redirect: '/404', hidden: true }
 ]
 
 // 需要登录才能访问的路由
@@ -113,16 +105,14 @@ export const asyncRoutes = [
     ]
   },
   {
-    path: '/profile',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'Profile',
-        component: () => import('@/views/profile/index'),
-        meta: { title: '个人中心', icon: 'user', requireAuth: true }
-      }
-    ]
+    path: '/forget-password',
+    component: () => import('@/views/forget-password/index'),
+    hidden: true
+  },
+  {
+    path: '/401',
+    component: () => import('@/views/error/401'),
+    hidden: true
   },
   {
     path: '*',

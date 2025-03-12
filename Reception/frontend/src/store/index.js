@@ -1,20 +1,20 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import user from './modules/user'
-import course from './modules/course'
-import learning from './modules/learning'
-import interaction from './modules/interaction'
 import getters from './getters'
 
 Vue.use(Vuex)
 
+// 自动导入modules下的所有模块
+const modulesFiles = require.context('./modules', true, /\.js$/)
+const modules = modulesFiles.keys().reduce((modules, modulePath) => {
+  const moduleName = modulePath.replace(/^\.\/(.*)\.\w+$/, '$1')
+  const value = modulesFiles(modulePath)
+  modules[moduleName] = value.default
+  return modules
+}, {})
+
 const store = new Vuex.Store({
-  modules: {
-    user,
-    course,
-    learning,
-    interaction
-  },
+  modules,
   getters
 })
 

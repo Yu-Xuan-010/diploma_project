@@ -17,11 +17,6 @@
           <i slot="prefix" class="el-input__icon el-icon-lock"></i>
         </el-input>
       </el-form-item>
-      <el-form-item prop="email">
-        <el-input v-model="registerForm.email" type="email" placeholder="邮箱">
-          <i slot="prefix" class="el-input__icon el-icon-message"></i>
-        </el-input>
-      </el-form-item>
       <el-form-item>
         <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleRegister">
           注册
@@ -35,6 +30,8 @@
 </template>
 
 <script>
+import { register } from '@/api/user'
+
 export default {
   name: 'Register',
   data() {
@@ -56,12 +53,12 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        confirmPassword: '',
-        email: ''
+        confirmPassword: ''
       },
       registerRules: {
         username: [
-          { required: true, trigger: 'blur', message: '请输入用户名' }
+          { required: true, trigger: 'blur', message: '请输入用户名' },
+          { min: 2, max: 20, message: '用户名长度必须在2到20个字符之间', trigger: 'blur' }
         ],
         password: [
           { required: true, trigger: 'blur', message: '请输入密码' },
@@ -70,10 +67,6 @@ export default {
         confirmPassword: [
           { required: true, trigger: 'blur', message: '请再次输入密码' },
           { validator: validateConfirmPassword, trigger: 'blur' }
-        ],
-        email: [
-          { required: true, trigger: 'blur', message: '请输入邮箱地址' },
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
         ]
       },
       loading: false
@@ -84,9 +77,17 @@ export default {
       this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          // 这里调用注册API
-          this.$message.success('注册成功')
-          this.$router.push('/login')
+          const { username, password } = this.registerForm
+          register({ username, password })
+            .then(() => {
+              this.$message.success('注册成功，请登录')
+              this.$router.push('/login')
+            })
+            .catch(error => {
+              console.error('注册失败:', error)
+              this.$message.error(error.message || '注册失败')
+              this.loading = false
+            })
         }
       })
     }

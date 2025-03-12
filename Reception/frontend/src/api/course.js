@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
 // 课程列表相关接口
-export function getCourseList(query) {
+export function getCourseList(params) {
   return request({
-    url: '/course/list',
+    url: '/api/courses',
     method: 'get',
-    params: query
+    params
   })
 }
 
@@ -33,7 +33,7 @@ export function getNewCourses() {
 // 课程详情相关接口
 export function getCourseDetail(id) {
   return request({
-    url: `/course/${id}`,
+    url: `/api/courses/${id}`,
     method: 'get'
   })
 }
@@ -256,5 +256,40 @@ export function clearSearchHistory() {
   return request({
     url: '/course/search/history',
     method: 'delete'
+  })
+}
+
+// 创建课程
+export function createCourse(data) {
+  return request({
+    url: '/api/courses',
+    method: 'post',
+    data
+  })
+}
+
+// 更新课程
+export function updateCourse(id, data) {
+  return request({
+    url: `/api/courses/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除课程
+export function deleteCourse(id) {
+  return request({
+    url: `/api/courses/${id}`,
+    method: 'delete'
+  })
+}
+
+// 更新课程状态
+export function updateCourseStatus(id, status) {
+  return request({
+    url: `/api/courses/${id}/status`,
+    method: 'put',
+    params: { status }
   })
 }

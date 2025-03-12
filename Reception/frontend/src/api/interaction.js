@@ -1,170 +1,207 @@
 import request from '@/utils/request'
 
-// 讨论相关接口
-export function getDiscussionList(query) {
+// 获取讨论列表
+export function getDiscussionList(params) {
   return request({
-    url: '/discussion/list',
+    url: '/api/discussions',
     method: 'get',
-    params: query
+    params
   })
 }
 
+// 获取讨论详情
 export function getDiscussionDetail(id) {
   return request({
-    url: `/discussion/${id}`,
+    url: `/api/discussions/${id}`,
     method: 'get'
   })
 }
 
+// 创建讨论
 export function createDiscussion(data) {
   return request({
-    url: '/discussion',
+    url: '/api/discussions',
     method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data
   })
 }
 
+// 回复讨论
+export function replyDiscussion(id, data) {
+  return request({
+    url: `/api/discussions/${id}/replies`,
+    method: 'post',
+    data
+  })
+}
+
+// 删除讨论
 export function deleteDiscussion(id) {
   return request({
-    url: `/discussion/${id}`,
+    url: `/api/discussions/${id}`,
     method: 'delete'
   })
 }
 
-export function likeDiscussion(id) {
+// 获取通知列表
+export function getNotifications(params) {
   return request({
-    url: `/discussion/${id}/like`,
+    url: '/api/notifications',
+    method: 'get',
+    params
+  })
+}
+
+// 标记通知为已读
+export function readNotification(id) {
+  return request({
+    url: `/api/notifications/${id}/read`,
+    method: 'put'
+  })
+}
+
+// 获取课程评论
+export function getCourseComments(courseId, params) {
+  return request({
+    url: `/api/courses/${courseId}/comments`,
+    method: 'get',
+    params
+  })
+}
+
+// 创建课程评论
+export function createCourseComment(courseId, data) {
+  return request({
+    url: `/api/courses/${courseId}/comments`,
+    method: 'post',
+    data
+  })
+}
+
+// 更新课程评论
+export function updateCourseComment(courseId, commentId, data) {
+  return request({
+    url: `/api/courses/${courseId}/comments/${commentId}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除课程评论
+export function deleteCourseComment(courseId, commentId) {
+  return request({
+    url: `/api/courses/${courseId}/comments/${commentId}`,
+    method: 'delete'
+  })
+}
+
+// 点赞课程评论
+export function likeCourseComment(courseId, commentId) {
+  return request({
+    url: `/api/courses/${courseId}/comments/${commentId}/like`,
     method: 'post'
   })
 }
 
-export function createReply(data) {
-  return request({
-    url: '/discussion/reply',
-    method: 'post',
-    data: data
-  })
-}
-
-export function deleteReply(id) {
-  return request({
-    url: `/discussion/reply/${id}`,
-    method: 'delete'
-  })
-}
-
+// 获取热门讨论
 export function getHotDiscussions() {
   return request({
-    url: '/discussion/hot',
+    url: '/api/discussions/hot',
     method: 'get'
   })
 }
 
-export function getMyParticipations() {
+// 点赞讨论
+export function likeDiscussion(id) {
   return request({
-    url: '/discussion/my-participations',
-    method: 'get'
-  })
-}
-
-// 反馈相关接口
-export function createFeedback(data) {
-  return request({
-    url: '/feedback',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
-export function getFeedbackList(query) {
-  return request({
-    url: '/feedback/list',
-    method: 'get',
-    params: query
-  })
-}
-
-export function getFeedbackDetail(id) {
-  return request({
-    url: `/feedback/${id}`,
-    method: 'get'
-  })
-}
-
-export function updateFeedbackStatus(id, data) {
-  return request({
-    url: `/feedback/${id}/status`,
-    method: 'put',
-    data: data
-  })
-}
-
-export function replyFeedback(id, data) {
-  return request({
-    url: `/feedback/${id}/reply`,
-    method: 'post',
-    data: data
-  })
-}
-
-// 课程评价相关接口
-export function getCourseComments(query) {
-  return request({
-    url: '/course/comments',
-    method: 'get',
-    params: query
-  })
-}
-
-export function createCourseComment(data) {
-  return request({
-    url: '/course/comment',
-    method: 'post',
-    data: data
-  })
-}
-
-export function updateCourseComment(id, data) {
-  return request({
-    url: `/course/comment/${id}`,
-    method: 'put',
-    data: data
-  })
-}
-
-export function deleteCourseComment(id) {
-  return request({
-    url: `/course/comment/${id}`,
-    method: 'delete'
-  })
-}
-
-export function likeCourseComment(id) {
-  return request({
-    url: `/course/comment/${id}/like`,
+    url: `/api/discussions/${id}/like`,
     method: 'post'
   })
 }
 
-// 统计相关接口
+// 获取我的参与
+export function getMyParticipations(params) {
+  return request({
+    url: '/api/discussions/participations',
+    method: 'get',
+    params
+  })
+}
+
+// 获取互动统计
 export function getInteractionStats() {
   return request({
-    url: '/interaction/stats',
+    url: '/api/interactions/stats',
     method: 'get'
   })
 }
 
-// 举报相关接口
+// 创建反馈
+export function createFeedback(data) {
+  return request({
+    url: '/api/feedback',
+    method: 'post',
+    data
+  })
+}
+
+// 获取反馈列表
+export function getFeedbackList(params) {
+  return request({
+    url: '/api/feedback',
+    method: 'get',
+    params
+  })
+}
+
+// 获取反馈详情
+export function getFeedbackDetail(id) {
+  return request({
+    url: `/api/feedback/${id}`,
+    method: 'get'
+  })
+}
+
+// 回复反馈
+export function replyFeedback(id, data) {
+  return request({
+    url: `/api/feedback/${id}/reply`,
+    method: 'post',
+    data
+  })
+}
+
+// 更新反馈状态
+export function updateFeedbackStatus(id, status) {
+  return request({
+    url: `/api/feedback/${id}/status`,
+    method: 'put',
+    data: { status }
+  })
+}
+
+// 举报内容
 export function reportContent(data) {
   return request({
-    url: '/interaction/report',
+    url: '/api/reports',
     method: 'post',
-    data: data
+    data
+  })
+}
+
+// 创建回复
+export function createReply(data) {
+  return request({
+    url: '/api/discussions/replies',
+    method: 'post',
+    data
+  })
+}
+
+// 标记所有通知为已读
+export function readAllNotifications() {
+  return request({
+    url: '/api/notifications/read-all',
+    method: 'put'
   })
 }
