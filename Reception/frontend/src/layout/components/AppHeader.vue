@@ -16,8 +16,10 @@
           {{ userInfo.userName || '未登录' }}<i class="el-icon-arrow-down el-icon--right"></i>
         </span>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-          <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+          <el-dropdown-item v-if="isLoggedIn" command="profile">个人中心</el-dropdown-item>
+          <el-dropdown-item :command="isLoggedIn ? 'logout' : 'login'">
+            {{ isLoggedIn ? '退出登录' : '登录' }}
+          </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </div>
@@ -30,7 +32,10 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'AppHeader',
   computed: {
-    ...mapGetters(['userInfo'])
+    ...mapGetters(['userInfo']),
+    isLoggedIn() {
+      return !!this.userInfo.userName // 假设 userInfo.userName 存在表示用户已登录
+    }
   },
   methods: {
     handleCommand(command) {
@@ -40,6 +45,8 @@ export default {
         this.$store.dispatch('user/logout').then(() => {
           this.$router.push('/login')
         })
+      } else if (command === 'login') {
+        this.$router.push('/login')
       }
     }
   }
@@ -53,7 +60,7 @@ export default {
   align-items: center;
   padding: 0 20px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0,21,41,.08);
+  box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
 }
 
 .logo {

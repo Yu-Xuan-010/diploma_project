@@ -1,6 +1,6 @@
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { getUserProfile, updateUserProfile, updatePassword } from '@/api/user'
-import login from '@/views/login/index.vue'
+import login from '@/views/Login.vue'
 
 const state = {
   token: getToken(),

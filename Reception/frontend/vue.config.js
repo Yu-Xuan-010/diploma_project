@@ -4,10 +4,9 @@ const path = require('path')
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
-    port: 8081,
     proxy: {
       '/api': {
-        target: 'http://localhost:8082',
+        target: 'http://192.168.151.141:5000',
         changeOrigin: true,
         pathRewrite: {
           '^/api': ''

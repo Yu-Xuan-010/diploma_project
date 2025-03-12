@@ -21,17 +21,17 @@ export const constantRoutes = [
   },
   {
     path: '/login',
-    component: () => import('@/views/login/index'),
+    component: () => import('@/views/Login.vue'),
     hidden: true
   },
   {
     path: '/register',
-    component: () => import('@/views/register/index'),
+    component: () => import('@/views/Register.vue'),
     hidden: true
   },
   {
     path: '/forget-password',
-    component: () => import('@/views/forget-password'),
+    component: () => import('@/views/ForgotPassword.vue'),
     hidden: true
   },
   {
