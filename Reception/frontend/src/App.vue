@@ -1,6 +1,7 @@
 <template>
     <div id="app">
       <router-view />
+      <h1>Vue App 正常运行</h1>
     </div>
   </template>
   

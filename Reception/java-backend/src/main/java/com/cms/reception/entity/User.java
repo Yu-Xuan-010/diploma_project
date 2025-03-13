@@ -1,14 +1,23 @@
-package com.cms.reception.model;
+package com.cms.reception.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
 @Data
+@Entity
 public class User implements UserDetails {
+    @javax.persistence.Id
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // 用户ID
     private String username; // 用户名
     private String password; // 密码
@@ -25,8 +34,6 @@ public class User implements UserDetails {
     private String gender; // 性别 (MALE, FEMALE, OTHER)
     private Date birthday; // 出生日期
     private String address; // 地址
-    private String verifyCode; // 验证码
-    private Date verifyCodeExpireTime; // 验证码过期时间
 
     // 实现 UserDetails 接口的方法
     @Override

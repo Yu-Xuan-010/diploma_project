@@ -12,3 +12,13 @@ spring:
 jwt:
   secret: your-secret-key-here-must-be-at-least-32-characters-long
   expiration: 86400 # 24小时过期
+
+logging:
+  level:
+    root: INFO # 设置全局日志级别为 INFO
+    com.cms.reception: DEBUG # 设置项目包下的日志级别为 DEBUG
+  file:
+    name: logs/app.log # 日志文件路径
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" # 日志文件格式
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" # 控制台日志格式

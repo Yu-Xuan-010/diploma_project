@@ -2,6 +2,7 @@ package com.cms.reception;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 /**
  * @BelongsProject: CMS
@@ -12,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Version: 1.0
  */
 @SpringBootApplication
+@EntityScan("com.cms.reception.entity")
 public class ReceptionApplication {
 
     public static void main(String[] args) {
