@@ -5,6 +5,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import store from './store';
 import axios from 'axios';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 const app = createApp(App);
 
@@ -26,4 +27,18 @@ if (token) {
     axios.defaults.headers['Authorization'] = `Bearer ${token}`;
 }
 
+// 注册所有图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
+
 app.use(ElementPlus).use(store).use(router).mount('#app');
+
+// 全局错误处理
+app.config.errorHandler = (err, vm, info) => {
+  console.error('全局错误:', err)
+  console.error('错误信息:', info)
+}
+
+// 导出 app 实例（用于调试）
+window.app = app

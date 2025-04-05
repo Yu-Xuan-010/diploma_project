@@ -1,24 +1,16 @@
 package com.cms.reception.service;
 
-import com.cms.reception.common.Result;
 import com.cms.reception.entity.User;
-import com.cms.reception.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+public interface UserService {
+    User register(User user);
+    User findByUsername(String username);
 
-@Service
-public class UserService {
+    boolean validateUser(String username, String password);
 
-    @Autowired
-    private UserRepository userRepository;
+    User updateUser(User user);
 
-    public boolean validateUser(String username, String password) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent() && user.get().getPassword().equals(password)) {
-            return true;  // 验证成功
-        }
-        return false;  // 验证失败
-    }
+    boolean changePassword(String username, String oldPassword, String newPassword);
+
+
 }
