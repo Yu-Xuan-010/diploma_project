@@ -22,6 +22,21 @@ spring:
       allowed-headers: "*"
       allow-credentials: true
       max-age: 3600
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+# 七牛云配置
+qiniu:
+  # 访问密钥
+  accessKey: dsjq5VLXslvh0YOn7MaHc0I8sGQcW51Z3HsN4OG9
+  # 密钥
+  secretKey: wX3cagWsnf93FIm5la38-k0tWSBSbkQ08HCt6Exb
+  # 存储空间名
+  bucket: bishe031123
+  # 访问域名
+  domain: sualyl9od.hn-bkt.clouddn.com
 
 jwt:
   secret: your_jwt_secret_key_here_make_it_long_and_secure_123456

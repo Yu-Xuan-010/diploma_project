@@ -27,6 +27,7 @@
 
 <script>
 import axios from 'axios';
+import { post } from '@/utils/request';
 
 export default {
   name: 'Login',
@@ -54,15 +55,13 @@ export default {
       try {
         await this.$refs.loginForm.validate();
         this.loading = true;
-        const response = await axios.post('/api/user/login', this.loginForm, {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const response = await post('/api/user/login', this.loginForm);
         
-        if (response.data && response.data.token) {
+        if (response && response.token) {
           // 使用 Vuex 存储用户信息和 token
           await this.$store.dispatch('loginSuccess', {
-            token: response.data.token,
-            userInfo: response.data
+            token: response.token,
+            userInfo: response
           });
           
           // 显示成功消息
@@ -76,7 +75,7 @@ export default {
           this.$message.error('登录失败：响应数据格式错误');
         }
       } catch (error) {
-        this.$message.error('登录失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+        this.$message.error('登录失败: ' + (error.response?.data?.error || error.message || '未知错误'));
       } finally {
         this.loading = false;
       }

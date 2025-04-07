@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/home/index.vue';
 import Login from '../views/login/index.vue';
 import Register from '../views/register/index.vue';
+import Layout from '../layout/components/AppHeader.vue';
 
 // 路由配置
 const routes = [
@@ -35,6 +36,24 @@ const routes = [
       requiresAuth: false,
       title: '注册'
     }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/profile/index.vue')
+  },
+  {
+    path: '/admin',
+    component: Layout,
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: 'teacher-applications',
+        name: 'TeacherApplications',
+        component: () => import('../views/admin/teacher-applications/index.vue'),
+        meta: { title: '教师申请管理', icon: 'user' }
+      }
+    ]
   },
   // 添加通配符路由
   {

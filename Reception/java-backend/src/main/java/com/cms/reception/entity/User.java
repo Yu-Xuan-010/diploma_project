@@ -1,5 +1,6 @@
 package com.cms.reception.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -35,9 +36,11 @@ public class User implements UserDetails {
     private String avatar; // 头像
 
     @Column(name = "create_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // 设置格式
     private LocalDateTime createTime;
 
     @Column(name = "update_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // 设置格式
     private LocalDateTime updateTime;
 
     @Column(length = 20)
@@ -53,7 +56,8 @@ public class User implements UserDetails {
     private String status; // 用户状态 (ACTIVE, INACTIVE, LOCKED)
 
     @Column(name = "last_login")
-    private Date lastLogin; // 最后登录时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // 设置格式
+    private Date lastLogin;
 
     @Column(name = "login_attempts")
     private Integer loginAttempts; // 登录尝试次数

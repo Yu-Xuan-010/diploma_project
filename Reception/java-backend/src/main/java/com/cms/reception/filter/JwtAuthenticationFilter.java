@@ -31,8 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String requestURI = request.getRequestURI();
-            // 允许注册接口不经过 JWT 认证
-            if (requestURI.contains("/user/register")) {
+            // 允许登录、注册和用户信息接口不经过 JWT 认证
+            if (requestURI.contains("/api/user/login") || 
+                requestURI.contains("/api/user/register") || 
+                requestURI.contains("/user/profile")) {
                 filterChain.doFilter(request, response);
                 return;
             }

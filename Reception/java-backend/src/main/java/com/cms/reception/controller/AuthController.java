@@ -25,13 +25,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
-@CrossOrigin(
-    origins = "http://localhost:3000",
-    allowedHeaders = "*",
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, 
-               RequestMethod.DELETE, RequestMethod.OPTIONS},
-    allowCredentials = "true"
-)
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;

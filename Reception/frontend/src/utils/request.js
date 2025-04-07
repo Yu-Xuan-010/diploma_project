@@ -4,7 +4,7 @@ import router from '../router/index'
 
 // 创建 axios 实例
 const service = axios.create({
-  baseURL: '/api', // API 的基础URL
+  baseURL: '', // 移除 /api 前缀，因为我们在具体的请求中已经包含了
   timeout: 5000, // 请求超时时间
   headers: {
     'Content-Type': 'application/json'
@@ -30,34 +30,24 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   response => {
-    const res = response.data
-    // 如果返回的状态码不是 200，说明接口有问题，需要处理
-    if (res.code !== 200) {
-      ElMessage({
-        message: res.message || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
-
-      // 401: 未登录或token过期
-      if (res.code === 401) {
-        // 清除本地token
-        localStorage.removeItem('token')
-        // 跳转到登录页
-        router.push('/login')
-      }
-      return Promise.reject(new Error(res.message || 'Error'))
-    } else {
-      return res
-    }
+    // 直接返回响应数据
+    return response.data
   },
   error => {
     console.error('Response error:', error)
     ElMessage({
-      message: error.message || '请求失败',
+      message: error.response?.data?.error || error.message || '请求失败',
       type: 'error',
       duration: 5 * 1000
     })
+    
+    // 401: 未登录或token过期
+    if (error.response?.status === 401) {
+      // 清除本地token
+      localStorage.removeItem('token')
+      // 跳转到登录页
+      router.push('/login')
+    }
     return Promise.reject(error)
   }
 )

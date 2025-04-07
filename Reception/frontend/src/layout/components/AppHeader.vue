@@ -5,11 +5,26 @@
         <h1>在线学习平台</h1>
       </router-link>
     </div>
+    
+    <div class="search-box">
+      <el-input
+        v-model="searchQuery"
+        placeholder="搜索课程..."
+        clearable
+        @keyup.enter="handleSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+
     <el-menu mode="horizontal" :router="true" class="nav-menu" background-color="#fff">
       <el-menu-item index="/course">课程中心</el-menu-item>
       <el-menu-item index="/learning">学习进度</el-menu-item>
       <el-menu-item index="/discussion">讨论区</el-menu-item>
     </el-menu>
+
     <div class="right-menu">
       <template v-if="isLoggedIn">
         <el-dropdown @command="handleCommand">
@@ -36,23 +51,34 @@
 </template>
 
 <script>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowDown, Search } from '@element-plus/icons-vue'
 
 export default {
   name: 'AppHeader',
   components: {
-    ArrowDown
+    ArrowDown,
+    Search
   },
   setup() {
     const store = useStore()
     const router = useRouter()
+    const searchQuery = ref('')
 
     const userInfo = computed(() => store.state.userInfo)
     const isLoggedIn = computed(() => store.getters.isAuthenticated)
+
+    const handleSearch = () => {
+      if (searchQuery.value.trim()) {
+        router.push({
+          path: '/search',
+          query: { q: searchQuery.value.trim() }
+        })
+      }
+    }
 
     const handleCommand = (command) => {
       switch (command) {
@@ -78,6 +104,8 @@ export default {
     return {
       userInfo,
       isLoggedIn,
+      searchQuery,
+      handleSearch,
       handleCommand,
       goToLogin,
       goToRegister
@@ -112,6 +140,19 @@ export default {
       font-size: 20px;
       color: #409EFF;
       font-weight: 600;
+    }
+  }
+
+  .search-box {
+    width: 300px;
+    margin: 0 20px;
+
+    :deep(.el-input__wrapper) {
+      border-radius: 20px;
+    }
+
+    :deep(.el-input__inner) {
+      height: 36px;
     }
   }
 

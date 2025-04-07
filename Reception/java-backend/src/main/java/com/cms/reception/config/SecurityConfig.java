@@ -35,14 +35,20 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
             .antMatchers(
-                "/api/user/login",
+                "/user/login",
                 "/api/user/register",
-                "/user/**",
+                "/api/category/list",
+                "/api/course/list",
+                "/api/course/recommended",
                 "/api/public/**",
+                "/api/file/upload",
+                "/api/file/uploads",
+                "/user/profile",
                 "/favicon.ico",
                 "/",
                 "/index.html",
-                "/static/**"
+                "/static/**",
+                "/error"
             ).permitAll()
             .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .anyRequest().authenticated()
@@ -55,7 +61,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
