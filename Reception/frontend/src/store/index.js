@@ -78,6 +78,8 @@ export default createStore({
                 }
                 
                 const response = await axios.get('/api/user/profile');
+                console.log('获取用户信息响应:', response.data);
+                
                 if (response.data.success) {
                     commit('SET_USER', response.data.data);
                     return response.data.data;
@@ -92,6 +94,7 @@ export default createStore({
         },
         logout({ commit }) {
             commit('CLEAR_USER');
+            delete axios.defaults.headers.common['Authorization'];
         }
     }
 });

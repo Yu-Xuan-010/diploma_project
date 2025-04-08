@@ -1,5 +1,6 @@
 // store/actions.js
 import axios from 'axios';  // 引入 axios 用于 HTTP 请求
+import { login, getProfile } from '@/api/user'
 
 export default {
     // 登录操作
@@ -50,4 +51,31 @@ export default {
     },
 
     // 其他异步操作...
+
+    async getUserProfile({ commit }) {
+        try {
+            console.log('开始获取用户信息')
+            const token = localStorage.getItem('token')
+            if (!token) {
+                console.log('未找到token')
+                return null
+            }
+            
+            const response = await getProfile()
+            console.log('获取用户信息响应:', response)
+            
+            if (response.data.success) {
+                const userData = response.data.data
+                console.log('用户信息:', userData)
+                commit('SET_USER', userData)
+                return userData
+            } else {
+                console.error('获取用户信息失败:', response.data.message)
+                return null
+            }
+        } catch (error) {
+            console.error('获取用户信息出错:', error)
+            return null
+        }
+    }
 };

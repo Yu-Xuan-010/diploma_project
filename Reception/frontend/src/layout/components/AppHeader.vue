@@ -2,7 +2,7 @@
   <div class="app-header">
     <div class="logo">
       <router-link to="/home">
-        <h1>在线学习平台</h1>
+        <h2>在线学习平台</h2>
       </router-link>
     </div>
     
@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -68,8 +68,23 @@ export default {
     const router = useRouter()
     const searchQuery = ref('')
 
-    const userInfo = computed(() => store.state.userInfo)
     const isLoggedIn = computed(() => store.getters.isAuthenticated)
+    const userInfo = computed(() => store.state.userInfo)
+
+    // 获取用户信息
+    const fetchUserInfo = async () => {
+      if (isLoggedIn.value && !userInfo.value.username) {
+        try {
+          await store.dispatch('getUserProfile')
+        } catch (error) {
+          console.error('获取用户信息失败:', error)
+        }
+      }
+    }
+
+    onMounted(() => {
+      fetchUserInfo()
+    })
 
     const handleSearch = () => {
       if (searchQuery.value.trim()) {
@@ -135,11 +150,8 @@ export default {
       text-decoration: none;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 20px;
-      color: #409EFF;
-      font-weight: 600;
+    img {
+      height: 40px;
     }
   }
 

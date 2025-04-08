@@ -91,7 +91,7 @@
                   <el-input v-else v-model="userInfo.phone" placeholder="请输入手机号码"></el-input>
                 </el-form-item>
                 <el-form-item label="所属学院">
-                  <span v-if="!isEditing">{{ userInfo.college?.name || '未设置' }}</span>
+                  <span v-if="!isEditing">{{ userInfo.college || '未设置' }}</span>
                   <el-select v-else v-model="selectedCollegeId" placeholder="请选择学院" @change="handleCollegeChange">
                     <el-option
                       v-for="college in colleges"
@@ -102,7 +102,7 @@
                   </el-select>
                 </el-form-item>
                 <el-form-item label="所属专业">
-                  <span v-if="!isEditing">{{ userInfo.major?.name || '未设置' }}</span>
+                  <span v-if="!isEditing">{{ userInfo.major || '未设置' }}</span>
                   <el-select v-else v-model="userInfo.majorId" placeholder="请选择专业" :disabled="!selectedCollegeId">
                     <el-option
                       v-for="major in filteredMajors"
@@ -329,6 +329,7 @@
     Plus
   } from '@element-plus/icons-vue'
   import axios from 'axios'
+  import { getProfile, updateProfile } from '@/api/user'
   
   export default {
     name: 'Profile',
@@ -469,68 +470,57 @@
       // 获取用户信息
       const fetchUserInfo = async () => {
         try {
-          // 添加时间戳防止缓存
-          const response = await axios.get('/api/user/profile', {
-            params: {
-              _t: new Date().getTime()
-            },
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          })
+          const response = await getProfile()
+          // 获取用户数据
+          const userData = response.data
+          console.log('获取到的用户数据:', userData)
           
-          if (response.data.success) {
-            // 获取用户数据
-            const userData = response.data.data
-            console.log('获取到的用户数据:', userData)
-            console.log('学院信息:', userData.college)
-            console.log('专业信息:', userData.major)
-            
-            // 处理性别值转换
-            if (userData.gender) {
-              // 如果性别值是数字格式，转换为对应的文本格式
-              if (['0', '1', '2'].includes(userData.gender)) {
-                switch (userData.gender) {
-                  case '0':
-                    userData.gender = 'male';
-                    break;
-                  case '1':
-                    userData.gender = 'female';
-                    break;
-                  case '2':
-                    userData.gender = 'other';
-                    break;
-                }
+          // 处理性别值转换
+          if (userData.gender) {
+            // 如果性别值是数字格式，转换为对应的文本格式
+            if (['0', '1', '2'].includes(userData.gender)) {
+              switch (userData.gender) {
+                case '0':
+                  userData.gender = 'male'
+                  break
+                case '1':
+                  userData.gender = 'female'
+                  break
+                case '2':
+                  userData.gender = 'other'
+                  break
               }
-            } else {
-              // 如果没有性别值，设置默认值
-              userData.gender = 'other';
-            }
-            
-            // 更新用户信息
-            userInfo.value = userData
-            
-            // 更新 Vuex store 中的用户信息
-            store.commit('setUserInfo', userData)
-            
-            // 设置选中的学院ID
-            if (userData.collegeId) {
-              selectedCollegeId.value = userData.collegeId
             }
           } else {
-            ElMessage.error(response.data.message || '获取用户信息失败')
+            // 如果没有性别值，设置默认值
+            userData.gender = 'other'
           }
+          
+          // 更新用户信息
+          userInfo.value = {
+            ...userInfo.value,
+            ...userData,
+            // 确保这些字段有默认值
+            username: userData.username || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            avatar: userData.avatar || '',
+            gender: userData.gender || 'other',
+            college: userData.college?.name || '',
+            major: userData.major?.name || '',
+            collegeId: userData.collegeId || null,
+            majorId: userData.majorId || null
+          }
+          
+          // 设置选中的学院ID
+          if (userData.collegeId) {
+            selectedCollegeId.value = userData.collegeId
+          }
+          
+          console.log('处理后的用户信息:', userInfo.value)
         } catch (error) {
-          console.error('获取用户信息错误:', error)
-          if (error.response?.status === 401) {
-            // token 失效，清除用户信息并跳转到登录页
-            store.commit('clearUserInfo')
-            router.push('/login')
-            ElMessage.error('登录已过期，请重新登录')
-          } else {
-            ElMessage.error('获取用户信息失败：' + (error.response?.data?.message || error.message))
-          }
+          console.error('获取用户信息失败:', error)
+          ElMessage.error('获取用户信息失败')
         }
       }
   
