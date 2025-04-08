@@ -3,6 +3,7 @@ import Home from '../views/home/index.vue';
 import Login from '../views/login/index.vue';
 import Register from '../views/register/index.vue';
 import Layout from '../layout/components/AppHeader.vue';
+import store from '../store';
 
 // 路由配置
 const routes = [
@@ -40,7 +41,11 @@ const routes = [
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('../views/profile/index.vue')
+    component: () => import('../views/profile/index.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '个人中心'
+    }
   },
   {
     path: '/admin',
@@ -68,29 +73,38 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 })
 });
 
-// 路由守卫，检查是否需要认证
+// 路由守卫
 router.beforeEach((to, from, next) => {
-  // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 在线学习平台` : '在线学习平台';
-  
-  const isAuthenticated = localStorage.getItem('token');
-  
-  // 如果需要认证但未登录，跳转到登录页面
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ 
-      name: 'login',
-      query: { redirect: to.fullPath }
+    console.log('路由守卫 - 目标路由:', to.path);
+    console.log('路由守卫 - 当前状态:', {
+        token: !!localStorage.getItem('token'),
+        isAuthenticated: store.getters.isAuthenticated
     });
-    return;
-  }
-  
-  // 如果已登录且访问登录页，重定向到首页
-  if (isAuthenticated && to.name === 'login') {
-    next({ name: 'home' });
-    return;
-  }
-  
-  next();
+    
+    // 判断目标路由是否需要认证
+    const token = localStorage.getItem('token');
+    const isAuthenticated = store.getters.isAuthenticated;
+    
+    if (to.meta.requiresAuth) {
+        if (!token || !isAuthenticated) {
+            console.log('需要认证但未登录，重定向到登录页');
+            // 保存重定向地址
+            next({
+                path: '/login',
+                query: { redirect: to.fullPath }
+            });
+        } else {
+            console.log('已认证，允许访问');
+            next();
+        }
+    } else if (to.path === '/login' && token && isAuthenticated) {
+        console.log('已登录用户访问登录页，重定向到首页');
+        // 如果已登录且访问登录页，重定向到首页
+        next('/home');
+    } else {
+        console.log('不需要认证或未登录访问登录页，允许访问');
+        next();
+    }
 });
 
 // 添加导航失败处理

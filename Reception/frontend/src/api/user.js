@@ -3,7 +3,7 @@ import request from '../utils/request'
 // 用户登录
 export function login(data) {
   return request({
-    url: '/api/user/login',
+    url: '/user/login',
     method: 'post',
     data
   })
@@ -12,7 +12,7 @@ export function login(data) {
 // 用户注册
 export function register(data) {
   return request({
-    url: '/api/user/register',
+    url: '/user/register',
     method: 'post',
     data
   })
@@ -21,7 +21,7 @@ export function register(data) {
 // 获取用户信息
 export function getProfile() {
   return request({
-    url: '/api/user/profile',
+    url: '/user/profile',
     method: 'get'
   })
 }
@@ -29,7 +29,7 @@ export function getProfile() {
 // 更新用户信息
 export function updateProfile(data) {
   return request({
-    url: '/api/user/profile',
+    url: '/user/profile',
     method: 'put',
     data
   })
@@ -38,7 +38,7 @@ export function updateProfile(data) {
 // 重置密码
 export function resetPassword(data) {
   return request({
-    url: '/api/user/reset-password',
+    url: '/user/reset-password',
     method: 'post',
     data
   })
@@ -47,7 +47,7 @@ export function resetPassword(data) {
 // 发送验证码
 export function sendCode(username) {
   return request({
-    url: '/api/user/send-code',
+    url: '/user/send-code',
     method: 'post',
     params: { username }
   })

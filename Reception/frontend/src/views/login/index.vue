@@ -1,19 +1,27 @@
 <template>
   <div class="login-container">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+    <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form">
       <h3 class="title">用户登录</h3>
       <el-form-item prop="username">
-        <el-input v-model="loginForm.username" type="text" placeholder="用户名">
-          <i slot="prefix" class="el-input__icon el-icon-user"></i>
+        <el-input
+            v-model="loginForm.username"
+            type="text"
+            placeholder="用户名"
+        >
+          <template #prefix>
+            <el-icon><User /></el-icon>
+          </template>
         </el-input>
       </el-form-item>
       <el-form-item prop="password">
-        <el-input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter.native="handleLogin">
-          <i slot="prefix" class="el-input__icon el-icon-lock"></i>
+        <el-input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter="handleLogin">
+          <template #prefix>
+            <el-icon><Lock /></el-icon>
+          </template>
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
+        <el-button :loading="loading" type="primary" style="width:100%;" @click="handleLogin">
           登录
         </el-button>
       </el-form-item>
@@ -26,11 +34,14 @@
 </template>
 
 <script>
-import axios from 'axios';
-import { post } from '@/utils/request';
+import { User, Lock } from '@element-plus/icons-vue';
 
 export default {
   name: 'Login',
+  components: {
+    User,
+    Lock
+  },
   data() {
     return {
       loginForm: {
@@ -44,46 +55,47 @@ export default {
       loading: false
     };
   },
+  methods: {
+    async handleLogin() {
+      if (!this.$refs.loginFormRef) return;
+      
+      try {
+        await this.$refs.loginFormRef.validate();
+        this.loading = true;
+        
+        console.log('开始登录，表单数据:', this.loginForm);
+        
+        const result = await this.$store.dispatch('login', {
+          username: this.loginForm.username,
+          password: this.loginForm.password
+        });
+        
+        console.log('登录结果:', result);
+        
+        if (result.success) {
+          this.$message.success('登录成功');
+          const redirect = this.$route.query.redirect || '/home';
+          console.log('准备跳转到:', redirect);
+          await this.$router.replace(redirect);
+        } else {
+          this.$message.error(result.message || '登录失败');
+        }
+      } catch (error) {
+        console.error('登录错误:', error);
+        this.$message.error(error.message || '登录失败，请重试');
+      } finally {
+        this.loading = false;
+      }
+    }
+  },
   created() {
     document.getElementById('app').classList.add('login-page');
   },
   destroyed() {
     document.getElementById('app').classList.remove('login-page');
-  },
-  methods: {
-    async handleLogin() {
-      try {
-        await this.$refs.loginForm.validate();
-        this.loading = true;
-        const response = await post('/api/user/login', this.loginForm);
-        
-        if (response && response.token) {
-          // 使用 Vuex 存储用户信息和 token
-          await this.$store.dispatch('loginSuccess', {
-            token: response.token,
-            userInfo: response
-          });
-          
-          // 显示成功消息
-          this.$message.success('登录成功');
-          
-          // 等待消息显示后再跳转
-          setTimeout(() => {
-            this.$router.replace({ name: 'home' });
-          }, 500);
-        } else {
-          this.$message.error('登录失败：响应数据格式错误');
-        }
-      } catch (error) {
-        this.$message.error('登录失败: ' + (error.response?.data?.error || error.message || '未知错误'));
-      } finally {
-        this.loading = false;
-      }
-    }
   }
 };
 </script>
-
 
 <style lang="scss" scoped>
 .login-container {

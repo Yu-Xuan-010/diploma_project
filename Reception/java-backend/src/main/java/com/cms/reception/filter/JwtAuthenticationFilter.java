@@ -30,11 +30,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String requestURI = request.getRequestURI();
-            // 允许登录、注册和用户信息接口不经过 JWT 认证
-            if (requestURI.contains("/api/user/login") || 
-                requestURI.contains("/api/user/register") || 
-                requestURI.contains("/user/profile")) {
+            // 对于登录、注册等公开接口，直接放行
+            String path = request.getRequestURI();
+            if (path.equals("/user/login") || 
+                path.equals("/api/user/login") || 
+                path.equals("/api/user/register") || 
+                path.equals("/file/upload") || 
+                path.equals("/file/uploads")) {
                 filterChain.doFilter(request, response);
                 return;
             }

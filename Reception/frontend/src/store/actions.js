@@ -1,4 +1,3 @@
-
 // store/actions.js
 import axios from 'axios';  // 引入 axios 用于 HTTP 请求
 
@@ -6,10 +5,11 @@ export default {
     // 登录操作
     async login({ commit }, userData) {
         try {
-            const response = await axios.post('/api/login', userData);
-            if (response.data.code === 200) {
-                commit('setUser', response.data.data); // 设置用户数据
-                commit('setToken', response.data.data.token); // 设置 token
+            const response = await axios.post('/api/auth/login', userData);
+            if (response.data.success) {
+                const { token, user } = response.data.data;
+                commit('setUser', user);
+                commit('setToken', token);
                 return response.data;  // 返回成功结果
             } else {
                 throw new Error(response.data.message || '登录失败');
@@ -20,12 +20,16 @@ export default {
     },
 
     // 获取用户信息
-    async fetchUserData({ commit }) {
+    async fetchUserData({ commit, state }) {
         try {
-            const response = await axios.get('/api/user');
-            if (response.data.code === 200) {
+            const response = await axios.get('/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${state.token}`
+                }
+            });
+            if (response.data.success) {
                 commit('setUser', response.data.data);
-                return response.data;  // 返回用户数据
+                return response.data.data;  // 返回用户数据
             } else {
                 throw new Error(response.data.message || '获取用户信息失败');
             }

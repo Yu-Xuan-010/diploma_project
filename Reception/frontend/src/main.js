@@ -20,17 +20,63 @@ router.beforeEach((to, from, next) => {
     }
 });
 
-// 获取存储的 token
-const token = localStorage.getItem('token');
-// 如果 token 存在，则在全局请求头中添加
+// 配置 axios 默认值
+axios.defaults.baseURL = 'http://localhost:8001'
+axios.defaults.withCredentials = true
+axios.defaults.headers.post['Content-Type'] = 'application/json'
+
+// 添加请求拦截器，用于调试
+axios.interceptors.request.use(
+  config => {
+    console.log('发送请求:', {
+      method: config.method.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      headers: config.headers,
+      data: config.data
+    });
+    return config;
+  },
+  error => {
+    console.error('请求错误:', error);
+    return Promise.reject(error);
+  }
+);
+
+// 添加响应拦截器，用于调试
+axios.interceptors.response.use(
+  response => {
+    console.log('收到响应:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data
+    });
+    return response;
+  },
+  error => {
+    console.error('响应错误:', {
+      message: error.message,
+      response: error.response,
+      config: error.config
+    });
+    return Promise.reject(error);
+  }
+);
+
+// 从本地存储获取 token
+const token = localStorage.getItem('token')
 if (token) {
-    axios.defaults.headers['Authorization'] = `Bearer ${token}`;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
+
+// 初始化用户状态
+store.dispatch('initializeUserState')
 
 app.use(ElementPlus).use(store).use(router).mount('#app');
 

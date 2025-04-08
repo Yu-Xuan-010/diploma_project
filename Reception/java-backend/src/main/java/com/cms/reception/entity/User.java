@@ -2,6 +2,7 @@ package com.cms.reception.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.security.core.GrantedAuthority;
@@ -43,11 +44,33 @@ public class User implements UserDetails {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") // 设置格式
     private LocalDateTime updateTime;
 
-    @Column(length = 20)
-    private String role; // 角色 (STUDENT, TEACHER)
+    @Column(name = "role")
+    private String role;
+
+    @Column(name = "major_id")
+    private Long majorId;
+
+    @Column(name = "college_id")
+    private Long collegeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "major_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Major major;
+
+    @Transient
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private College college;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber; // 电话号码
+     public String getPhone() {
+        return phoneNumber;
+    }
+
+    public void setPhone(String phone) {
+        this.phoneNumber = phone;
+    }
 
     @Column(name = "real_name", length = 50)
     private String realName; // 真实姓名
@@ -68,6 +91,23 @@ public class User implements UserDetails {
     private Date birthday; // 出生日期
 
     private String address; // 地址
+
+    public Long getCollegeId() {
+        return collegeId;
+    }
+
+    public void setCollegeId(Long collegeId) {
+        this.collegeId = collegeId;
+    }
+
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    public College getCollege() {
+        return college;
+    }
+
+    public void setCollege(College college) {
+        this.college = college;
+    }
 
     @PrePersist
     protected void onCreate() {

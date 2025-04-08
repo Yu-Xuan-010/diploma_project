@@ -36,21 +36,27 @@ public class SecurityConfig {
             .authorizeRequests()
             .antMatchers(
                 "/user/login",
-                "/api/user/register",
+                "/user/register",
                 "/api/category/list",
                 "/api/course/list",
                 "/api/course/recommended",
                 "/api/public/**",
-                "/api/file/upload",
-                "/api/file/uploads",
-                "/user/profile",
+                "/file/upload",
+                "/file/uploads",
                 "/favicon.ico",
                 "/",
                 "/index.html",
                 "/static/**",
-                "/error"
+                "/error",
+                "/majors",
+                "/api/majors",
+                "/colleges",
+                "/api/colleges"
             ).permitAll()
             .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .antMatchers("/api/auth/**").permitAll()
+            .antMatchers("/api/colleges", "/api/majors").permitAll()
+            .antMatchers("/api/user/profile").authenticated()
             .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -61,21 +67,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization",
-            "Content-Type",
-            "X-Requested-With",
-            "Accept",
-            "Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers"
-        ));
-        configuration.setExposedHeaders(Arrays.asList(
-            "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
-        ));
+        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
