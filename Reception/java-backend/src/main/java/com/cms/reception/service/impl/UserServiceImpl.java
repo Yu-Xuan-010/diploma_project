@@ -6,6 +6,7 @@ import com.cms.reception.entity.ApplicationStatus;
 import com.cms.reception.dto.TeacherApplicationDTO;
 import com.cms.reception.repository.UserRepository;
 import com.cms.reception.repository.TeacherApplicationRepository;
+import com.cms.reception.repository.MajorRepository;
 import com.cms.reception.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,7 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TeacherApplicationRepository teacherApplicationRepository;
+    private final MajorRepository majorRepository;
 
     @Override
     public User register(User user) {
@@ -48,6 +51,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User findById(Long id) {
+        return userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+    }
+
+    @Override
     public boolean validateUser(String username, String password) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
@@ -60,14 +69,43 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User updateUser(User user) {
         User existingUser = userRepository.findById(user.getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
+        // 检查邮箱是否已被其他用户使用
         User userWithEmail = userRepository.findByEmail(user.getEmail());
         if (userWithEmail != null && !userWithEmail.getId().equals(user.getId())) {
             throw new RuntimeException("Email already exists");
         }
 
-        return userRepository.save(user);
+        // 保留原有的关联关系
+        if (user.getMajorId() != null) {
+            existingUser.setMajorId(user.getMajorId());
+            
+            // 根据专业ID自动设置学院ID
+            majorRepository.findById(user.getMajorId()).ifPresent(major -> {
+                existingUser.setCollegeId(major.getCollegeId());
+            });
+        }
+        
+        if (user.getCollegeId() != null) {
+            existingUser.setCollegeId(user.getCollegeId());
+        }
+
+        // 更新其他字段
+        existingUser.setNickname(user.getNickname());
+        existingUser.setEmail(user.getEmail());
+        existingUser.setPhoneNumber(user.getPhoneNumber());
+        existingUser.setRealName(user.getRealName());
+        existingUser.setGender(user.getGender());
+        existingUser.setBirthday(user.getBirthday());
+        existingUser.setAddress(user.getAddress());
+        existingUser.setAvatar(user.getAvatar());
+
+        // 设置更新时间为LocalDateTime类型
+        existingUser.setUpdateTime(LocalDateTime.now());
+        
+        // 更新用户信息
+        return userRepository.save(existingUser);
     }
 
     @Override
@@ -85,6 +123,43 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        
+        // 加密新密码
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Override
+    public boolean verifyPassword(User user, String rawPassword) {
+        return passwordEncoder.matches(rawPassword, user.getPassword());
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long userId, String status) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        
+        user.setStatus(status);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void updateLoginInfo(Long userId, Integer loginAttempts, Date lastLogin) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        
+        user.setLoginAttempts(loginAttempts);
+        user.setLastLogin(lastLogin);
+        userRepository.save(user);
     }
 
     @Override

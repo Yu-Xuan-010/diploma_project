@@ -20,6 +20,7 @@ import com.cms.reception.service.MajorService;
 import com.cms.reception.service.CollegeService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -42,146 +43,66 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ApiResponse<User> getUserProfile(Authentication authentication) {
-        try {
-            log.info("开始获取用户信息，用户名: {}", authentication.getName());
-            User user = userService.findByUsername(authentication.getName());
-            if (user != null) {
-                // 获取专业信息
-                Major major = null;
-                College college = null;
-                if (user.getMajorId() != null) {
-                    major = majorService.findById(user.getMajorId());
-                    if (major != null) {
-                        college = collegeService.findById(major.getCollegeId());
-                        log.info("获取到专业信息: {}, 学院信息: {}", major.getName(), college != null ? college.getName() : "null");
-                    }
-                }
-
-                // 设置专业和学院信息
-                if (major != null) {
-                    user.setMajor(major);
-                }
-                if (college != null) {
-                    user.setCollege(college);
-                    // 设置学院ID，用于前端显示
-                    user.setCollegeId(college.getId());
-                }
-
-                log.info("成功获取用户信息: {}, 专业: {}, 学院: {}", 
-                    user.getUsername(), 
-                    user.getMajor() != null ? user.getMajor().getName() : "null",
-                    user.getCollege() != null ? user.getCollege().getName() : "null");
-                
-                return ApiResponse.success(user);
-            } else {
-                log.warn("未找到用户信息: {}", authentication.getName());
-                return ApiResponse.error("用户不存在");
-            }
-        } catch (Exception e) {
-            log.error("获取用户信息失败", e);
-            return ApiResponse.error("获取用户信息失败");
+    public ResponseEntity<?> getUserProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userService.findByUsername(username);
+        if (user != null) {
+            return ResponseEntity.ok(ApiResponse.success(user));
         }
+        return ResponseEntity.ok(ApiResponse.error("用户不存在"));
     }
 
     @PutMapping("/profile")
-    public ApiResponse<User> updateUserProfile(@RequestBody User updatedUser, HttpServletRequest request) {
-        try {
-            String token = request.getHeader("Authorization");
-            if (token != null && token.startsWith("Bearer ")) {
-                token = token.substring(7);
-                String username = jwtUtil.getUsernameFromToken(token);
-                if (username != null && jwtUtil.validateToken(token)) {
-                    User existingUser = userService.findByUsername(username);
-                    
-                    if (existingUser == null) {
-                        return ApiResponse.error("用户不存在");
-                    }
-
-                    // 验证用户名
-                    if (updatedUser.getUsername() != null && !updatedUser.getUsername().trim().isEmpty()) {
-                        // 检查用户名是否已被其他用户使用
-                        User userWithSameUsername = userService.findByUsername(updatedUser.getUsername());
-                        if (userWithSameUsername != null && !userWithSameUsername.getId().equals(existingUser.getId())) {
-                            return ApiResponse.error("用户名已被使用");
-                        }
-                        existingUser.setUsername(updatedUser.getUsername().trim());
-                    }
-
-                    // 验证并转换性别值
-                    String gender = updatedUser.getGender();
-                    if (gender != null) {
-                        switch (gender.toLowerCase()) {
-                            case "male":
-                                gender = "0";
-                                break;
-                            case "female":
-                                gender = "1";
-                                break;
-                            case "other":
-                                gender = "2";
-                                break;
-                            default:
-                                return ApiResponse.error("无效的性别值，只能是 male、female 或 other");
-                        }
-                        existingUser.setGender(gender);
-                    }
-
-                    // 验证手机号
-                    if (updatedUser.getPhoneNumber() != null) {
-                        String phoneNumber = updatedUser.getPhoneNumber().trim();
-                        if (!phoneNumber.matches("^1[3-9]\\d{9}$")) {
-                            return ApiResponse.error("无效的手机号码格式");
-                        }
-                        existingUser.setPhoneNumber(phoneNumber);
-                    }
-
-                    // 验证邮箱
-                    if (updatedUser.getEmail() != null) {
-                        String email = updatedUser.getEmail().trim();
-                        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-                            return ApiResponse.error("无效的邮箱格式");
-                        }
-                        existingUser.setEmail(email);
-                    }
-
-                    // 更新其他字段
-                    if (updatedUser.getAvatar() != null) {
-                        existingUser.setAvatar(updatedUser.getAvatar());
-                    }
-                    if (updatedUser.getMajorId() != null) {
-                        existingUser.setMajorId(updatedUser.getMajorId());
-                    }
-
-                    User savedUser = userService.updateUser(existingUser);
-                    savedUser.setPassword(null); // 防止密码泄露
-
-                    return ApiResponse.success("用户信息更新成功", savedUser);
-                }
-            }
-            return ApiResponse.error("用户未登录或 token 无效");
-        } catch (Exception e) {
-            log.error("更新用户信息失败", e);
-            return ApiResponse.error("更新失败: " + e.getMessage());
-        }
-    }
-
-    @PutMapping("/password")
-    public ApiResponse<Void> changePassword(@RequestBody Map<String, String> passwordChange) {
+    public ResponseEntity<?> updateUserProfile(@RequestBody User updatedUser) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
+            User currentUser = userService.findByUsername(username);
             
-            String oldPassword = passwordChange.get("oldPassword");
-            String newPassword = passwordChange.get("newPassword");
-            
-            if (userService.changePassword(username, oldPassword, newPassword)) {
-                return ApiResponse.success("密码修改成功", null);
-            } else {
-                return ApiResponse.error("旧密码不正确");
+            if (currentUser == null) {
+                return ResponseEntity.ok(ApiResponse.error("用户不存在"));
             }
+
+            // 更新用户信息
+            currentUser.setUsername(updatedUser.getUsername());
+            currentUser.setEmail(updatedUser.getEmail());
+            currentUser.setPhoneNumber(updatedUser.getPhoneNumber());
+            currentUser.setAvatar(updatedUser.getAvatar());
+            currentUser.setGender(updatedUser.getGender());
+            currentUser.setMajorId(updatedUser.getMajorId());
+            currentUser.setCollegeId(updatedUser.getCollegeId());
+            currentUser.setRealName(updatedUser.getRealName());
+            currentUser.setNickname(updatedUser.getNickname());
+            currentUser.setBirthday(updatedUser.getBirthday());
+            currentUser.setAddress(updatedUser.getAddress());
+
+            userService.updateUser(currentUser);
+            return ResponseEntity.ok(ApiResponse.success("个人信息更新成功"));
         } catch (Exception e) {
-            return ApiResponse.error(e.getMessage());
+            return ResponseEntity.ok(ApiResponse.error("更新失败：" + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            User user = userService.findByUsername(username);
+            
+            if (user == null) {
+                return ResponseEntity.ok(ApiResponse.error("用户不存在"));
+            }
+
+            if (!userService.verifyPassword(user, request.getOldPassword())) {
+                return ResponseEntity.ok(ApiResponse.error("原密码错误"));
+            }
+
+            userService.updatePassword(user.getId(), request.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success("密码修改成功"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("密码修改失败：" + e.getMessage()));
         }
     }
 
@@ -203,5 +124,26 @@ public class UserController {
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
+    }
+}
+
+class PasswordChangeRequest {
+    private String oldPassword;
+    private String newPassword;
+
+    public String getOldPassword() {
+        return oldPassword;
+    }
+
+    public void setOldPassword(String oldPassword) {
+        this.oldPassword = oldPassword;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
     }
 } 

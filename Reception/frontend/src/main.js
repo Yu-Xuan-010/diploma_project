@@ -6,6 +6,7 @@ import 'element-plus/dist/index.css'
 import store from './store';
 import axios from 'axios';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
 const app = createApp(App);
 
@@ -78,7 +79,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // 初始化用户状态
 store.dispatch('initializeUserState')
 
-app.use(ElementPlus).use(store).use(router).mount('#app');
+app.use(ElementPlus).use(store).use(router).mount('#app').use(ElementPlus, { locale: zhCn });
 
 // 全局错误处理
 app.config.errorHandler = (err, vm, info) => {

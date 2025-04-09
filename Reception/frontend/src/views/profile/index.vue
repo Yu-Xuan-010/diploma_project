@@ -60,6 +60,14 @@
                   <span v-if="!isEditing">{{ userInfo.username }}</span>
                   <el-input v-else v-model="userInfo.username" placeholder="请输入用户名"></el-input>
                 </el-form-item>
+                <el-form-item label="真实姓名" prop="realName">
+                  <span v-if="!isEditing">{{ userInfo.realName || '未设置' }}</span>
+                  <el-input v-else v-model="userInfo.realName" placeholder="请输入真实姓名"></el-input>
+                </el-form-item>
+                <el-form-item label="昵称" prop="nickname">
+                  <span v-if="!isEditing">{{ userInfo.nickname || '未设置' }}</span>
+                  <el-input v-else v-model="userInfo.nickname" placeholder="请输入昵称"></el-input>
+                </el-form-item>
                 <el-form-item label="头像">
                   <el-upload
                     class="avatar-uploader"
@@ -82,13 +90,67 @@
                     <el-radio label="other">保密</el-radio>
                   </el-radio-group>
                 </el-form-item>
+                <el-form-item label="生日" prop="birthday">
+                  <span v-if="!isEditing">{{ userInfo.birthday ? formatDate(userInfo.birthday) : '未设置' }}</span>
+                  <el-date-picker
+                      v-else
+                      v-model="userInfo.birthday"
+                      type="date"
+                      placeholder="选择生日"
+                      format="YYYY年MM月DD日"
+                      value-format="YYYY-MM-DD"
+                      :shortcuts="false"
+                      :disabled-date="(time) => time > new Date()"
+                      :locale="{
+                        name: 'zh-cn',
+                        el: {
+                          datepicker: {
+                            now: '此刻',
+                            today: '今天',
+                            cancel: '取消',
+                            clear: '清除',
+                            confirm: '确定',
+                            selectDate: '选择日期',
+                            selectTime: '选择时间',
+                            startDate: '开始日期',
+                            startTime: '开始时间',
+                            endDate: '结束日期',
+                            endTime: '结束时间',
+                            prevYear: '前一年',
+                            nextYear: '后一年',
+                            prevMonth: '上个月',
+                            nextMonth: '下个月',
+                            year: '年',
+                            month1: '1 月',
+                            month2: '2 月',
+                            month3: '3 月',
+                            month4: '4 月',
+                            month5: '5 月',
+                            month6: '6 月',
+                            month7: '7 月',
+                            month8: '8 月',
+                            month9: '9 月',
+                            month10: '10 月',
+                            month11: '11 月',
+                            month12: '12 月',
+                            weeks: ['日', '一', '二', '三', '四', '五', '六'],
+                            placeholder: '请选择日期'
+                          }
+                        }
+                      }"
+                  ></el-date-picker>
+                </el-form-item>
                 <el-form-item label="邮箱">
-                  <span v-if="!isEditing">{{ userInfo.email }}</span>
+                  <span v-if="!isEditing">{{ userInfo.email || '未设置' }}</span>
                   <el-input v-else v-model="userInfo.email" placeholder="请输入邮箱"></el-input>
                 </el-form-item>
-                <el-form-item label="手机号码" prop="phone">
-                  <span v-if="!isEditing">{{ userInfo.phone || '未设置' }}</span>
-                  <el-input v-else v-model="userInfo.phone" placeholder="请输入手机号码"></el-input>
+                <el-form-item label="手机号码" prop="phoneNumber">
+                  <span v-if="!isEditing">{{ userInfo.phoneNumber || '未设置' }}</span>
+                  <el-input v-else v-model="userInfo.phoneNumber" placeholder="请输入手机号码"></el-input>
+                </el-form-item>
+                <el-form-item label="地址">
+                  <span v-if="!isEditing">{{ userInfo.address || '未设置' }}</span>
+                  <el-input v-else v-model="userInfo.address" placeholder="请输入地址"></el-input>
                 </el-form-item>
                 <el-form-item label="所属学院">
                   <span v-if="!isEditing">{{ userInfo.college || '未设置' }}</span>
@@ -200,7 +262,7 @@
                 </el-form-item>
                 <el-form-item label="手机绑定">
                   <el-button type="primary" link @click="showBindPhone">
-                    {{ userInfo.phone ? '修改手机号' : '绑定手机号' }}
+                    {{ userInfo.phoneNumber ? '修改手机号' : '绑定手机号' }}
                   </el-button>
                 </el-form-item>
                 <el-form-item label="邮箱绑定">
@@ -331,6 +393,7 @@
   import axios from 'axios'
   import { getProfile, updateProfile } from '@/api/user'
   import { submitTeacherApplication as submitTeacherApplicationApi } from '@/api/teacher'
+  import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
   
   export default {
     name: 'Profile',
@@ -362,7 +425,7 @@
       const userInfo = ref({
           username: '',
           email: '',
-          phone: '',
+          phoneNumber: '',
           createTime: '',
           avatar: '',
           gender: 'other',
@@ -370,7 +433,11 @@
           college: '',
           major: '',
           collegeId: null,
-          majorId: null
+          majorId: null,
+          realName: '',
+          nickname: '',
+          birthday: '',
+          address: ''
       })
   
       const learningRecords = ref([
@@ -477,25 +544,7 @@
           console.log('获取到的用户数据:', userData)
           
           // 处理性别值转换
-          if (userData.gender) {
-            // 如果性别值是数字格式，转换为对应的文本格式
-            if (['0', '1', '2'].includes(userData.gender)) {
-              switch (userData.gender) {
-                case '0':
-                  userData.gender = 'male'
-                  break
-                case '1':
-                  userData.gender = 'female'
-                  break
-                case '2':
-                  userData.gender = 'other'
-                  break
-              }
-            }
-          } else {
-            // 如果没有性别值，设置默认值
-            userData.gender = 'other'
-          }
+          let genderValue = userData.gender || 'other'
           
           // 更新用户信息
           userInfo.value = {
@@ -504,13 +553,17 @@
             // 确保这些字段有默认值
             username: userData.username || '',
             email: userData.email || '',
-            phone: userData.phone || '',
+            phoneNumber: userData.phoneNumber || '',
             avatar: userData.avatar || '',
-            gender: userData.gender || 'other',
+            gender: genderValue,
             college: userData.college?.name || '',
             major: userData.major?.name || '',
             collegeId: userData.collegeId || null,
-            majorId: userData.majorId || null
+            majorId: userData.majorId || null,
+            realName: userData.realName || '',
+            nickname: userData.nickname || '',
+            birthday: userData.birthday || '',
+            address: userData.address || ''
           }
           
           // 设置选中的学院ID
@@ -719,6 +772,25 @@
           return '暂无数据'
         }
       }
+      
+      const formatDate = (date) => {
+        if (!date) return '暂无数据'
+        try {
+          // 尝试解析ISO格式的日期字符串
+          const dateObj = new Date(date)
+          if (isNaN(dateObj.getTime())) {
+            return '暂无数据'
+          }
+          return dateObj.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          })
+        } catch (error) {
+          console.error('日期格式化错误:', error)
+          return '暂无数据'
+        }
+      }
   
       const handleAvatarSuccess = (response) => {
         if (response.success) {
@@ -755,8 +827,15 @@
           await axios.put('/api/user/profile', {
             username: userInfo.value.username,
             email: userInfo.value.email,
+            phoneNumber: userInfo.value.phoneNumber,
             avatar: userInfo.value.avatar,
-            gender: userInfo.value.gender
+            gender: userInfo.value.gender === 'male' ? 0 : userInfo.value.gender === 'female' ? 1 : 2,
+            majorId: userInfo.value.majorId,
+            collegeId: userInfo.value.collegeId,
+            realName: userInfo.value.realName || '',
+            nickname: userInfo.value.nickname || '',
+            birthday: userInfo.value.birthday || null,
+            address: userInfo.value.address || ''
           })
           ElMessage.success('个人信息更新成功')
         } catch (error) {
@@ -774,30 +853,6 @@
         
         // 设置选中的学院ID
         selectedCollegeId.value = userInfo.value.collegeId
-        
-        // 确保性别值正确显示
-        if (userInfo.value.gender) {
-          // 如果性别值已经是 male/female/other 格式，则不需要转换
-          if (!['male', 'female', 'other'].includes(userInfo.value.gender)) {
-            // 如果是数字格式，转换为对应的文本格式
-            switch (userInfo.value.gender) {
-              case '0':
-                userInfo.value.gender = 'male';
-                break;
-              case '1':
-                userInfo.value.gender = 'female';
-                break;
-              case '2':
-                userInfo.value.gender = 'other';
-                break;
-              default:
-                userInfo.value.gender = 'other';
-            }
-          }
-        } else {
-          // 如果没有性别值，设置默认值
-          userInfo.value.gender = 'other';
-        }
       }
   
       const cancelEditing = () => {
@@ -810,11 +865,30 @@
           { required: true, message: '用户名不能为空', trigger: 'blur' },
           { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
         ],
-        phone: [
+        phoneNumber: [
           { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
         ],
         email: [
           { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+        ],
+        birthday: [
+          { 
+            validator: (rule, value, callback) => {
+              if (!value) {
+                callback()
+              } else {
+                const selectedDate = new Date(value)
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                if (selectedDate > today) {
+                  callback(new Error('生日不能晚于今天'))
+                } else {
+                  callback()
+                }
+              }
+            },
+            trigger: 'change'
+          }
         ]
       }
 
@@ -825,15 +899,33 @@
           // 表单验证
           await userForm.value.validate()
           
+          // 校验生日
+          if (userInfo.value.birthday) {
+            const selectedDate = new Date(userInfo.value.birthday)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            if (selectedDate > today) {
+              ElMessage.error('生日不能晚于今天')
+              return
+            }
+          }
+          
           // 准备要发送的数据
           const profileData = {
             username: userInfo.value.username,
             email: userInfo.value.email,
-            phone: userInfo.value.phone,
+            phoneNumber: userInfo.value.phoneNumber,
             avatar: userInfo.value.avatar,
-            gender: userInfo.value.gender,
-            majorId: userInfo.value.majorId
+            gender: userInfo.value.gender === 'male' ? 0 : userInfo.value.gender === 'female' ? 1 : 2,
+            majorId: userInfo.value.majorId,
+            collegeId: userInfo.value.collegeId,
+            realName: userInfo.value.realName || '',
+            nickname: userInfo.value.nickname || '',
+            birthday: userInfo.value.birthday || null,
+            address: userInfo.value.address || ''
           }
+          
+          console.log('发送到后端的数据:', profileData)
           
           const response = await axios.put('/api/user/profile', profileData)
           if (response.data.success) {
@@ -845,6 +937,7 @@
             ElMessage.error(response.data.message || '更新失败')
           }
         } catch (error) {
+          console.error('更新用户信息失败:', error)
           if (error.response?.data?.message) {
             ElMessage.error(error.response.data.message)
           } else if (error.message) {
@@ -860,6 +953,8 @@
         // 当学院变化时，清空专业选择
         userInfo.value.majorId = null
       }
+  
+      const dateShortcuts = []  // 移除快捷选项
   
       return {
         activeTab,
@@ -891,6 +986,7 @@
         showApplyTeacherDialog,
         submitTeacherApplication,
         formatDateTime,
+        formatDate,
         handleAvatarSuccess,
         handleAvatarError,
         beforeAvatarUpload,
@@ -904,7 +1000,9 @@
         filteredMajors,
         handleCollegeChange,
         userForm,
-        rules
+        rules,
+        dateShortcuts,
+        zhCn
       }
     }
   }

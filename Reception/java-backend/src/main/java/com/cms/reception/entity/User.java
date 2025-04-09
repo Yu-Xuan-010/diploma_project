@@ -1,8 +1,14 @@
 package com.cms.reception.entity;
 
+import com.cms.reception.util.GenderDeserializer;
+import com.cms.reception.util.GenderSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,7 +38,8 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email; // 邮箱
 
-    private String nickname;
+    @Column(length = 50)
+    private String nickname; // 昵称
 
     private String avatar; // 头像
 
@@ -53,24 +60,18 @@ public class User implements UserDetails {
     @Column(name = "college_id")
     private Long collegeId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "major_id", insertable = false, updatable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Major major;
 
-    @Transient
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "college_id", insertable = false, updatable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private College college;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber; // 电话号码
-     public String getPhone() {
-        return phoneNumber;
-    }
-
-    public void setPhone(String phone) {
-        this.phoneNumber = phone;
-    }
 
     @Column(name = "real_name", length = 50)
     private String realName; // 真实姓名
@@ -86,11 +87,97 @@ public class User implements UserDetails {
     private Integer loginAttempts; // 登录尝试次数
 
     @Column(length = 10)
-    private String gender; // 性别 (MALE, FEMALE, OTHER)
+    @JsonDeserialize(using = GenderDeserializer.class)
+    @JsonSerialize(using = GenderSerializer.class)
+    private Integer gender; // 性别 (MALE, FEMALE, OTHER)
 
+    @Column
+    @JsonFormat(pattern = "yyyy-MM-dd") // 设置格式
     private Date birthday; // 出生日期
 
+    @Column(length = 255)
     private String address; // 地址
+
+    // Getter and Setter methods
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Long getMajorId() {
+        return majorId;
+    }
+
+    public void setMajorId(Long majorId) {
+        this.majorId = majorId;
+    }
 
     public Long getCollegeId() {
         return collegeId;
@@ -100,7 +187,14 @@ public class User implements UserDetails {
         this.collegeId = collegeId;
     }
 
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    public Major getMajor() {
+        return major;
+    }
+
+    public void setMajor(Major major) {
+        this.major = major;
+    }
+
     public College getCollege() {
         return college;
     }
@@ -109,24 +203,70 @@ public class User implements UserDetails {
         this.college = college;
     }
 
-    @PrePersist
-    protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
-        if (status == null) {
-            status = "ACTIVE";
-        }
-        if (loginAttempts == null) {
-            loginAttempts = 0;
-        }
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updateTime = LocalDateTime.now();
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
-    // 实现 UserDetails 接口的方法
+    public String getRealName() {
+        return realName;
+    }
+
+    public void setRealName(String realName) {
+        this.realName = realName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Date getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(Date lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    public Integer getLoginAttempts() {
+        return loginAttempts;
+    }
+
+    public void setLoginAttempts(Integer loginAttempts) {
+        this.loginAttempts = loginAttempts;
+    }
+
+    public Integer getGender() {
+        return gender;
+    }
+
+    public void setGender(Integer gender) {
+        this.gender = gender;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     @Override
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -155,5 +295,22 @@ public class User implements UserDetails {
     @JsonIgnore
     public boolean isEnabled() {
         return "ACTIVE".equals(status); // 账户已启用
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now();
+        if (status == null) {
+            status = "ACTIVE";
+        }
+        if (loginAttempts == null) {
+            loginAttempts = 0;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
     }
 } 
