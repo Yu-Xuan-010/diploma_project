@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -99,7 +100,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 检查是否已有待审核的申请
-        if (teacherApplicationRepository.existsByUserIdAndStatus(applicationDTO.getUserId(), ApplicationStatus.PENDING)) {
+        if (teacherApplicationRepository.existsByUserIdAndStatus(applicationDTO.getUserId(), TeacherApplication.ApplicationStatus.PENDING)) {
             throw new IllegalStateException("您已经有一个待审核的申请");
         }
 
@@ -109,14 +110,14 @@ public class UserServiceImpl implements UserService {
         application.setReason(applicationDTO.getReason());
         application.setExpertise(String.join(",", applicationDTO.getExpertise()));
         application.setExperience(applicationDTO.getExperience());
-        application.setStatus(ApplicationStatus.PENDING);
+        application.setStatus(TeacherApplication.ApplicationStatus.PENDING);
 
         return teacherApplicationRepository.save(application);
     }
 
     @Override
     public TeacherApplication getTeacherApplication(Long userId) {
-        return teacherApplicationRepository.findByUserId(userId)
+        return teacherApplicationRepository.findFirstByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException("未找到申请记录"));
     }
 } 

@@ -1,6 +1,9 @@
 package com.cms.reception.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -15,38 +18,37 @@ public class TeacherApplication {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String expertise;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String experience;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "reviewed_by")
-    private Long reviewedBy;
+    @Column(name = "reviewer_id")
+    private Long reviewerId;
 
-    @Column(name = "review_comment")
+    @Column(name = "review_comment", columnDefinition = "TEXT")
     private String reviewComment;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    public enum ApplicationStatus {
+        PENDING, APPROVED, REJECTED
     }
 } 

@@ -330,6 +330,7 @@
   } from '@element-plus/icons-vue'
   import axios from 'axios'
   import { getProfile, updateProfile } from '@/api/user'
+  import { submitTeacherApplication as submitTeacherApplicationApi } from '@/api/teacher'
   
   export default {
     name: 'Profile',
@@ -673,19 +674,27 @@
         }
   
         try {
-          await axios.post('/api/user/applyTeacher', {
+          const response = await submitTeacherApplicationApi({
             userId: store.state.userInfo.id,
-            ...applyForm.value
+            reason: applyForm.value.reason,
+            expertise: applyForm.value.expertise.join(','),
+            experience: applyForm.value.experience
           })
-          ElMessage.success('申请已提交，请等待审核')
-          applyTeacherDialogVisible.value = false
-          applyForm.value = {
-            reason: '',
-            expertise: [],
-            experience: ''
+          
+          if (response.success) {
+            ElMessage.success('申请已提交，请等待审核')
+            applyTeacherDialogVisible.value = false
+            applyForm.value = {
+              reason: '',
+              expertise: [],
+              experience: ''
+            }
+          } else {
+            ElMessage.error(response.message || '申请提交失败')
           }
         } catch (error) {
-          ElMessage.error('申请提交失败：' + error.response?.data?.message || '未知错误')
+          console.error('申请提交失败:', error)
+          ElMessage.error('申请提交失败：' + (error.response?.data?.message || '未知错误'))
         }
       }
   
