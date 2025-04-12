@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.CategoryMapper">
+    
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.Category">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="description" property="description"/>
+        <result column="sort_order" property="sortOrder"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, name, parent_id, description, sort_order
+    </sql>
+    
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM category
+        ORDER BY sort_order
+    </select>
+    
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM category
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order
+    </select>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM category
+        WHERE id = #{id}
+    </select>
+    
+    <insert id="insert" parameterType="com.cms.reception.entity.Category" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO category (
+            name, parent_id, description, sort_order
+        ) VALUES (
+            #{name}, #{parentId}, #{description}, #{sortOrder}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.cms.reception.entity.Category">
+        UPDATE category
+        SET name = #{name},
+            parent_id = #{parentId},
+            description = #{description},
+            sort_order = #{sortOrder}
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM category
+        WHERE id = #{id}
+    </delete>
+    
+</mapper> 

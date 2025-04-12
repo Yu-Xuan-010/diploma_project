@@ -36,17 +36,6 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          type="success"
-          plain
-          icon="el-icon-edit"
-          size="mini"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['system:category:edit']"
-        >修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
           type="danger"
           plain
           icon="el-icon-delete"
@@ -75,7 +64,6 @@
       <el-table-column label="种类名称" align="center" prop="name" />
       <el-table-column label="父类id" align="center" prop="parentId" />
       <el-table-column label="分类描述" align="center" prop="description" />
-      <el-table-column label="排序" align="center" prop="sortOrder" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -95,7 +83,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -116,49 +104,6 @@
         <el-form-item label="分类描述" prop="description">
           <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
         </el-form-item>
-        <el-form-item label="排序" prop="sortOrder">
-          <el-input v-model="form.sortOrder" placeholder="请输入排序" />
-        </el-form-item>
-        <el-divider content-position="center">课程列表信息</el-divider>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button type="primary" icon="el-icon-plus" size="mini" @click="handleAddCourse">添加</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleDeleteCourse">删除</el-button>
-          </el-col>
-        </el-row>
-        <el-table :data="courseList" :row-class-name="rowCourseIndex" @selection-change="handleCourseSelectionChange" ref="course">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column label="序号" align="center" prop="index" width="50"/>
-          <el-table-column label="课程名称" prop="name" width="150">
-            <template slot-scope="scope">
-              <el-input v-model="scope.row.name" placeholder="请输入课程名称" />
-            </template>
-          </el-table-column>
-          <el-table-column label="评分" prop="averageRating" width="150">
-            <template slot-scope="scope">
-              <el-input v-model="scope.row.averageRating" placeholder="请输入评分" />
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" prop="status" width="150">
-            <template slot-scope="scope">
-              <el-select v-model="scope.row.status" placeholder="请选择状态">
-                <el-option label="请选择字典生成" value="" />
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="教师ID" prop="teacherId" width="150">
-            <template slot-scope="scope">
-              <el-input v-model="scope.row.teacherId" placeholder="请输入教师ID" />
-            </template>
-          </el-table-column>
-          <el-table-column label="学习人数" prop="studentCount" width="150">
-            <template slot-scope="scope">
-              <el-input v-model="scope.row.studentCount" placeholder="请输入学习人数" />
-            </template>
-          </el-table-column>
-        </el-table>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>

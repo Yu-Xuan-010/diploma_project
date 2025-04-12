@@ -53,3 +53,6 @@ logging:
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" # 日志文件格式
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" # 控制台日志格式
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cms.reception.entity

@@ -53,4 +53,7 @@ public interface UserMapper {
 
     @Update("UPDATE user SET login_attempts = #{loginAttempts}, last_login = #{lastLogin} WHERE id = #{id}")
     int updateLoginInfo(@Param("id") Long id, @Param("loginAttempts") Integer loginAttempts, @Param("lastLogin") Date lastLogin);
+
+    @Update("UPDATE user SET role = #{role} WHERE id = #{userId}")
+    void updateUserRole(@Param("userId") Long userId, @Param("role") String role);
 }

@@ -2,79 +2,82 @@ package com.sen.web.controller.sen.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Date;
+import javax.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 教师申请实体类
  */
 @Data
-public class TeacherApplication {
-    /**
-     * 申请ID
-     */
+@Getter
+@Setter
+@Entity
+@Table(name = "teacher_application")
+public class TeacherApplication implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 申请用户ID
-     */
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    /**
-     * 申请人姓名
-     */
+    @Transient
     private String userName;
 
-    /**
-     * 申请理由
-     */
-    private String reason;
-
-    /**
-     * 专业领域（多个以逗号分隔）
-     */
+    @Column(name = "expertise", nullable = false)
     private String expertise;
 
-    /**
-     * 教学经验
-     */
+    @Transient
+    private String expertiseNames;
+
+    @Column(name = "reason", nullable = false)
+    private String reason;
+
+    @Column(name = "experience")
     private String experience;
 
-    /**
-     * 审核状态（PENDING-待审核，APPROVED-已通过，REJECTED-已拒绝）
-     */
+    @Column(name = "status", nullable = false)
     private String status;
 
-    /**
-     * 申请时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date createdAt;
-
-    /**
-     * 更新时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date updatedAt;
-
-    /**
-     * 审核管理员ID
-     */
+    @Column(name = "reviewer_id")
     private Long reviewerId;
 
-    /**
-     * 审核人姓名
-     */
+    @Transient
     private String reviewerName;
 
-    /**
-     * 审核意见
-     */
+    @Column(name = "review_comment")
     private String reviewComment;
 
-    /**
-     * 审核时间
-     */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date reviewedAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        status = "PENDING";
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        if (status != null && !status.equals("PENDING") && reviewedAt == null) {
+            reviewedAt = LocalDateTime.now();
+        }
+    }
 } 

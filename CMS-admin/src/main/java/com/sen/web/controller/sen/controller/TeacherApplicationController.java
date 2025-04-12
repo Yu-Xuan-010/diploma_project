@@ -13,7 +13,7 @@ import java.util.List;
  * 教师申请管理
  */
 @RestController
-@RequestMapping("/sen/teacherApplication")
+@RequestMapping("/system/teacherApplication")
 public class TeacherApplicationController {
     
     @Autowired
@@ -22,7 +22,7 @@ public class TeacherApplicationController {
     /**
      * 获取所有教师申请
      */
-    @PreAuthorize("@ss.hasPermi('sen:teacherApplication:list')")
+    @PreAuthorize("@ss.hasPermi('system:teacherApplication:list')")
     @GetMapping("/list")
     public AjaxResult list() {
         List<TeacherApplication> list = teacherApplicationService.getAllApplications();
@@ -32,7 +32,7 @@ public class TeacherApplicationController {
     /**
      * 根据状态获取教师申请
      */
-    @PreAuthorize("@ss.hasPermi('sen:teacherApplication:list')")
+    @PreAuthorize("@ss.hasPermi('system:teacherApplication:list')")
     @GetMapping("/list/{status}")
     public AjaxResult listByStatus(@PathVariable("status") String status) {
         List<TeacherApplication> list = teacherApplicationService.getApplicationsByStatus(status);
@@ -42,7 +42,7 @@ public class TeacherApplicationController {
     /**
      * 获取教师申请详细信息
      */
-    @PreAuthorize("@ss.hasPermi('sen:teacherApplication:query')")
+    @PreAuthorize("@ss.hasPermi('system:teacherApplication:query')")
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         TeacherApplication application = teacherApplicationService.getApplicationById(id);
@@ -52,11 +52,17 @@ public class TeacherApplicationController {
     /**
      * 审核教师申请
      */
-    @PreAuthorize("@ss.hasPermi('sen:teacherApplication:review')")
+    @PreAuthorize("@ss.hasPermi('system:teacherApplication:review')")
     @PutMapping("/review/{id}")
-    public AjaxResult review(@PathVariable("id") Long id, @RequestParam("status") String status,
-                            @RequestParam("reviewerId") Long reviewerId, @RequestParam("reviewComment") String reviewComment) {
+    public AjaxResult review(@PathVariable("id") Long id,
+                             @RequestParam("status") String status,
+                             @RequestParam("reviewerId") Long reviewerId,
+                             @RequestParam("reviewComment") String reviewComment) {
+        if (reviewerId == null) {
+            return AjaxResult.error("审核人ID不能为空");
+        }
         boolean result = teacherApplicationService.reviewApplication(id, status, reviewerId, reviewComment);
         return result ? AjaxResult.success() : AjaxResult.error("审核失败");
     }
+
 } 

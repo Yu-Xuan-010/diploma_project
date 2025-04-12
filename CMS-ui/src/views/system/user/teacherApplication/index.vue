@@ -4,7 +4,7 @@
       <div slot="header" class="card-header">
         <span>教师申请列表</span>
       </div>
-      
+
       <!-- 搜索区域 -->
       <el-form :model="queryParams" ref="queryForm" :inline="true">
         <el-form-item label="申请状态" prop="status">
@@ -21,39 +21,46 @@
       </el-form>
 
       <!-- 表格区域 -->
-      <el-table v-loading="loading" :data="applicationList">
-        <el-table-column label="申请编号" prop="id" width="80" />
-        <el-table-column label="申请人" prop="userName" width="120" />
-        <el-table-column label="专业领域" prop="expertise" width="200" show-overflow-tooltip>
-          <template slot-scope="scope">
-            {{ scope.row.expertise ? scope.row.expertise.split(',').join('、') : '-' }}
+      <el-table v-loading="loading" :data="applicationList" style="width: 100%">
+        <!-- 申请编号（减少宽度） -->
+        <el-table-column label="申请编号" prop="id" min-width="60" />
+
+        <!-- 申请人（减少宽度） -->
+        <el-table-column label="申请人" prop="userName" min-width="100" />
+
+        <!-- 专业领域（自适应填充空间，避免空白） -->
+        <el-table-column label="专业领域" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ getExpertiseNames(row.expertise) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="申请状态" prop="status" width="100">
-          <template slot-scope="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
-              {{ getStatusText(scope.row.status) }}
+
+        <!-- 申请状态（减少宽度） -->
+        <el-table-column label="申请状态" prop="status" min-width="80">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="申请时间" prop="createdAt" width="160">
-          <template slot-scope="scope">
-            {{ parseTime(scope.row.createdAt) }}
+
+        <!-- 申请时间（稍微加宽，提高可读性） -->
+        <el-table-column label="申请时间" prop="createdAt" min-width="180">
+          <template #default="{ row }">
+            {{ row.createdAt ? parseTime(row.createdAt, '{y}-{m}-{d} {h}:{i}:{s}') : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="审核时间" prop="reviewedAt" width="160">
-          <template slot-scope="scope">
-            {{ scope.row.status === 'PENDING' ? '未审核' : parseTime(scope.row.reviewedAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="200">
-          <template slot-scope="scope">
-            <el-button type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-            <el-button v-if="scope.row.status === 'PENDING'" type="text" icon="el-icon-check" @click="handleApprove(scope.row)">批准</el-button>
-            <el-button v-if="scope.row.status === 'PENDING'" type="text" icon="el-icon-close" @click="handleReject(scope.row)">拒绝</el-button>
+
+        <!-- 操作列（固定在右侧，稍微加宽） -->
+        <el-table-column label="操作" align="center" min-width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button type="text" icon="el-icon-view" @click="handleView(row)">查看</el-button>
+            <el-button v-if="row.status === 'PENDING'" type="text" icon="el-icon-check" @click="handleApprove(row)">批准</el-button>
+            <el-button v-if="row.status === 'PENDING'" type="text" icon="el-icon-close" @click="handleReject(row)">拒绝</el-button>
           </template>
         </el-table-column>
       </el-table>
+
     </el-card>
 
     <!-- 查看详情对话框 -->
@@ -63,7 +70,7 @@
         <el-descriptions-item label="申请状态">
           <el-tag :type="getStatusType(form.status)">{{ getStatusText(form.status) }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="专业领域">{{ form.expertise ? form.expertise.split(',').join('、') : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="专业领域">{{ getExpertiseNames(form.expertise) }}</el-descriptions-item>
         <el-descriptions-item label="申请时间">{{ parseTime(form.createdAt) }}</el-descriptions-item>
         <el-descriptions-item label="申请理由" :span="2">{{ form.reason }}</el-descriptions-item>
         <el-descriptions-item label="教学经验" :span="2">{{ form.experience }}</el-descriptions-item>
@@ -92,7 +99,8 @@
 
 <script>
 import { listTeacherApplications, getTeacherApplication, reviewTeacherApplication } from '@/api/system/teacherApplication'
-import { parseTime } from '@/utils'
+import request from '@/utils/request'
+import { getToken } from '@/utils/auth'
 
 export default {
   name: 'TeacherApplication',
@@ -122,14 +130,99 @@ export default {
         reviewComment: [
           { required: true, message: '请输入审核意见', trigger: 'blur' }
         ]
-      }
+      },
+      // 专业列表
+      majorList: [],
+      // 当前用户信息
+      currentUser: null
     }
   },
   created() {
     this.getList()
+    this.getMajorList()
+    this.getCurrentUser()
   },
   methods: {
-    parseTime,
+    parseTime(time, format = '{y}-{m}-{d} {h}:{i}:{s}') {
+      if (!time) return '-';
+      const date = typeof time === 'string' ? new Date(time.replace(/-/g, '/')) : new Date(time);
+      if (isNaN(date.getTime())) return '-'; // 处理无效时间
+      const formatObj = {
+        y: date.getFullYear(),
+        m: date.getMonth() + 1,
+        d: date.getDate(),
+        h: date.getHours(),
+        i: date.getMinutes(),
+        s: date.getSeconds(),
+      };
+      return format.replace(/{(y|m|d|h|i|s)}/g, (match, key) => {
+        return formatObj[key].toString().padStart(2, '0'); // 补零
+      });
+    },
+    // 查询列表
+    async getList() {
+      this.loading = true;
+      try {
+        // 根据状态筛选
+        let url = '/system/teacherApplication/list';
+        if (this.queryParams.status) {
+          url = `/system/teacherApplication/list/${this.queryParams.status}`;
+        }
+        
+        const response = await request({
+          url: url,
+          method: 'get'
+        });
+        
+        console.log('Teacher application response:', response); // 添加日志
+        if (response.code === 200) {
+          this.applicationList = response.data;
+        } else {
+          this.$message.error(response.msg || '获取教师申请列表失败');
+        }
+      } catch (error) {
+        console.error('获取教师申请列表失败:', error);
+        this.$message.error('获取教师申请列表失败');
+      }
+      this.loading = false;
+    },
+    // 获取专业领域名称
+    getExpertiseNames(expertise) {
+      if (!expertise || !this.majorList.length) return '-';
+      try {
+        // 确保 expertise 是字符串，防止传入数组
+        const expertiseStr = Array.isArray(expertise) ? expertise.join(',') : String(expertise);
+        
+        return expertiseStr.split(',')
+          .map(id => {
+            const major = this.majorList.find(m => m.id === parseInt(id.trim()));
+            return major ? major.name : '-';
+          })
+          .filter(name => name !== '-') // 过滤掉 '-'
+          .join('、') || '-';
+      } catch (error) {
+        console.error('处理专业领域出错:', error, expertise);
+        return expertise || '-';
+      }
+    },
+    // 获取专业列表
+    async getMajorList() {
+      try {
+        const response = await request({
+          url: '/system/major/list',
+          method: 'get'
+        });
+        console.log('Major list response:', response); // 添加日志
+        if (response.code === 200) {
+          this.majorList = response.data;
+        } else {
+          this.$message.error(response.msg || '获取专业列表失败');
+        }
+      } catch (error) {
+        console.error('获取专业列表失败:', error);
+        this.$message.error('获取专业列表失败');
+      }
+    },
     // 获取状态类型
     getStatusType(status) {
       const statusMap = {
@@ -147,18 +240,6 @@ export default {
         'REJECTED': '已拒绝'
       }
       return statusMap[status] || status
-    },
-    // 查询列表
-    async getList() {
-      this.loading = true
-      try {
-        const response = await listTeacherApplications(this.queryParams)
-        this.applicationList = response.data
-      } catch (error) {
-        console.error('获取教师申请列表失败:', error)
-        this.$message.error('获取教师申请列表失败')
-      }
-      this.loading = false
     },
     // 搜索按钮操作
     handleQuery() {
@@ -201,12 +282,39 @@ export default {
       this.reviewTitle = '拒绝教师申请'
       this.reviewOpen = true
     },
+    // 获取当前用户信息
+    async getCurrentUser() {
+      try {
+        const response = await request({
+          url: '/system/user/profile',
+          method: 'get'
+        })
+        if (response.code === 200) {
+          this.currentUser = response.data
+        } else {
+          this.$message.error('获取当前用户信息失败')
+        }
+      } catch (error) {
+        console.error('获取当前用户信息失败:', error)
+        this.$message.error('获取当前用户信息失败')
+      }
+    },
     // 提交审核
     async submitReview() {
       this.$refs.reviewFormRef.validate(async valid => {
         if (valid) {
           try {
-            await reviewTeacherApplication(this.reviewForm)
+            if (!this.currentUser || !this.currentUser.userId) {
+              this.$message.error('无法获取当前用户信息')
+              return
+            }
+            
+            const reviewData = {
+              ...this.reviewForm,
+              reviewerId: this.currentUser.userId
+            }
+            
+            await reviewTeacherApplication(reviewData)
             this.$message.success('审核成功')
             this.reviewOpen = false
             this.getList()

@@ -2,20 +2,21 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sen.web.controller.sen.mapper.TeacherApplicationMapper">
     
-    <resultMap type="com.sen.web.controller.sen.domain.TeacherApplication" id="TeacherApplicationResult">
-        <id property="id" column="id"/>
-        <result property="userId" column="user_id"/>
-        <result property="userName" column="user_name"/>
-        <result property="reason" column="reason"/>
-        <result property="expertise" column="expertise"/>
-        <result property="experience" column="experience"/>
-        <result property="status" column="status"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-        <result property="reviewerId" column="reviewer_id"/>
-        <result property="reviewerName" column="reviewer_name"/>
-        <result property="reviewComment" column="review_comment"/>
-        <result property="reviewedAt" column="reviewed_at"/>
+    <resultMap id="BaseResultMap" type="com.sen.web.controller.sen.domain.TeacherApplication">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="expertise" property="expertise"/>
+        <result column="expertise_names" property="expertiseNames"/>
+        <result column="reason" property="reason"/>
+        <result column="experience" property="experience"/>
+        <result column="status" property="status"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="reviewer_name" property="reviewerName"/>
+        <result column="review_comment" property="reviewComment"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="reviewed_at" property="reviewedAt"/>
     </resultMap>
     
     <sql id="selectTeacherApplicationVo">
@@ -28,18 +29,37 @@
         left join user r on ta.reviewer_id = r.id
     </sql>
     
-    <select id="selectAll" resultMap="TeacherApplicationResult">
-        <include refid="selectTeacherApplicationVo"/>
-        order by ta.created_at desc
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT 
+            ta.id,
+            ta.user_id,
+            ta.reason,
+            ta.expertise,
+            ta.experience,
+            ta.status,
+            ta.created_at,
+            ta.updated_at,
+            ta.reviewer_id,
+            ta.review_comment,
+            ta.reviewed_at,
+            u.real_name as user_name,
+            r.real_name as reviewer_name,
+            GROUP_CONCAT(m.name) as expertise_names
+        FROM teacher_application ta
+        LEFT JOIN user u ON ta.user_id = u.id
+        LEFT JOIN user r ON ta.reviewer_id = r.id
+        LEFT JOIN major m ON FIND_IN_SET(m.id, ta.expertise)
+        GROUP BY ta.id
+        ORDER BY ta.created_at DESC
     </select>
     
-    <select id="selectByStatus" resultMap="TeacherApplicationResult">
+    <select id="selectByStatus" resultMap="BaseResultMap">
         <include refid="selectTeacherApplicationVo"/>
         where ta.status = #{status}
         order by ta.created_at desc
     </select>
     
-    <select id="selectById" resultMap="TeacherApplicationResult">
+    <select id="selectById" resultMap="BaseResultMap">
         <include refid="selectTeacherApplicationVo"/>
         where ta.id = #{id}
     </select>
@@ -50,6 +70,7 @@
             reviewer_id = #{reviewerId},
             review_comment = #{reviewComment},
             reviewed_at = sysdate(),
+            reviewed_by = #{reviewerName},
             updated_at = sysdate()
         where id = #{id}
     </update>

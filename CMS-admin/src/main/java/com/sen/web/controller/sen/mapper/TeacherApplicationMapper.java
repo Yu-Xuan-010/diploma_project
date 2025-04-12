@@ -31,5 +31,6 @@ public interface TeacherApplicationMapper {
      * 更新教师申请状态
      */
     int updateStatus(@Param("id") Long id, @Param("status") String status,
-                    @Param("reviewerId") Long reviewerId, @Param("reviewComment") String reviewComment);
+                    @Param("reviewerId") Long reviewerId, @Param("reviewerName") String reviewerName,
+                    @Param("reviewComment") String reviewComment);
 } 

@@ -470,13 +470,49 @@
         coverImage: '',
         category: ''
       })
-  
-      const categories = [
-        { value: 'frontend', label: '前端开发' },
-        { value: 'backend', label: '后端开发' },
-        { value: 'mobile', label: '移动开发' },
-        { value: 'database', label: '数据库' }
-      ]
+
+      const categories = ref([])
+
+// 获取课程分类列表
+      const fetchCategories = async () => {
+        try {
+          console.log('开始获取课程分类')
+          const response = await axios.get('/api/categories')
+          console.log('获取课程分类响应:', response)
+
+          // ✅ 修改这里
+          if (response.data.code === 200) {
+            if (!response.data.data || response.data.data.length === 0) {
+              console.warn('没有获取到课程分类数据')
+              ElMessage.warning('暂无课程分类数据')
+              categories.value = []
+              return
+            }
+
+            categories.value = response.data.data.map(category => {
+              console.log('处理分类数据:', category)
+              return {
+                value: category.id,
+                label: category.name
+              }
+            })
+            console.log('处理后的分类数据:', categories.value)
+          } else {
+            console.error('获取课程分类失败:', response.data.message)
+            ElMessage.error(response.data.message || '获取课程分类失败')
+          }
+        } catch (error) {
+          console.error('获取课程分类出错:', error)
+          ElMessage.error('获取课程分类失败：' + (error.response?.data?.message || '未知错误'))
+        }
+      }
+
+
+
+      // 在组件挂载时获取分类数据
+      onMounted(() => {
+        fetchCategories()
+      })
   
       const passwordForm = ref({
         oldPassword: '',
@@ -566,6 +602,13 @@
             address: userData.address || ''
           }
           
+          // 更新 Vuex store 中的用户信息
+          store.commit('setUserInfo', {
+            ...store.state.userInfo,
+            ...userData,
+            role: userData.role || 'student'
+          })
+          
           // 设置选中的学院ID
           if (userData.collegeId) {
             selectedCollegeId.value = userData.collegeId
@@ -618,6 +661,8 @@
         if (newRole === 'teacher') {
           ElMessage.success('恭喜！您的教师身份已通过审核')
           userInfo.value.role = newRole
+          // 重新获取用户信息以更新 Vuex store
+          fetchUserInfo()
         }
       })
   

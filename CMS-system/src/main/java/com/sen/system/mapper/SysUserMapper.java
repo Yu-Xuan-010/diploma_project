@@ -124,4 +124,8 @@ public interface SysUserMapper
      * @return 结果
      */
     public SysUser checkEmailUnique(String email);
+
+    void updateUserRole(@Param("userId") Long userId, @Param("role") String role);
+
+    String getUserNameById(Long reviewerId);
 }

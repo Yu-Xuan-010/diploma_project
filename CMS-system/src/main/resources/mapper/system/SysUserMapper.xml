@@ -141,7 +141,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="checkEmailUnique" parameterType="String" resultMap="SysUserResult">
 		select user_id, email from sys_user where email = #{email} and del_flag = '0' limit 1
 	</select>
-	
+	<select id="getUserNameById" resultType="java.lang.String">
+		SELECT user_name FROM sys_user WHERE user_id = #{userId}
+	</select>
+
 	<insert id="insertUser" parameterType="SysUser" useGeneratedKeys="true" keyProperty="userId">
  		insert into sys_user(
  			<if test="userId != null and userId != 0">user_id,</if>
@@ -205,8 +208,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<update id="resetUserPwd" parameterType="SysUser">
  		update sys_user set password = #{password} where user_name = #{userName}
 	</update>
-	
-	<delete id="deleteUserById" parameterType="Long">
+
+
+    <delete id="deleteUserById" parameterType="Long">
  		update sys_user set del_flag = '2' where user_id = #{userId}
  	</delete>
  	
@@ -216,5 +220,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			#{userId}
         </foreach> 
  	</delete>
-	
+	<update id="updateUserRole">
+		update sys_user_role set role_id = (select role_id from sys_role where role_key = #{role}) where user_id = #{userId}
+	</update>
 </mapper> 

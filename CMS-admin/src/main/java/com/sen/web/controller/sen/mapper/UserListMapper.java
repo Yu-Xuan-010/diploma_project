@@ -1,6 +1,7 @@
 package com.sen.web.controller.sen.mapper;
 
 import com.sen.web.controller.sen.domain.UserList;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -59,4 +60,13 @@ public interface UserListMapper
      * @return 结果
      */
     public int deleteUserListByIds(Long[] ids);
+
+    /**
+     * 更新用户角色
+     * 
+     * @param userId 用户ID
+     * @param role 角色
+     * @return 结果
+     */
+    public int updateUserRole(@Param("userId") Long userId, @Param("role") String role);
 }
