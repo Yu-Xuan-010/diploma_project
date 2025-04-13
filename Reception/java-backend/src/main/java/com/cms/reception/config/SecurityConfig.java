@@ -41,7 +41,7 @@ public class SecurityConfig {
                 "/api/course/list",
                 "/api/course/recommended",
                 "/api/public/**",
-                "/file/upload",
+                "/api/file/upload",
                 "/file/uploads",
                 "/favicon.ico",
                 "/",

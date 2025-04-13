@@ -1,8 +1,8 @@
 package com.cms.reception.controller;
 
+import com.cms.reception.dto.ApiResponse;
 import com.cms.reception.entity.Major;
 import com.cms.reception.service.MajorService;
-import com.cms.reception.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.hibernate.Hibernate;

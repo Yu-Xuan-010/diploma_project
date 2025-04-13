@@ -10,6 +10,21 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
 const app = createApp(App);
 
+// 注册所有图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component);
+}
+
+// 配置axios
+axios.defaults.baseURL = '/api';
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // 路由守卫
 router.beforeEach((to, from, next) => {
     // 判断目标路由是否需要认证

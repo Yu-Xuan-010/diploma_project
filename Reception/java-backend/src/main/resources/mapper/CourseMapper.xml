@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.CourseMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.Course">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="image" property="image"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="status" property="status"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="student_count" property="studentCount"/>
+        <result column="average_rating" property="averageRating"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        c.id, c.name, c.description, c.image, c.category_id, c.teacher_id, c.status, 
+        COALESCE(cp.view_count, 0) as view_count, c.student_count, c.average_rating, 
+        c.created_at, c.updated_at
+    </sql>
+
+    <select id="selectCourseList" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM course c
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        <where>
+            <if test="categoryId != null">
+                AND c.category_id = #{categoryId}
+            </if>
+            <if test="status != null and status != ''">
+                AND c.status = #{status}
+            </if>
+        </where>
+        ORDER BY c.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countCourses" resultType="int">
+        SELECT COUNT(*)
+        FROM course c
+        <where>
+            <if test="categoryId != null">
+                AND c.category_id = #{categoryId}
+            </if>
+            <if test="status != null and status != ''">
+                AND c.status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectCourseById" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM course c
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        WHERE c.id = #{id}
+    </select>
+
+    <insert id="insertCourse" parameterType="com.cms.reception.entity.Course" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course (
+            name, description, image, category_id, teacher_id, status,
+            student_count, average_rating, created_at, updated_at
+        )
+        VALUES (
+            #{name}, #{description}, #{image}, #{categoryId}, #{teacherId}, #{status},
+            #{studentCount}, #{averageRating}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="updateCourse" parameterType="com.cms.reception.entity.Course">
+        UPDATE course
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="image != null">image = #{image},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="teacherId != null">teacher_id = #{teacherId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="studentCount != null">student_count = #{studentCount},</if>
+            <if test="averageRating != null">average_rating = #{averageRating},</if>
+            updated_at = #{updatedAt}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteCourseById">
+        DELETE FROM course WHERE id = #{id}
+    </delete>
+
+    <select id="selectTop5ByPopularity" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM course c
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        WHERE c.status = 'approved'
+        ORDER BY COALESCE(cp.view_count, 0) DESC, c.created_at DESC
+        LIMIT 5
+    </select>
+
+    <update id="incrementViewCount">
+        INSERT INTO course_popularity (course_id, view_count)
+        VALUES (#{id}, 1)
+        ON DUPLICATE KEY UPDATE view_count = view_count + 1
+    </update>
+
+    <select id="selectCoursesByTeacherId" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM course c
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        WHERE c.teacher_id = #{teacherId}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="selectCoursesByCategoryId" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM course c
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        WHERE c.category_id = #{categoryId}
+        AND c.status = 'approved'
+        ORDER BY c.created_at DESC
+    </select>
+</mapper> 

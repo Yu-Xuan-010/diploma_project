@@ -14,8 +14,7 @@ export default defineConfig({
           proxy.on("proxyReq",(proxyReq)=>{
             proxyReq.removeHeader("origin");
           });
-        },
-        rewrite: path => path.replace(/^\/api/, '')
+        }
       }
     }
   },

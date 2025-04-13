@@ -56,3 +56,8 @@ logging:
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.cms.reception.entity
+file:
+  upload:
+    path: D:/upload/files  #  使用绝对路径
+    url-prefix: /file/uploads
+

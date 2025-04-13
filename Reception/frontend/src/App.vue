@@ -1,20 +1,22 @@
 <template>
   <el-config-provider :locale="zhCn">
-  <div id="app">
-    <app-header v-if="showHeader"/> <!-- 仅在非登录/注册页面显示头部 -->
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
-  </div>
+    <div id="app">
+      <app-header v-if="showHeader"/> <!-- 仅在非登录/注册页面显示头部 -->
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </transition>
+      </router-view>
+    </div>
   </el-config-provider>
 </template>
 
 <script>
 // 引入 AppHeader 组件
-import AppHeader from '../src/layout/components/AppHeader.vue';
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import AppHeader from './layout/components/AppHeader.vue';
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 
 export default {
   name: 'App',

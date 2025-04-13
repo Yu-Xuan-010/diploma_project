@@ -32,9 +32,9 @@
           clearable
           @change="handleQuery"
         >
-          <el-option label="待审核" value="PENDING"></el-option>
-          <el-option label="已审核" value="APPROVED"></el-option>
-          <el-option label="审核未通过" value="REJECTED"></el-option>
+          <el-option label="待审核" value="pending"></el-option>
+          <el-option label="已审核" value="approved"></el-option>
+          <el-option label="审核未通过" value="rejected"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -53,18 +53,6 @@
           @click="handleAdd"
           v-hasPermi="['system:course:add']"
         >新增
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="el-icon-edit"
-          size="mini"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['system:course:edit']"
-        >修改
         </el-button>
       </el-col>
       <el-col :span="1.5">
@@ -100,7 +88,13 @@
       <el-table-column label="课程描述" align="center" prop="description"/>
       <el-table-column label="课程种类" align="center" prop="categoryId"/>
       <el-table-column label="评分" align="center" prop="averageRating"/>
-      <el-table-column label="状态" align="center" prop="status"/>
+      <el-table-column label="状态" align="center" prop="status">
+        <template slot-scope="scope">
+          <el-tag :type="scope.row.status === 'approved' ? 'success' : scope.row.status === 'rejected' ? 'danger' : 'warning'">
+            {{ scope.row.status === 'approved' ? '已通过' : scope.row.status === 'rejected' ? '已驳回' : '待审核' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="教师ID" align="center" prop="teacherId"/>
       <el-table-column label="学习人数" align="center" prop="studentCount"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -120,6 +114,24 @@
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:course:remove']"
           >删除
+          </el-button>
+          <el-button
+            v-if="scope.row.status === 'pending'"
+            size="mini"
+            type="text"
+            icon="el-icon-check"
+            @click="handleReview(scope.row, 'approved')"
+            v-hasPermi="['system:course:review']"
+          >通过
+          </el-button>
+          <el-button
+            v-if="scope.row.status === 'pending'"
+            size="mini"
+            type="text"
+            icon="el-icon-close"
+            @click="handleReview(scope.row, 'rejected')"
+            v-hasPermi="['system:course:review']"
+          >驳回
           </el-button>
         </template>
       </el-table-column>
@@ -148,35 +160,37 @@
         <el-form-item label="封面" prop="image">
           <image-upload v-model="form.image"/>
         </el-form-item>
-        <el-form-item label="创建时间" prop="createdAt">
-          <el-date-picker clearable
-                          v-model="form.createdAt"
-                          type="date"
-                          value-format="yyyy-MM-dd"
-                          placeholder="请选择创建时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="更新时间" prop="updatedAt">
-          <el-date-picker clearable
-                          v-model="form.updatedAt"
-                          type="date"
-                          value-format="yyyy-MM-dd"
-                          placeholder="请选择更新时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="评分" prop="averageRating">
-          <el-input v-model="form.averageRating" placeholder="请输入评分"/>
-        </el-form-item>
         <el-form-item label="教师ID" prop="teacherId">
           <el-input v-model="form.teacherId" placeholder="请输入教师ID"/>
-        </el-form-item>
-        <el-form-item label="学习人数" prop="studentCount">
-          <el-input v-model="form.studentCount" placeholder="请输入学习人数"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 审核对话框 -->
+    <el-dialog :title="reviewTitle" :visible.sync="reviewOpen" width="500px" append-to-body>
+      <el-form ref="reviewForm" :model="reviewForm" :rules="reviewRules" label-width="80px">
+        <el-form-item label="审核结果" prop="status">
+          <el-radio-group v-model="reviewForm.status">
+            <el-radio label="approved">通过</el-radio>
+            <el-radio label="rejected">驳回</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="驳回原因" prop="rejectReason" v-if="reviewForm.status === 'rejected'">
+          <el-input
+            type="textarea"
+            v-model="reviewForm.rejectReason"
+            placeholder="请输入驳回原因"
+            :rows="3"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitReview">确 定</el-button>
+        <el-button @click="cancelReview">取 消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -226,6 +240,28 @@ export default {
         ],
         teacherId: [
           {required: true, message: "教师ID不能为空", trigger: "blur"}
+        ]
+      },
+      // 审核对话框
+      reviewOpen: false,
+      reviewTitle: "",
+      reviewForm: {
+        id: null,
+        status: "approved",
+        rejectReason: ""
+      },
+      reviewRules: {
+        status: [
+          { required: true, message: "请选择审核结果", trigger: "change" }
+        ],
+        rejectReason: [
+          { required: true, message: "请输入驳回原因", trigger: "blur", validator: (rule, value, callback) => {
+            if (this.reviewForm.status === "rejected" && !value) {
+              callback(new Error("请输入驳回原因"));
+            } else {
+              callback();
+            }
+          }}
         ]
       }
     };
@@ -344,6 +380,51 @@ export default {
       this.download('system/course/export', {
         ...this.queryParams
       }, `course_${new Date().getTime()}.xlsx`);
+    },
+
+    /** 审核按钮操作 */
+    handleReview(row, status) {
+      this.reviewForm = {
+        id: row.id,
+        status: status,
+        rejectReason: ""
+      };
+      this.reviewTitle = status === "approved" ? "审核通过" : "审核驳回";
+      this.reviewOpen = true;
+    },
+
+    /** 取消审核 */
+    cancelReview() {
+      this.reviewOpen = false;
+      this.resetReviewForm();
+    },
+
+    /** 重置审核表单 */
+    resetReviewForm() {
+      this.reviewForm = {
+        id: null,
+        status: "approved",
+        rejectReason: ""
+      };
+      this.resetForm("reviewForm");
+    },
+
+    /** 提交审核 */
+    submitReview() {
+      this.$refs["reviewForm"].validate(valid => {
+        if (valid) {
+          const data = {
+            id: this.reviewForm.id,
+            status: this.reviewForm.status,
+            rejectReason: this.reviewForm.status === "rejected" ? this.reviewForm.rejectReason : null
+          };
+          updateCourse(data).then(response => {
+            this.$modal.msgSuccess("审核成功");
+            this.reviewOpen = false;
+            this.getList();
+          });
+        }
+      });
     }
   }
 }

@@ -278,25 +278,32 @@
           <div v-if="activeTab === 'upload' && isTeacher" class="content-section">
             <h2>上传课程</h2>
             <el-card>
-              <el-form :model="courseForm" label-width="100px">
-                <el-form-item label="课程标题">
-                  <el-input v-model="courseForm.title" placeholder="请输入课程标题"></el-input>
+              <el-form :model="courseForm" label-width="100px" :rules="courseRules" ref="courseFormRef">
+                <el-form-item label="课程标题" prop="name">
+                  <el-input v-model="courseForm.name" placeholder="请输入课程标题"></el-input>
                 </el-form-item>
-                <el-form-item label="课程简介">
+                <el-form-item label="课程简介" prop="description">
                   <el-input type="textarea" v-model="courseForm.description" rows="4" placeholder="请输入课程简介"></el-input>
                 </el-form-item>
-                <el-form-item label="课程封面">
+                <el-form-item label="课程封面" prop="coverImage">
                   <el-upload
                     class="cover-uploader"
-                    action="/api/upload"
+                    action="/api/file/upload"
                     :show-file-list="false"
                     :on-success="handleCoverSuccess"
+                    :on-error="handleCoverError"
+                    :before-upload="beforeCoverUpload"
+                    :headers="uploadHeaders"
+                    name="file"
+                    :on-progress="(event, file) => {
+                      console.log('上传进度:', event.percent)
+                    }"
                   >
                     <img v-if="courseForm.coverImage" :src="courseForm.coverImage" class="cover">
                     <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
                   </el-upload>
                 </el-form-item>
-                <el-form-item label="课程分类">
+                <el-form-item label="课程分类" prop="category">
                   <el-select v-model="courseForm.category" placeholder="请选择课程分类">
                     <el-option
                       v-for="item in categories"
@@ -307,7 +314,8 @@
                   </el-select>
                 </el-form-item>
                 <el-form-item>
-                  <el-button type="primary" @click="submitCourse">提交课程</el-button>
+                  <el-button type="primary" class="submit-course-btn" @click="submitCourse">提交课程</el-button>
+                  <el-button @click="resetCourseForm">重置</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
@@ -409,17 +417,33 @@
     setup() {
       const store = useStore()
       const router = useRouter()
+      
+      // 确保 store 存在
+      if (!store) {
+        console.error('Vuex store is not available')
+        ElMessage.error('系统错误：状态管理不可用')
+        return
+      }
+
+
       const activeTab = ref('basic')
       const passwordDialogVisible = ref(false)
       const applyTeacherDialogVisible = ref(false)
-      const isTeacher = computed(() => store.state.userInfo?.role === 'teacher')
+      const uploadHeaders = computed(() => ({
+        Authorization: `Bearer ${store.state.token}`
+      }))
+
+
+      
+      // 使用可选链操作符来安全访问 store.state
+      const isTeacher = computed(() => store?.state?.userInfo?.role === 'teacher')
       const roleText = computed(() => {
         const roleMap = {
           'student': '学生',
           'teacher': '教师',
           'admin': '管理员'
         }
-        return roleMap[userInfo.value.role] || '未知'
+        return roleMap[store?.state?.userInfo?.role] || '未知'
       })
   
       const userInfo = ref({
@@ -452,35 +476,34 @@
       const favoriteCourses = ref([
         {
           id: 1,
-          title: 'Vue.js 高级教程',
+          name: 'Vue.js 高级教程',
           description: '深入学习 Vue.js 的高级特性',
           coverImage: '/course-1.jpg'
         },
         {
           id: 2,
-          title: 'Spring Boot 实战',
+          name: 'Spring Boot 实战',
           description: '从零开始学习 Spring Boot',
           coverImage: '/course-2.jpg'
         }
       ])
   
       const courseForm = ref({
-        title: '',
+        name: '',
         description: '',
         coverImage: '',
-        category: ''
+        category: '',
       })
 
       const categories = ref([])
 
-// 获取课程分类列表
+      // 获取课程分类列表
       const fetchCategories = async () => {
         try {
           console.log('开始获取课程分类')
           const response = await axios.get('/api/categories')
-          console.log('获取课程分类响应:', response)
-
-          // ✅ 修改这里
+          console.log('获取课程分类响应:', response.data)
+          
           if (response.data.code === 200) {
             if (!response.data.data || response.data.data.length === 0) {
               console.warn('没有获取到课程分类数据')
@@ -488,7 +511,7 @@
               categories.value = []
               return
             }
-
+            
             categories.value = response.data.data.map(category => {
               console.log('处理分类数据:', category)
               return {
@@ -507,7 +530,76 @@
         }
       }
 
+      // 提交课程
+      const submitCourse = async () => {
+        if (!courseFormRef.value) return
+        
+        try {
+          // 添加加载状态
+          const submitButton = document.querySelector('.submit-course-btn')
+          if (submitButton) {
+            submitButton.disabled = true
+            submitButton.innerHTML = '提交中...'
+          }
+          
+          await courseFormRef.value.validate()
+          
+          // 准备提交的数据
+          const courseData = {
+            name: courseForm.value.name,
+            description: courseForm.value.description,
+            image: courseForm.value.coverImage,
+            categoryId: courseForm.value.category,
+            status: 'pending',
+            teacherId: store.state.userInfo.id,
+            studentCount: 0,
+            averageRating: 0
+          }
+          
+          console.log('提交的课程数据:', courseData)
+          
+          // 发送请求
+          const response = await axios.post('/api/courses', courseData, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${store.state.token}`
+            }
+          })
+          
+          console.log('服务器响应:', response.data)
 
+          if (response.data.success) {
+            ElMessage({
+              type: 'success',
+              message: response.data.message || '课程创建成功',
+              duration: 3000,
+              showClose: true
+            })
+            resetCourseForm()
+          } else {
+            ElMessage({
+              type: 'error',
+              message: response.data.message || '课程创建失败',
+              duration: 3000,
+              showClose: true
+            })
+          }
+        } catch (error) {
+          console.error('提交课程失败:', error)
+          ElMessage({
+            type: 'error',
+            message: error.response?.data?.message || '提交失败，请检查表单内容',
+            duration: 3000
+          })
+        } finally {
+          // 恢复按钮状态
+          const submitButton = document.querySelector('.submit-course-btn')
+          if (submitButton) {
+            submitButton.disabled = false
+            submitButton.innerHTML = '提交课程'
+          }
+        }
+      }
 
       // 在组件挂载时获取分类数据
       onMounted(() => {
@@ -733,22 +825,33 @@
       }
   
       const handleCoverSuccess = (response) => {
-        courseForm.value.coverImage = response.url
-      }
-  
-      const submitCourse = async () => {
-        try {
-          await axios.post('/api/course', courseForm.value)
-          ElMessage.success('课程提交成功')
-          courseForm.value = {
-            title: '',
-            description: '',
-            coverImage: '',
-            category: ''
-          }
-        } catch (error) {
-          ElMessage.error('课程提交失败：' + error.response?.data?.message || '未知错误')
+        console.log('文件上传响应:', response)
+        if (response.success) {
+          courseForm.value.coverImage = response.data;
+          ElMessage.success('课程封面上传成功');
+        } else {
+          ElMessage.error(response.message || '课程封面上传失败');
         }
+      }
+
+      const handleCoverError = (error) => {
+        console.error('文件上传错误:', error)
+        ElMessage.error('课程封面上传失败：' + (error.message || '未知错误'));
+      }
+
+      const beforeCoverUpload = (file) => {
+        const isImage = file.type.startsWith('image/');
+        const isLt5M = file.size / 1024 / 1024 < 5;
+
+        if (!isImage) {
+          ElMessage.error('上传课程封面只能是图片格式!');
+          return false;
+        }
+        if (!isLt5M) {
+          ElMessage.error('上传课程封面大小不能超过 5MB!');
+          return false;
+        }
+        return true;
       }
   
       const showApplyTeacherDialog = () => {
@@ -1001,6 +1104,33 @@
   
       const dateShortcuts = []  // 移除快捷选项
   
+      // 课程表单验证规则
+      const courseRules = {
+        name: [
+          { required: true, message: '请输入课程标题', trigger: 'blur' },
+          { min: 2, max: 50, message: '标题长度在2到50个字符之间', trigger: 'blur' }
+        ],
+        description: [
+          { required: true, message: '请输入课程简介', trigger: 'blur' },
+          { min: 10, max: 500, message: '简介长度在10到500个字符之间', trigger: 'blur' }
+        ],
+        coverImage: [
+          { required: true, message: '请上传课程封面', trigger: 'change' }
+        ],
+        category: [
+          { required: true, message: '请选择课程分类', trigger: 'change' }
+        ]
+      }
+
+      const courseFormRef = ref(null)
+
+      // 重置课程表单
+      const resetCourseForm = () => {
+        if (courseFormRef.value) {
+          courseFormRef.value.resetFields()
+        }
+      }
+  
       return {
         activeTab,
         userInfo,
@@ -1047,7 +1177,10 @@
         userForm,
         rules,
         dateShortcuts,
-        zhCn
+        zhCn,
+        courseRules,
+        courseFormRef,
+        resetCourseForm
       }
     }
   }

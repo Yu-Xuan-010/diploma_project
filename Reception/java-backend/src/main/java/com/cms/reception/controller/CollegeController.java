@@ -1,11 +1,10 @@
 package com.cms.reception.controller;
 
+import com.cms.reception.dto.ApiResponse;
 import com.cms.reception.entity.College;
 import com.cms.reception.service.CollegeService;
-import com.cms.reception.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.hibernate.Hibernate;
 
 import java.util.List;
 

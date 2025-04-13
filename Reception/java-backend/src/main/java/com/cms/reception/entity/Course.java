@@ -39,10 +39,10 @@ public class Course extends BaseEntity
     private String image;
 
     /** 创建时间 */
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     /** 更新时间 */
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     /** 评分 */
     private BigDecimal averageRating;
@@ -119,21 +119,21 @@ public class Course extends BaseEntity
     {
         return image;
     }
-    public void setCreatedAt(Date createdAt) 
+    public void setCreatedAt(LocalDateTime createdAt) 
     {
         this.createdAt = createdAt;
     }
 
-    public Date getCreatedAt() 
+    public LocalDateTime getCreatedAt() 
     {
         return createdAt;
     }
-    public void setUpdatedAt(Date updatedAt) 
+    public void setUpdatedAt(LocalDateTime updatedAt) 
     {
         this.updatedAt = updatedAt;
     }
 
-    public Date getUpdatedAt() 
+    public LocalDateTime getUpdatedAt() 
     {
         return updatedAt;
     }
