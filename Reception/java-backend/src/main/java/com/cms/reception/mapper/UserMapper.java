@@ -56,4 +56,7 @@ public interface UserMapper {
 
     @Update("UPDATE user SET role = #{role} WHERE id = #{userId}")
     void updateUserRole(@Param("userId") Long userId, @Param("role") String role);
+
+    @Select("SELECT * FROM user WHERE username = #{username}")
+    User getUserByUsername(@Param("username") String username);
 }

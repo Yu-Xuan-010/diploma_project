@@ -32,6 +32,10 @@
               <el-icon><Upload /></el-icon>
               <span>上传课程</span>
             </el-menu-item>
+            <el-menu-item v-if="isTeacher" index="myCourses">
+              <el-icon><Collection /></el-icon>
+              <span>我的课程</span>
+            </el-menu-item>
           </el-menu>
         </el-col>
   
@@ -286,10 +290,10 @@
                   <el-input type="textarea" v-model="courseForm.description" rows="4" placeholder="请输入课程简介"></el-input>
                 </el-form-item>
                 <el-form-item label="课程封面" prop="coverImage">
-                  <el-upload
+            <el-upload
                     class="cover-uploader"
                     action="/api/file/upload"
-                    :show-file-list="false"
+              :show-file-list="false"
                     :on-success="handleCoverSuccess"
                     :on-error="handleCoverError"
                     :before-upload="beforeCoverUpload"
@@ -301,8 +305,8 @@
                   >
                     <img v-if="courseForm.coverImage" :src="courseForm.coverImage" class="cover">
                     <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
-                  </el-upload>
-                </el-form-item>
+            </el-upload>
+          </el-form-item>
                 <el-form-item label="课程分类" prop="category">
                   <el-select v-model="courseForm.category" placeholder="请选择课程分类">
                     <el-option
@@ -312,14 +316,147 @@
                       :value="item.value"
                     ></el-option>
                   </el-select>
-                </el-form-item>
+          </el-form-item>
                 <el-form-item>
                   <el-button type="primary" class="submit-course-btn" @click="submitCourse">提交课程</el-button>
                   <el-button @click="resetCourseForm">重置</el-button>
-                </el-form-item>
-              </el-form>
+          </el-form-item>
+        </el-form>
             </el-card>
           </div>
+
+          <!-- 我的课程（仅教师可见） -->
+          <div v-if="activeTab === 'myCourses' && isTeacher" class="content-section">
+            <h2>我的课程</h2>
+            <el-card class="course-list">
+              <template #header>
+                <div class="card-header">
+                  <span>我的课程</span>
+                </div>
+              </template>
+              
+              <el-table
+                v-if="myCourses && myCourses.length > 0"
+                :data="myCourses"
+                style="width: 100%"
+              >
+                <el-table-column prop="name" label="课程名称" />
+                <el-table-column prop="categoryName" label="分类" />
+                <el-table-column prop="status" label="状态" width="100">
+                  <template #default="{ row }">
+                    <el-tag :type="getStatusType(row.status)">
+                      {{ getStatusText(row.status) }}
+                    </el-tag>
+                    <div v-if="row.status === 'rejected'" class="reject-reason">
+                      <el-tooltip
+                        :content="row.rejectReason || '未提供拒绝原因'"
+                        placement="top"
+                        effect="light"
+                      >
+                        <el-icon><Warning /></el-icon>
+                      </el-tooltip>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="studentCount" label="学习人数" />
+                <el-table-column prop="viewCount" label="浏览次数" />
+                <el-table-column label="操作" width="200">
+                  <template #default="scope">
+                    <template v-if="scope.row.status === 'approved'">
+                      <el-button type="primary" link @click="manageLessons(scope.row)">
+                        管理课时
+                      </el-button>
+                      <el-button type="danger" link @click="deleteCourse(scope.row)">
+                        删除
+                      </el-button>
+                    </template>
+                    <template v-else-if="scope.row.status === 'rejected'">
+                      <el-button type="warning" link @click="showRejectReason(scope.row)">
+                        查看原因
+                      </el-button>
+                      <el-button type="danger" link @click="deleteCourse(scope.row)">
+                        删除
+                      </el-button>
+                    </template>
+                    <template v-else>
+                      <el-button type="info" link disabled>
+                        待审核
+                      </el-button>
+                      <el-button type="danger" link @click="deleteCourse(scope.row)">
+                        删除
+                      </el-button>
+                    </template>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <el-empty v-else description="暂无课程" />
+            </el-card>
+          </div>
+
+          <!-- 课时管理对话框 -->
+          <el-dialog v-model="lessonDialogVisible" :title="currentCourse ? currentCourse.name + ' - 课时管理' : '课时管理'" width="800px">
+            <div class="lesson-management">
+              <div class="lesson-header">
+                <h3>课时列表</h3>
+                <el-button type="primary" @click="showAddLessonDialog">添加课时</el-button>
+              </div>
+              <el-table :data="lessons" style="width: 100%">
+                <el-table-column prop="title" label="课时标题"></el-table-column>
+                <el-table-column prop="duration" label="时长">
+                  <template #default="scope">
+                    {{ formatDuration(scope.row.duration) }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="sortOrder" label="排序"></el-table-column>
+                <el-table-column label="操作" width="200">
+                  <template #default="scope">
+                    <el-button type="primary" link @click="editLesson(scope.row)">
+                      编辑
+                    </el-button>
+                    <el-button type="danger" link @click="deleteLesson(scope.row)">
+                      删除
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+        </div>
+      </el-dialog>
+
+          <!-- 添加/编辑课时对话框 -->
+          <el-dialog v-model="lessonFormDialogVisible" :title="editingLesson ? '编辑课时' : '添加课时'" width="500px">
+            <el-form :model="lessonForm" :rules="lessonRules" ref="lessonFormRef" label-width="100px">
+              <el-form-item label="课时标题" prop="title">
+                <el-input v-model="lessonForm.title" placeholder="请输入课时标题"></el-input>
+              </el-form-item>
+              <el-form-item label="课时描述" prop="description">
+                <el-input type="textarea" v-model="lessonForm.description" rows="4" placeholder="请输入课时描述"></el-input>
+              </el-form-item>
+              <el-form-item label="视频文件" prop="videoUrl">
+                <el-upload
+                  class="video-uploader"
+                  action="/api/file/upload"
+                  :show-file-list="false"
+                  :on-success="handleVideoSuccess"
+                  :on-error="handleVideoError"
+                  :before-upload="beforeVideoUpload"
+                  :headers="uploadHeaders"
+                  name="file"
+                >
+                  <el-button type="primary">选择视频文件</el-button>
+                </el-upload>
+              </el-form-item>
+              <el-form-item label="排序" prop="sortOrder">
+                <el-input-number v-model="lessonForm.sortOrder" :min="0"></el-input-number>
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <span class="dialog-footer">
+                <el-button @click="lessonFormDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveLesson">确定</el-button>
+              </span>
+            </template>
+          </el-dialog>
         </el-col>
       </el-row>
   
@@ -381,6 +518,18 @@
           </span>
         </template>
       </el-dialog>
+
+      <!-- 添加驳回原因对话框 -->
+      <el-dialog v-model="rejectReasonDialogVisible" title="驳回原因" width="500px">
+        <div class="reject-reason">
+          <p>{{ currentCourse?.rejectReason || '暂无驳回原因' }}</p>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="rejectReasonDialogVisible = false">关闭</el-button>
+          </span>
+        </template>
+      </el-dialog>
     </div>
   </template>
   
@@ -396,7 +545,9 @@
     Document,
     Lock,
     Upload,
-    Plus
+    Plus,
+    Collection,
+    Warning
   } from '@element-plus/icons-vue'
   import axios from 'axios'
   import { getProfile, updateProfile } from '@/api/user'
@@ -412,7 +563,9 @@
       Document,
       Lock,
       Upload,
-      Plus
+      Plus,
+      Collection,
+      Warning
     },
     setup() {
       const store = useStore()
@@ -425,16 +578,15 @@
         return
       }
 
-
+      // 状态管理
       const activeTab = ref('basic')
       const passwordDialogVisible = ref(false)
       const applyTeacherDialogVisible = ref(false)
+      const rejectReasonDialogVisible = ref(false)
       const uploadHeaders = computed(() => ({
         Authorization: `Bearer ${store.state.token}`
       }))
 
-
-      
       // 使用可选链操作符来安全访问 store.state
       const isTeacher = computed(() => store?.state?.userInfo?.role === 'teacher')
       const roleText = computed(() => {
@@ -1131,6 +1283,306 @@
         }
       }
   
+      // 新增的课程相关逻辑
+      const myCourses = ref([])
+      const currentCourse = ref(null)
+      const lessons = ref([])
+      const lessonDialogVisible = ref(false)
+      const lessonFormDialogVisible = ref(false)
+      const editingLesson = ref(null)
+      const lessonFormRef = ref(null)
+
+      const lessonForm = ref({
+        title: '',
+        description: '',
+        videoUrl: '',
+        sortOrder: 0
+      })
+
+      const lessonRules = {
+        title: [
+          { required: true, message: '请输入课时标题', trigger: 'blur' },
+          { min: 2, max: 50, message: '标题长度在2-50个字符之间', trigger: 'blur' }
+        ],
+        description: [
+          { required: true, message: '请输入课时描述', trigger: 'blur' }
+        ],
+        videoUrl: [
+          { required: true, message: '请上传课时视频', trigger: 'change' }
+        ],
+        sortOrder: [
+          { required: true, message: '请输入排序序号', trigger: 'blur' },
+          { type: 'number', message: '排序序号必须为数字', trigger: 'blur' }
+        ]
+      }
+
+      // 获取我的课程列表
+      const fetchMyCourses = async () => {
+        try {
+          const response = await axios.get('/api/courses/my', {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          console.log('获取课程列表响应:', response.data)  // 添加调试日志
+          if (response.data.success) {  // 修改判断条件
+            myCourses.value = response.data.data.map(course => ({
+              id: course.id,
+              name: course.name,
+              categoryName: course.categoryName,
+              status: course.status,
+              studentCount: course.studentCount || 0,
+              viewCount: course.viewCount || 0,
+              description: course.description || '',
+              coverImage: course.coverImage || '',
+              teacherName: course.teacherName || '',
+              rejectReason: course.rejectReason || '暂无驳回原因'  // 添加驳回原因字段
+            }))
+            console.log('处理后的课程列表数据:', myCourses.value)  // 添加调试日志
+          } else {
+            ElMessage.error(response.data.message || '获取课程列表失败')
+          }
+        } catch (error) {
+          console.error('获取课程列表失败:', error)
+          ElMessage.error('获取课程列表失败')
+        }
+      }
+
+      // 管理课时
+      const manageLessons = async (course) => {
+        currentCourse.value = course
+        lessonDialogVisible.value = true
+        await fetchLessons(course.id)
+      }
+
+      // 获取课时列表
+      const fetchLessons = async (courseId) => {
+        try {
+          const response = await axios.get(`/api/lessons/course/${courseId}`, {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          if (response.data.success) {
+            lessons.value = response.data.data
+          } else {
+            ElMessage.error(response.data.message || '获取课时列表失败')
+          }
+        } catch (error) {
+          console.error('获取课时列表失败:', error)
+          ElMessage.error('获取课时列表失败')
+        }
+      }
+
+      // 显示添加课时对话框
+      const showAddLessonDialog = () => {
+        editingLesson.value = null
+        lessonForm.value = {
+          title: '',
+          description: '',
+          videoUrl: '',
+          sortOrder: lessons.value.length + 1
+        }
+        lessonFormDialogVisible.value = true
+      }
+
+      // 编辑课时
+      const editLesson = (lesson) => {
+        editingLesson.value = lesson
+        lessonForm.value = {
+          title: lesson.title,
+          description: lesson.description,
+          videoUrl: lesson.videoUrl,
+          sortOrder: lesson.sortOrder
+        }
+        lessonFormDialogVisible.value = true
+      }
+
+      // 删除课时
+      const deleteLesson = async (lesson) => {
+        try {
+          await ElMessageBox.confirm('确定要删除该课时吗？', '提示', {
+            type: 'warning'
+          })
+          
+          const response = await axios.delete(`/api/lessons/${lesson.id}`, {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          
+          if (response.data.code === 200) {
+            ElMessage.success('删除成功')
+            await fetchLessons(currentCourse.value.id)
+          } else {
+            ElMessage.error(response.data.message || '删除失败')
+          }
+        } catch (error) {
+          if (error !== 'cancel') {
+            console.error('删除课时失败:', error)
+            ElMessage.error('删除课时失败')
+          }
+        }
+      }
+
+      // 删除课程
+      const deleteCourse = async (course) => {
+        try {
+          await ElMessageBox.confirm('确定要删除该课程吗？删除后将无法恢复！', '警告', {
+            type: 'warning'
+          })
+          
+          const response = await axios.delete(`/api/courses/${course.id}`, {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          
+          if (response.data.code === 200) {
+            ElMessage.success('删除成功')
+            // 重新获取课程列表
+            await fetchMyCourses()
+            // 如果当前正在查看被删除的课程，清空当前课程
+            if (currentCourse.value && currentCourse.value.id === course.id) {
+              currentCourse.value = null
+              lessons.value = []
+            }
+          } else {
+            ElMessage.error(response.data.message || '删除失败')
+          }
+        } catch (error) {
+          if (error !== 'cancel') {
+            console.error('删除课程失败:', error)
+            ElMessage.error('删除课程失败')
+          }
+        }
+      }
+
+      // 格式化时长
+      const formatDuration = (seconds) => {
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        const remainingSeconds = seconds % 60
+        
+        let result = ''
+        if (hours > 0) {
+          result += `${hours}小时`
+        }
+        if (minutes > 0) {
+          result += `${minutes}分钟`
+        }
+        if (remainingSeconds > 0 || result === '') {
+          result += `${remainingSeconds}秒`
+        }
+        
+        return result
+      }
+
+      // 视频上传成功回调
+      const handleVideoSuccess = (response) => {
+        if (response.code === 200) {
+          lessonForm.value.videoUrl = response.data
+          ElMessage.success('视频上传成功')
+        } else {
+          ElMessage.error(response.message || '视频上传失败')
+        }
+      }
+
+      // 视频上传失败回调
+      const handleVideoError = (error) => {
+        console.error('视频上传失败:', error)
+        ElMessage.error('视频上传失败')
+      }
+
+      // 视频上传前的验证
+      const beforeVideoUpload = (file) => {
+        const isVideo = file.type.startsWith('video/')
+        const isLt2G = file.size / 1024 / 1024 / 1024 < 2
+
+        if (!isVideo) {
+          ElMessage.error('只能上传视频文件！')
+          return false
+        }
+        if (!isLt2G) {
+          ElMessage.error('视频大小不能超过 2GB！')
+          return false
+        }
+        return true
+      }
+
+      // 保存课时
+      const saveLesson = async () => {
+        if (!lessonFormRef.value) return
+        
+        try {
+          await lessonFormRef.value.validate()
+          
+          const url = editingLesson.value 
+            ? `/api/lessons/${editingLesson.value.id}`
+            : `/api/courses/${currentCourse.value.id}/lessons`
+          
+          const method = editingLesson.value ? 'put' : 'post'
+          
+          const response = await axios[method](url, lessonForm.value, {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          
+          if (response.data.code === 200) {
+            ElMessage.success(editingLesson.value ? '更新成功' : '添加成功')
+            lessonFormDialogVisible.value = false
+            await fetchLessons(currentCourse.value.id)
+          } else {
+            ElMessage.error(response.data.message || (editingLesson.value ? '更新失败' : '添加失败'))
+          }
+        } catch (error) {
+          console.error('保存课时失败:', error)
+          ElMessage.error('保存课时失败')
+        }
+      }
+
+      // 获取状态类型
+      const getStatusType = (status) => {
+        switch (status) {
+          case 'approved':
+            return 'success'
+          case 'pending':
+            return 'warning'
+          case 'rejected':
+            return 'danger'
+          default:
+            return 'info'
+        }
+      }
+
+      // 获取状态文本
+      const getStatusText = (status) => {
+        switch (status) {
+          case 'approved':
+            return '已通过'
+          case 'pending':
+            return '待审核'
+          case 'rejected':
+            return '已驳回'
+          default:
+            return '未知'
+        }
+      }
+
+      // 在组件挂载时获取课程列表
+      onMounted(() => {
+        if (isTeacher.value) {
+          fetchMyCourses()
+        }
+      })
+
+      // 显示驳回原因
+      const showRejectReason = (course) => {
+        currentCourse.value = course
+        rejectReasonDialogVisible.value = true
+      }
+
       return {
         activeTab,
         userInfo,
@@ -1180,7 +1632,28 @@
         zhCn,
         courseRules,
         courseFormRef,
-        resetCourseForm
+        resetCourseForm,
+        myCourses,
+        currentCourse,
+        lessons,
+        editingLesson,
+        lessonForm,
+        lessonRules,
+        lessonFormRef,
+        showAddLessonDialog,
+        manageLessons,
+        deleteCourse,
+        formatDuration,
+        editLesson,
+        deleteLesson,
+        handleVideoSuccess,
+        handleVideoError,
+        beforeVideoUpload,
+        saveLesson,
+        getStatusType,
+        getStatusText,
+        rejectReasonDialogVisible,
+        showRejectReason
       }
     }
   }
@@ -1202,7 +1675,7 @@
   
   .content-section {
     h2 {
-      margin-bottom: 20px;
+        margin-bottom: 20px;
       font-size: 20px;
       color: #333;
     }
@@ -1246,25 +1719,25 @@
       .course-footer {
         display: flex;
         justify-content: space-between;
+        }
       }
     }
-  }
   
-  .note-item {
+    .note-item {
     padding: 15px;
     margin-bottom: 15px;
     border: 1px solid #ebeef5;
     border-radius: 4px;
   
-    h4 {
-      margin: 0 0 10px;
+      h4 {
+        margin: 0 0 10px;
       color: #333;
-    }
+      }
   
-    p {
-      color: #666;
+      p {
+        color: #666;
       margin-bottom: 10px;
-    }
+      }
   
     .note-footer {
         display: flex;
@@ -1358,5 +1831,21 @@
   .edit-actions {
     display: flex;
     gap: 10px;
+  }
+
+  .course-list {
+    margin-top: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .reject-reason {
+    margin-top: 4px;
+    color: #f56c6c;
+    font-size: 12px;
   }
   </style>

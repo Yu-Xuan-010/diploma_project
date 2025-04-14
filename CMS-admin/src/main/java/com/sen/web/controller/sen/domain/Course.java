@@ -54,6 +54,9 @@ public class Course extends BaseEntity
     /** 学习人数 */
     private Long studentCount;
 
+    /** 驳回原因 */
+    private String rejectReason;
+
     public void setId(Long id) 
     {
         this.id = id;
@@ -154,6 +157,16 @@ public class Course extends BaseEntity
         return studentCount;
     }
 
+    public void setRejectReason(String rejectReason) 
+    {
+        this.rejectReason = rejectReason;
+    }
+
+    public String getRejectReason() 
+    {
+        return rejectReason;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -168,6 +181,7 @@ public class Course extends BaseEntity
             .append("status", getStatus())
             .append("teacherId", getTeacherId())
             .append("studentCount", getStudentCount())
+            .append("rejectReason", getRejectReason())
             .toString();
     }
 }

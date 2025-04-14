@@ -21,4 +21,10 @@ public interface CourseService {
 
     List<Course> listCourses(Long categoryId, String status, int page, int pageSize);
     int countCourses(Long categoryId, String status);
+
+    /**
+     * 获取教师的所有课程
+     * @param teacherId 教师ID
+     * @return 课程列表
+     */
 } 

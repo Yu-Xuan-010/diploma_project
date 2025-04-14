@@ -34,5 +34,8 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(false, message, null);
     }
+    public static <T> ApiResponse<T> success() {
+        return new ApiResponse<>(true, "操作成功", null);
+    }
 }
 

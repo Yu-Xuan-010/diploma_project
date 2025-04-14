@@ -2,6 +2,7 @@ package com.sen.web.controller.sen.controller;
 
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 import com.sen.web.controller.sen.domain.Course;
 import com.sen.web.controller.sen.service.ICourseService;
@@ -101,5 +102,33 @@ public class CourseController extends BaseController
     public AjaxResult remove(@PathVariable Long[] ids)
     {
         return toAjax(courseService.deleteCourseByIds(ids));
+    }
+
+    /**
+     * 更新课程状态
+     */
+    @PreAuthorize("@ss.hasPermi('system:course:edit')")
+    @Log(title = "课程列表", businessType = BusinessType.UPDATE)
+    @PutMapping("/status/{id}")
+    public AjaxResult updateStatus(@PathVariable("id") Long id, @RequestBody Map<String, String> request)
+    {
+        String status = request.get("status");
+        String rejectReason = request.get("rejectReason");
+        
+        if (status == null || status.isEmpty()) {
+            return AjaxResult.error("状态不能为空");
+        }
+        
+        Course course = courseService.selectCourseById(id);
+        if (course == null) {
+            return AjaxResult.error("课程不存在");
+        }
+        
+        course.setStatus(status);
+        if ("rejected".equals(status) && rejectReason != null) {
+            course.setRejectReason(rejectReason);
+        }
+        
+        return toAjax(courseService.updateCourse(course));
     }
 }

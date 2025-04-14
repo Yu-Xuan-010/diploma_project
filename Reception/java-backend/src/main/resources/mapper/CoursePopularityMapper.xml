@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.CoursePopularityMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.CoursePopularity">
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="course_name" property="courseName"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="student_count" property="studentCount"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByCourseId" resultMap="BaseResultMap">
+        SELECT * FROM course_popularity WHERE course_id = #{courseId}
+    </select>
+
+    <update id="incrementViewCount">
+        UPDATE course_popularity 
+        SET view_count = view_count + 1,
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+    </update>
+
+    <update id="incrementStudentCount">
+        UPDATE course_popularity 
+        SET student_count = student_count + 1,
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+    </update>
+
+    <select id="selectTopByPopularity" resultMap="BaseResultMap">
+        SELECT cp.*, c.status
+        FROM course_popularity cp
+        JOIN course c ON cp.course_id = c.id
+        WHERE c.status = 'approved'
+        ORDER BY (cp.view_count * 0.6 + cp.student_count * 0.4) DESC
+        LIMIT #{limit}
+    </select>
+</mapper> 

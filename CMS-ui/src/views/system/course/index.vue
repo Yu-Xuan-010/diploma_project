@@ -198,6 +198,7 @@
 
 <script>
 import {listCourse, getCourse, delCourse, addCourse, updateCourse} from "@/api/system/course";
+import request from "@/utils/request";
 
 export default {
   name: "Course",
@@ -414,14 +415,19 @@ export default {
       this.$refs["reviewForm"].validate(valid => {
         if (valid) {
           const data = {
-            id: this.reviewForm.id,
             status: this.reviewForm.status,
             rejectReason: this.reviewForm.status === "rejected" ? this.reviewForm.rejectReason : null
           };
-          updateCourse(data).then(response => {
+          request({
+            url: `/system/course/status/${this.reviewForm.id}`,
+            method: 'put',
+            data: data
+          }).then(response => {
             this.$modal.msgSuccess("审核成功");
             this.reviewOpen = false;
             this.getList();
+          }).catch(error => {
+            this.$modal.msgError("审核失败：" + error.message);
           });
         }
       });

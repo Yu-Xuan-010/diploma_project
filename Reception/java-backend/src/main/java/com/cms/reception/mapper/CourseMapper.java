@@ -41,9 +41,14 @@ public interface CourseMapper {
         @Param("status") String status
     );
 
-
-
     List<Course> selectTop5ByPopularity();
 
     int incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 根据教师ID查询课程列表
+     * @param teacherId 教师ID
+     * @return 课程列表
+     */
+    List<Course> selectByTeacherId(Long teacherId);
 }

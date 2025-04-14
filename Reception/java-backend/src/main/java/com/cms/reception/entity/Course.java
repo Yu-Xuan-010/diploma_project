@@ -74,6 +74,15 @@ public class Course extends BaseEntity
     /** 课程浏览次数 */
     private Integer viewCount;  // 从 course_popularity 表中获取
 
+    /** 拒绝理由 */
+    private String rejectReason;
+
+    /** 关联字段 */
+    private String teacherName;
+
+    /** 课程流行度 */
+    private CoursePopularity popularity;
+
     public void setId(Long id) 
     {
         this.id = id;
@@ -174,6 +183,16 @@ public class Course extends BaseEntity
         return studentCount;
     }
 
+    public void setRejectReason(String rejectReason) 
+    {
+        this.rejectReason = rejectReason;
+    }
+
+    public String getRejectReason() 
+    {
+        return rejectReason;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -194,6 +213,9 @@ public class Course extends BaseEntity
             .append("createTime", getCreateTime())
             .append("updateTime", getUpdateTime())
             .append("viewCount", getViewCount())
+            .append("rejectReason", getRejectReason())
+            .append("teacherName", getTeacherName())
+            .append("popularity", getPopularity())
             .toString();
     }
 }

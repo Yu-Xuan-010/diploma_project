@@ -14,12 +14,24 @@
         <result column="average_rating" property="averageRating"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
+        <result column="category_name" property="categoryName"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <association property="popularity" javaType="com.cms.reception.entity.CoursePopularity">
+            <id column="popularity_id" property="id"/>
+            <result column="course_id" property="courseId"/>
+            <result column="popularity_course_name" property="courseName"/>
+            <result column="view_count" property="viewCount"/>
+            <result column="student_count" property="studentCount"/>
+            <result column="created_at" property="createdAt"/>
+            <result column="updated_at" property="updatedAt"/>
+        </association>
     </resultMap>
 
     <sql id="Base_Column_List">
         c.id, c.name, c.description, c.image, c.category_id, c.teacher_id, c.status, 
         COALESCE(cp.view_count, 0) as view_count, c.student_count, c.average_rating, 
-        c.created_at, c.updated_at
+        c.created_at, c.updated_at, cat.name as category_name, u.username as teacher_name
     </sql>
 
     <select id="selectCourseList" resultMap="BaseResultMap">
@@ -27,6 +39,8 @@
         <include refid="Base_Column_List"/>
         FROM course c
         LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        LEFT JOIN category cat ON c.category_id = cat.id
+        LEFT JOIN user u ON c.teacher_id = u.id
         <where>
             <if test="categoryId != null">
                 AND c.category_id = #{categoryId}
@@ -57,6 +71,8 @@
         <include refid="Base_Column_List"/>
         FROM course c
         LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        LEFT JOIN category cat ON c.category_id = cat.id
+        LEFT JOIN user u ON c.teacher_id = u.id
         WHERE c.id = #{id}
     </select>
 
@@ -82,6 +98,7 @@
             <if test="status != null">status = #{status},</if>
             <if test="studentCount != null">student_count = #{studentCount},</if>
             <if test="averageRating != null">average_rating = #{averageRating},</if>
+            <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
             updated_at = #{updatedAt}
         </set>
         WHERE id = #{id}
@@ -93,11 +110,17 @@
 
     <select id="selectTop5ByPopularity" resultMap="BaseResultMap">
         SELECT 
-        <include refid="Base_Column_List"/>
+            c.*,
+            cat.name as category_name,
+            u.username as teacher_name,
+            cp.view_count,
+            cp.student_count
         FROM course c
+        LEFT JOIN category cat ON c.category_id = cat.id
+        LEFT JOIN user u ON c.teacher_id = u.id
         LEFT JOIN course_popularity cp ON c.id = cp.course_id
         WHERE c.status = 'approved'
-        ORDER BY COALESCE(cp.view_count, 0) DESC, c.created_at DESC
+        ORDER BY (cp.view_count * 0.6 + cp.student_count * 0.4) DESC
         LIMIT 5
     </select>
 
@@ -112,6 +135,8 @@
         <include refid="Base_Column_List"/>
         FROM course c
         LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        LEFT JOIN category cat ON c.category_id = cat.id
+        LEFT JOIN user u ON c.teacher_id = u.id
         WHERE c.teacher_id = #{teacherId}
         ORDER BY c.created_at DESC
     </select>
@@ -121,8 +146,25 @@
         <include refid="Base_Column_List"/>
         FROM course c
         LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        LEFT JOIN category cat ON c.category_id = cat.id
         WHERE c.category_id = #{categoryId}
         AND c.status = 'approved'
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="selectByTeacherId" resultMap="BaseResultMap">
+        SELECT 
+            c.*,
+            cat.name as category_name,
+            u.username as teacher_name,
+            cp.view_count,
+            cp.student_count,
+            cp.course_name as popularity_course_name
+        FROM course c
+        LEFT JOIN category cat ON c.category_id = cat.id
+        LEFT JOIN user u ON c.teacher_id = u.id
+        LEFT JOIN course_popularity cp ON c.id = cp.course_id
+        WHERE c.teacher_id = #{teacherId}
         ORDER BY c.created_at DESC
     </select>
 </mapper> 

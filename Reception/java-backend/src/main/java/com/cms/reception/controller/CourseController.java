@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.cms.reception.entity.User;
+import com.cms.reception.service.UserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/courses")  // 添加 /api 前缀
@@ -24,6 +29,9 @@ public class CourseController {
 
     @Autowired
     private CourseService courseService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/search")
     public ResponseEntity<List<Course>> searchCourses(@RequestParam String keyword) {
@@ -131,6 +139,104 @@ public class CourseController {
         } catch (Exception e) {
             log.error("获取课程列表失败", e);
             return ResponseEntity.badRequest().body(new ApiResponse(false, "获取课程列表失败: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ApiResponse<List<Course>> getMyCourses() {
+        try {
+            // 从 SecurityContext 获取当前用户
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            log.info("当前用户: {}", username);
+            
+            // 获取当前用户ID
+            User user = userService.getUserByUsername(username);
+            if (user == null) {
+                log.error("用户不存在: {}", username);
+                return ApiResponse.error("用户不存在");
+            }
+            log.info("用户ID: {}, 角色: {}", user.getId(), user.getRole());
+            
+            // 获取该教师的所有课程
+            List<Course> courses = courseService.getCoursesByTeacherId(user.getId());
+            log.info("获取到课程数量: {}", courses.size());
+            
+            // 记录每个课程的基本信息
+            for (Course course : courses) {
+                log.info("课程信息 - ID: {}, 名称: {}, 状态: {}", 
+                    course.getId(), course.getName(), course.getStatus());
+            }
+            
+            return ApiResponse.success(courses);
+        } catch (Exception e) {
+            log.error("获取教师课程列表失败", e);
+            return ApiResponse.error("获取课程列表失败：" + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ApiResponse<?> deleteCourse(@PathVariable Long id) {
+        try {
+            // 从 SecurityContext 获取当前用户
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            
+            // 获取当前用户ID
+            User user = userService.getUserByUsername(username);
+            if (user == null) {
+                return ApiResponse.error("用户不存在");
+            }
+            
+            // 获取课程信息
+            Course course = courseService.getCourseById(id);
+            if (course == null) {
+                return ApiResponse.error("课程不存在");
+            }
+            
+            // 验证课程是否属于当前教师
+            if (!course.getTeacherId().equals(user.getId())) {
+                return ApiResponse.error("无权删除此课程");
+            }
+            
+            // 删除课程
+            courseService.deleteCourse(id);
+            return ApiResponse.success("删除成功");
+        } catch (Exception e) {
+            log.error("删除课程失败", e);
+            return ApiResponse.error("删除课程失败：" + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateCourseStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+            String rejectReason = request.get("rejectReason");  // 获取驳回原因
+            
+            if (status == null || status.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "状态不能为空"));
+            }
+            
+            Course course = courseService.getCourseById(id);
+            if (course == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            course.setStatus(status);
+            if ("rejected".equals(status) && rejectReason != null) {
+                course.setRejectReason(rejectReason);  // 设置驳回原因
+            }
+            
+            courseService.updateCourse(course);
+            return ResponseEntity.ok(new ApiResponse(true, "课程状态更新成功"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "更新课程状态失败：" + e.getMessage()));
         }
     }
 }

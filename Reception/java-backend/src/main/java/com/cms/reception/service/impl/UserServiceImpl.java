@@ -4,6 +4,7 @@ import com.cms.reception.entity.User;
 import com.cms.reception.entity.TeacherApplication;
 import com.cms.reception.entity.ApplicationStatus;
 import com.cms.reception.dto.TeacherApplicationDTO;
+import com.cms.reception.mapper.UserMapper;
 import com.cms.reception.repository.UserRepository;
 import com.cms.reception.repository.TeacherApplicationRepository;
 import com.cms.reception.repository.MajorRepository;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final TeacherApplicationRepository teacherApplicationRepository;
     private final MajorRepository majorRepository;
+    private final UserMapper userMapper;
 
     @Override
     public User register(User user) {
@@ -194,5 +196,10 @@ public class UserServiceImpl implements UserService {
     public TeacherApplication getTeacherApplication(Long userId) {
         return teacherApplicationRepository.findFirstByUserId(userId)
             .orElseThrow(() -> new EntityNotFoundException("未找到申请记录"));
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userMapper.getUserByUsername(username);
     }
 } 

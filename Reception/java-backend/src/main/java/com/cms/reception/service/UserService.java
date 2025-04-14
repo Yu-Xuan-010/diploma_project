@@ -24,4 +24,6 @@ public interface UserService {
     void updateLoginInfo(Long userId, Integer loginAttempts, Date lastLogin);
     TeacherApplication submitTeacherApplication(TeacherApplicationDTO applicationDTO);
     TeacherApplication getTeacherApplication(Long userId);
+    // UserService.java
+    User getUserByUsername(String username);
 }

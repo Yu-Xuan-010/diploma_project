@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.LessonMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.Lesson">
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="duration" property="duration"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectByCourseId" resultMap="BaseResultMap">
+        SELECT * FROM lesson 
+        WHERE course_id = #{courseId}
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM lesson WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.cms.reception.entity.Lesson" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO lesson (
+            course_id, title, description, video_url, duration, 
+            sort_order, create_time, update_time
+        ) VALUES (
+            #{courseId}, #{title}, #{description}, #{videoUrl}, #{duration},
+            #{sortOrder}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.cms.reception.entity.Lesson">
+        UPDATE lesson
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM lesson WHERE id = #{id}
+    </delete>
+
+    <select id="getMaxSortOrder" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort_order), 0) FROM lesson WHERE course_id = #{courseId}
+    </select>
+</mapper> 

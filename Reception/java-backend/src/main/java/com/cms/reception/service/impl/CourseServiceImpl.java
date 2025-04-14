@@ -3,6 +3,8 @@ package com.cms.reception.service.impl;
 import com.cms.reception.entity.Course;
 import com.cms.reception.mapper.CourseMapper;
 import com.cms.reception.service.CourseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Service
 public class CourseServiceImpl implements CourseService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseServiceImpl.class);
 
     @Autowired
     private CourseMapper courseMapper;
@@ -39,7 +43,14 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<Course> getCoursesByTeacherId(Long teacherId) {
-        return courseMapper.selectCoursesByTeacherId(teacherId);
+        if (teacherId == null) {
+            log.error("教师ID不能为空");
+            throw new IllegalArgumentException("教师ID不能为空");
+        }
+        log.info("正在获取教师ID为 {} 的课程列表", teacherId);
+        List<Course> courses = courseMapper.selectByTeacherId(teacherId);
+        log.info("成功获取到 {} 个课程", courses.size());
+        return courses;
     }
 
     @Override
