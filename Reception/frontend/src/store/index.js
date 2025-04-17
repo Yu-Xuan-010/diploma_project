@@ -1,5 +1,8 @@
 import { createStore } from 'vuex';
 import axios from 'axios';
+import course from './modules/course';
+import lesson from './modules/lesson';
+import user from './modules/user';
 
 export default createStore({
     state: {
@@ -27,6 +30,20 @@ export default createStore({
         }
     },
     actions: {
+        // 初始化用户状态
+        initializeUserState({ commit }) {
+            const token = localStorage.getItem('token');
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            
+            if (token) {
+                commit('SET_TOKEN', token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
+            
+            if (userInfo && Object.keys(userInfo).length > 0) {
+                commit('SET_USER', userInfo);
+            }
+        },
         // 登录
         async login({ commit }, { username, password }) {
             try {
@@ -81,8 +98,10 @@ export default createStore({
                 console.log('获取用户信息响应:', response.data);
                 
                 if (response.data.success) {
-                    commit('SET_USER', response.data.data);
-                    return response.data.data;
+                    const userInfo = response.data.data;
+                    console.log('用户信息:', userInfo);
+                    commit('SET_USER', userInfo);
+                    return userInfo;
                 } else {
                     throw new Error(response.data.message || '获取用户信息失败');
                 }
@@ -96,5 +115,10 @@ export default createStore({
             commit('CLEAR_USER');
             delete axios.defaults.headers.common['Authorization'];
         }
+    },
+    modules: {
+        course,
+        lesson,
+        user
     }
 });

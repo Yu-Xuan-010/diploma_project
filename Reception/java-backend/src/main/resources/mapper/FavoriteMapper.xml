@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.FavoriteMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.Favorite">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="course_name" property="courseName"/>
+        <result column="course_image" property="courseImage"/>
+        <result column="teacher_name" property="teacherName"/>
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT 
+            f.*,
+            c.name as course_name,
+            c.image as course_image,
+            u.username as teacher_name
+        FROM favorites f
+        LEFT JOIN course c ON f.course_id = c.id
+        LEFT JOIN user u ON c.teacher_id = u.id
+        WHERE f.user_id = #{userId}
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="selectByUserIdAndCourseId" resultMap="BaseResultMap">
+        SELECT * FROM favorites 
+        WHERE user_id = #{userId} AND course_id = #{courseId}
+    </select>
+
+    <insert id="insert" parameterType="com.cms.reception.entity.Favorite" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO favorites (
+            user_id,
+            course_id,
+            create_time
+        ) VALUES (
+            #{userId},
+            #{courseId},
+            NOW()
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM favorites WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByUserIdAndCourseId">
+        DELETE FROM favorites 
+        WHERE user_id = #{userId} AND course_id = #{courseId}
+    </delete>
+
+    <select id="countByCourseId" resultType="int">
+        SELECT COUNT(*) FROM favorites WHERE course_id = #{courseId}
+    </select>
+</mapper> 

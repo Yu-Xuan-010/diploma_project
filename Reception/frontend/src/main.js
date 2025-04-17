@@ -91,10 +91,18 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 初始化用户状态
-store.dispatch('initializeUserState')
+// 注册插件
+app.use(store)
+   .use(router)
+   .use(ElementPlus, {
+     locale: zhCn,
+   });
 
-app.use(ElementPlus).use(store).use(router).mount('#app').use(ElementPlus, { locale: zhCn });
+// 初始化用户状态
+store.dispatch('initializeUserState');
+
+// 挂载应用
+app.mount('#app');
 
 // 全局错误处理
 app.config.errorHandler = (err, vm, info) => {

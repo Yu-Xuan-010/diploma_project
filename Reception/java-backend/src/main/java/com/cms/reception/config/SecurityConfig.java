@@ -1,6 +1,7 @@
 package com.cms.reception.config;
 
 import com.cms.reception.filter.JwtAuthenticationFilter;
+import com.cms.reception.service.UserService;
 import com.cms.reception.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,6 +58,13 @@ public class SecurityConfig {
             .antMatchers("/api/auth/**").permitAll()
             .antMatchers("/api/colleges", "/api/majors").permitAll()
             .antMatchers("/api/user/profile").authenticated()
+            .antMatchers(
+                "/api/courses/*/favorite/check",
+                "/api/courses/*/favorite",
+                "/api/courses/*/favorite/cancel",
+                "/api/courses/favorites",
+                "/api/courses/*/favorite/count"
+            ).authenticated()
             .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -80,8 +88,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService, UserService userService) {
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService, userService);
     }
 
     @Bean

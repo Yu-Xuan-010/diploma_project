@@ -13,17 +13,6 @@ ruoyi:
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
 
-# 七牛云配置
-qiniu:
-  # 访问密钥
-  accessKey: your-access-key
-  # 密钥
-  secretKey: your-secret-key
-  # 存储空间名
-  bucket: your-bucket-name
-  # 访问域名
-  domain: http://your-domain.com
-
 # 开发环境配置
 server:
   # 服务器的HTTP端口，默认为8080

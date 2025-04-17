@@ -243,7 +243,7 @@ export default {
     // 查看课程详情
     async viewCourse(courseId) {
       try {
-        await axios.post(`/api/course/${courseId}/view`)
+        await axios.post(`/api/courses/${courseId}/view`)
         this.$router.push(`/course/${courseId}`)
       } catch (error) {
         console.error('更新课程浏览量失败:', error)

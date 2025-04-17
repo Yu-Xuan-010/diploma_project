@@ -419,15 +419,13 @@ export default {
             rejectReason: this.reviewForm.status === "rejected" ? this.reviewForm.rejectReason : null
           };
           request({
-            url: `/system/course/status/${this.reviewForm.id}`,
+            url: `/api/courses/${this.reviewForm.id}/status`,
             method: 'put',
             data: data
           }).then(response => {
             this.$modal.msgSuccess("审核成功");
             this.reviewOpen = false;
             this.getList();
-          }).catch(error => {
-            this.$modal.msgError("审核失败：" + error.message);
           });
         }
       });

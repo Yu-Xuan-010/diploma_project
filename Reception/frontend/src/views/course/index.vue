@@ -118,7 +118,15 @@ export default {
       this.getList()
     },
     viewCourse(id) {
-      this.$router.push(`/course/detail/${id}`)
+      // 发送浏览请求
+      this.$axios.post(`/api/courses/${id}/view`)
+        .then(() => {
+          this.$router.push(`/course/${id}`)
+        })
+        .catch(error => {
+          console.error('更新课程浏览量失败:', error)
+          this.$message.error('更新课程浏览量失败')
+        })
     }
   }
 }

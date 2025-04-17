@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.CourseCommentReplyMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.CourseCommentReply">
+        <id column="id" property="id"/>
+        <result column="comment_id" property="commentId"/>
+        <result column="user_id" property="userId"/>
+        <result column="content" property="content"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_avatar" property="userAvatar"/>
+    </resultMap>
+
+    <select id="selectByCommentId" resultMap="BaseResultMap">
+        SELECT 
+            cr.*,
+            u.username as user_name,
+            u.avatar as user_avatar
+        FROM course_comment_reply cr
+        LEFT JOIN user u ON cr.user_id = u.id
+        WHERE cr.comment_id = #{commentId}
+        ORDER BY cr.create_time ASC
+    </select>
+
+    <insert id="insert" parameterType="com.cms.reception.entity.CourseCommentReply" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course_comment_reply (
+            comment_id,
+            user_id,
+            content,
+            create_time,
+            update_time
+        ) VALUES (
+            #{commentId},
+            #{userId},
+            #{content},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM course_comment_reply WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT 
+            cr.*,
+            u.username as user_name,
+            u.avatar as user_avatar
+        FROM course_comment_reply cr
+        LEFT JOIN user u ON cr.user_id = u.id
+        WHERE cr.id = #{id}
+    </select>
+</mapper> 

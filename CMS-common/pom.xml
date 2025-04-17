@@ -119,13 +119,6 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
-        <!-- 七牛云存储 -->
-        <dependency>
-            <groupId>com.qiniu</groupId>
-            <artifactId>qiniu-java-sdk</artifactId>
-            <version>7.12.1</version>
-        </dependency>
-
     </dependencies>
 
 </project>

@@ -10,11 +10,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8001',  // 后端服务器地址
         changeOrigin: true,
-        configure(proxy,options){
-          proxy.on("proxyReq",(proxyReq)=>{
-            proxyReq.removeHeader("origin");
-          });
-        }
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },

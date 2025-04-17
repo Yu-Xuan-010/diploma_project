@@ -45,10 +45,11 @@ public class LessonController {
         }
     }
 
-    @PostMapping
+    @PostMapping("/course/{courseId}")
     @PreAuthorize("hasRole('TEACHER')")
-    public ApiResponse<Lesson> createLesson(@RequestBody Lesson lesson) {
+    public ApiResponse<Lesson> createLessonForCourse(@PathVariable Long courseId, @RequestBody Lesson lesson) {
         try {
+            lesson.setCourseId(courseId);
             Lesson createdLesson = lessonService.createLesson(lesson);
             return ApiResponse.success(createdLesson);
         } catch (Exception e) {

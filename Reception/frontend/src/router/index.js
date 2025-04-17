@@ -60,6 +60,24 @@ const routes = [
       }
     ]
   },
+  {
+    path: '/course',
+    name: 'CourseList',
+    component: () => import('../views/course/index.vue'),
+    meta: { title: '课程列表' }
+  },
+  {
+    path: '/course/:courseId',
+    name: 'CourseDetail',
+    component: () => import('../views/course/detail.vue'),
+    meta: { title: '课程详情' }
+  },
+  {
+    path: '/course/:courseId/lesson/:lessonId',
+    name: 'LessonPlayer',
+    component: () => import('../views/course/lesson.vue'),
+    meta: { title: '课时学习' }
+  },
   // 添加通配符路由
   {
     path: '/:pathMatch(.*)*',

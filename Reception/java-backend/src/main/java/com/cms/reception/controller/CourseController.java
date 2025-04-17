@@ -239,4 +239,17 @@ public class CourseController {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "更新课程状态失败：" + e.getMessage()));
         }
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCourseById(@PathVariable Long id) {
+        try {
+            Course course = courseService.getCourseById(id);
+            if (course == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(new ApiResponse(true, "获取课程详情成功", course));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "获取课程详情失败: " + e.getMessage()));
+        }
+    }
 }

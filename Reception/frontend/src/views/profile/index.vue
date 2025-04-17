@@ -157,7 +157,7 @@
                   <el-input v-else v-model="userInfo.address" placeholder="请输入地址"></el-input>
                 </el-form-item>
                 <el-form-item label="所属学院">
-                  <span v-if="!isEditing">{{ userInfo.college || '未设置' }}</span>
+                  <span v-if="!isEditing">{{ userInfo.college?.name || '未设置' }}</span>
                   <el-select v-else v-model="selectedCollegeId" placeholder="请选择学院" @change="handleCollegeChange">
                     <el-option
                       v-for="college in colleges"
@@ -168,7 +168,7 @@
                   </el-select>
                 </el-form-item>
                 <el-form-item label="所属专业">
-                  <span v-if="!isEditing">{{ userInfo.major || '未设置' }}</span>
+                  <span v-if="!isEditing">{{ userInfo.major?.name || '未设置' }}</span>
                   <el-select v-else v-model="userInfo.majorId" placeholder="请选择专业" :disabled="!selectedCollegeId">
                     <el-option
                       v-for="major in filteredMajors"
@@ -395,13 +395,20 @@
           </div>
 
           <!-- 课时管理对话框 -->
-          <el-dialog v-model="lessonDialogVisible" :title="currentCourse ? currentCourse.name + ' - 课时管理' : '课时管理'" width="800px">
+          <el-dialog
+            v-model="lessonDialogVisible"
+            :title="currentCourse ? currentCourse.name + ' - 课时管理' : '课时管理'"
+            width="800px"
+            :close-on-click-modal="false"
+            :close-on-press-escape="false"
+            destroy-on-close
+          >
             <div class="lesson-management">
               <div class="lesson-header">
                 <h3>课时列表</h3>
                 <el-button type="primary" @click="showAddLessonDialog">添加课时</el-button>
               </div>
-              <el-table :data="lessons" style="width: 100%">
+              <el-table v-if="lessons.length > 0" :data="lessons" style="width: 100%">
                 <el-table-column prop="title" label="课时标题"></el-table-column>
                 <el-table-column prop="duration" label="时长">
                   <template #default="scope">
@@ -420,8 +427,9 @@
                   </template>
                 </el-table-column>
               </el-table>
-        </div>
-      </el-dialog>
+              <el-empty v-else description="暂无课时" />
+            </div>
+          </el-dialog>
 
           <!-- 添加/编辑课时对话框 -->
           <el-dialog v-model="lessonFormDialogVisible" :title="editingLesson ? '编辑课时' : '添加课时'" width="500px">
@@ -445,6 +453,19 @@
                 >
                   <el-button type="primary">选择视频文件</el-button>
                 </el-upload>
+                <!-- 添加视频预览 -->
+                <div v-if="lessonForm.videoUrl" class="video-preview">
+                  <video 
+                    :src="lessonForm.videoUrl" 
+                    controls 
+                    class="preview-video"
+                  ></video>
+                  <div class="video-actions">
+                    <el-button type="danger" link @click="removeVideo">
+                      删除视频
+                    </el-button>
+                  </div>
+                </div>
               </el-form-item>
               <el-form-item label="排序" prop="sortOrder">
                 <el-input-number v-model="lessonForm.sortOrder" :min="0"></el-input-number>
@@ -583,19 +604,57 @@
       const passwordDialogVisible = ref(false)
       const applyTeacherDialogVisible = ref(false)
       const rejectReasonDialogVisible = ref(false)
+      const lessonDialogVisible = ref(false)
+      const lessonFormDialogVisible = ref(false)
+      const currentCourse = ref(null)
+      const lessons = ref([])
+      const editingLesson = ref(null)
+      const lessonFormRef = ref(null)
+
+      const lessonForm = ref({
+        title: '',
+        description: '',
+        videoUrl: '',
+        sortOrder: 0,
+        duration: 0
+      })
+
+      const lessonRules = {
+        title: [
+          { required: true, message: '请输入课时标题', trigger: 'blur' },
+          { min: 2, max: 50, message: '标题长度在2-50个字符之间', trigger: 'blur' }
+        ],
+        description: [
+          { required: true, message: '请输入课时描述', trigger: 'blur' }
+        ],
+        videoUrl: [
+          { required: true, message: '请上传课时视频', trigger: 'change' }
+        ],
+        sortOrder: [
+          { required: true, message: '请输入排序序号', trigger: 'blur' },
+          { type: 'number', message: '排序序号必须为数字', trigger: 'blur' }
+        ]
+      }
+
       const uploadHeaders = computed(() => ({
         Authorization: `Bearer ${store.state.token}`
       }))
 
       // 使用可选链操作符来安全访问 store.state
-      const isTeacher = computed(() => store?.state?.userInfo?.role === 'teacher')
+      const isTeacher = computed(() => {
+        const role = store?.state?.userInfo?.role?.toLowerCase()
+        console.log('检查是否为教师，当前角色:', role)
+        return role === 'teacher'
+      })
       const roleText = computed(() => {
         const roleMap = {
           'student': '学生',
           'teacher': '教师',
           'admin': '管理员'
         }
-        return roleMap[store?.state?.userInfo?.role] || '未知'
+        const role = store?.state?.userInfo?.role?.toLowerCase() || 'student'
+        console.log('当前用户角色:', role)
+        return roleMap[role] || '未知'
       })
   
       const userInfo = ref({
@@ -818,50 +877,29 @@
       // 获取用户信息
       const fetchUserInfo = async () => {
         try {
+          console.log('开始获取用户信息')
           const response = await getProfile()
-          // 获取用户数据
           const userData = response.data
-          console.log('获取到的用户数据:', userData)
-          
-          // 处理性别值转换
-          let genderValue = userData.gender || 'other'
+          console.log('获取到的原始用户数据:', userData)
+          console.log('用户角色值:', userData.role)
           
           // 更新用户信息
-          userInfo.value = {
+          const updatedUserInfo = {
             ...userInfo.value,
             ...userData,
-            // 确保这些字段有默认值
-            username: userData.username || '',
-            email: userData.email || '',
-            phoneNumber: userData.phoneNumber || '',
-            avatar: userData.avatar || '',
-            gender: genderValue,
-            college: userData.college?.name || '',
-            major: userData.major?.name || '',
-            collegeId: userData.collegeId || null,
-            majorId: userData.majorId || null,
-            realName: userData.realName || '',
-            nickname: userData.nickname || '',
-            birthday: userData.birthday || '',
-            address: userData.address || ''
+            role: userData.role?.toLowerCase() || 'student'
           }
           
-          // 更新 Vuex store 中的用户信息
-          store.commit('setUserInfo', {
-            ...store.state.userInfo,
-            ...userData,
-            role: userData.role || 'student'
-          })
+          console.log('更新后的用户信息:', updatedUserInfo)
+          console.log('更新后的角色值:', updatedUserInfo.role)
           
-          // 设置选中的学院ID
-          if (userData.collegeId) {
-            selectedCollegeId.value = userData.collegeId
-          }
+          // 更新 Vuex store
+          store.commit('user/setUserInfo', updatedUserInfo)
           
-          console.log('处理后的用户信息:', userInfo.value)
+          // 更新本地状态
+          userInfo.value = updatedUserInfo
         } catch (error) {
           console.error('获取用户信息失败:', error)
-          ElMessage.error('获取用户信息失败')
         }
       }
   
@@ -1285,36 +1323,6 @@
   
       // 新增的课程相关逻辑
       const myCourses = ref([])
-      const currentCourse = ref(null)
-      const lessons = ref([])
-      const lessonDialogVisible = ref(false)
-      const lessonFormDialogVisible = ref(false)
-      const editingLesson = ref(null)
-      const lessonFormRef = ref(null)
-
-      const lessonForm = ref({
-        title: '',
-        description: '',
-        videoUrl: '',
-        sortOrder: 0
-      })
-
-      const lessonRules = {
-        title: [
-          { required: true, message: '请输入课时标题', trigger: 'blur' },
-          { min: 2, max: 50, message: '标题长度在2-50个字符之间', trigger: 'blur' }
-        ],
-        description: [
-          { required: true, message: '请输入课时描述', trigger: 'blur' }
-        ],
-        videoUrl: [
-          { required: true, message: '请上传课时视频', trigger: 'change' }
-        ],
-        sortOrder: [
-          { required: true, message: '请输入排序序号', trigger: 'blur' },
-          { type: 'number', message: '排序序号必须为数字', trigger: 'blur' }
-        ]
-      }
 
       // 获取我的课程列表
       const fetchMyCourses = async () => {
@@ -1350,27 +1358,34 @@
 
       // 管理课时
       const manageLessons = async (course) => {
-        currentCourse.value = course
-        lessonDialogVisible.value = true
-        await fetchLessons(course.id)
-      }
-
-      // 获取课时列表
-      const fetchLessons = async (courseId) => {
+        console.log('点击管理课时按钮，课程信息：', course)
         try {
-          const response = await axios.get(`/api/lessons/course/${courseId}`, {
+          // 先设置当前课程和显示对话框
+          currentCourse.value = course
+          lessonDialogVisible.value = true
+          
+          // 获取课时列表
+          const response = await axios.get(`/api/lessons/course/${course.id}`, {
             headers: {
               Authorization: `Bearer ${store.state.token}`
             }
           })
-          if (response.data.success) {
-            lessons.value = response.data.data
+          
+          console.log('获取课时列表响应：', response)
+          
+          if (response.data.success) {  // 修改判断条件
+            lessons.value = response.data.data || []
+            console.log('设置课时列表：', lessons.value)
           } else {
             ElMessage.error(response.data.message || '获取课时列表失败')
+            // 如果获取失败，关闭对话框
+            lessonDialogVisible.value = false
           }
         } catch (error) {
-          console.error('获取课时列表失败:', error)
+          console.error('管理课时出错：', error)
           ElMessage.error('获取课时列表失败')
+          // 如果出错，关闭对话框
+          lessonDialogVisible.value = false
         }
       }
 
@@ -1381,7 +1396,8 @@
           title: '',
           description: '',
           videoUrl: '',
-          sortOrder: lessons.value.length + 1
+          sortOrder: lessons.value.length + 1,
+          duration: 0
         }
         lessonFormDialogVisible.value = true
       }
@@ -1393,7 +1409,8 @@
           title: lesson.title,
           description: lesson.description,
           videoUrl: lesson.videoUrl,
-          sortOrder: lesson.sortOrder
+          sortOrder: lesson.sortOrder,
+          duration: lesson.duration
         }
         lessonFormDialogVisible.value = true
       }
@@ -1411,9 +1428,17 @@
             }
           })
           
-          if (response.data.code === 200) {
+          if (response.data.success) {
             ElMessage.success('删除成功')
-            await fetchLessons(currentCourse.value.id)
+            // 重新获取课时列表
+            const lessonsResponse = await axios.get(`/api/lessons/course/${currentCourse.value.id}`, {
+              headers: {
+                Authorization: `Bearer ${store.state.token}`
+              }
+            })
+            if (lessonsResponse.data.success) {
+              lessons.value = lessonsResponse.data.data || []
+            }
           } else {
             ElMessage.error(response.data.message || '删除失败')
           }
@@ -1438,7 +1463,7 @@
             }
           })
           
-          if (response.data.code === 200) {
+          if (response.data.success) {
             ElMessage.success('删除成功')
             // 重新获取课程列表
             await fetchMyCourses()
@@ -1480,8 +1505,16 @@
 
       // 视频上传成功回调
       const handleVideoSuccess = (response) => {
-        if (response.code === 200) {
+        console.log('视频上传响应:', response)
+        if (response.success) {
           lessonForm.value.videoUrl = response.data
+          // 计算视频时长
+          const video = document.createElement('video')
+          video.src = response.data
+          video.onloadedmetadata = () => {
+            lessonForm.value.duration = Math.round(video.duration)
+            console.log('视频时长:', lessonForm.value.duration, '秒')
+          }
           ElMessage.success('视频上传成功')
         } else {
           ElMessage.error(response.message || '视频上传失败')
@@ -1491,7 +1524,7 @@
       // 视频上传失败回调
       const handleVideoError = (error) => {
         console.error('视频上传失败:', error)
-        ElMessage.error('视频上传失败')
+        ElMessage.error('视频上传失败：' + (error.message || '未知错误'))
       }
 
       // 视频上传前的验证
@@ -1507,6 +1540,9 @@
           ElMessage.error('视频大小不能超过 2GB！')
           return false
         }
+        
+        // 显示上传进度
+        ElMessage.info('视频上传中，请稍候...')
         return true
       }
 
@@ -1517,28 +1553,48 @@
         try {
           await lessonFormRef.value.validate()
           
+          // 确保有视频时长
+          if (!lessonForm.value.duration) {
+            ElMessage.warning('正在计算视频时长，请稍候...')
+            return
+          }
+          
           const url = editingLesson.value 
             ? `/api/lessons/${editingLesson.value.id}`
-            : `/api/courses/${currentCourse.value.id}/lessons`
+            : `/api/lessons/course/${currentCourse.value.id}`
           
           const method = editingLesson.value ? 'put' : 'post'
           
-          const response = await axios[method](url, lessonForm.value, {
+          // 准备要发送的数据
+          const lessonData = {
+            ...lessonForm.value,
+            duration: lessonForm.value.duration // 确保包含时长字段
+          }
+          
+          const response = await axios[method](url, lessonData, {
             headers: {
               Authorization: `Bearer ${store.state.token}`
             }
           })
           
-          if (response.data.code === 200) {
+          if (response.data.success) {
             ElMessage.success(editingLesson.value ? '更新成功' : '添加成功')
             lessonFormDialogVisible.value = false
-            await fetchLessons(currentCourse.value.id)
+            // 重新获取课时列表
+            const lessonsResponse = await axios.get(`/api/lessons/course/${currentCourse.value.id}`, {
+              headers: {
+                Authorization: `Bearer ${store.state.token}`
+              }
+            })
+            if (lessonsResponse.data.success) {
+              lessons.value = lessonsResponse.data.data || []
+            }
           } else {
             ElMessage.error(response.data.message || (editingLesson.value ? '更新失败' : '添加失败'))
           }
         } catch (error) {
           console.error('保存课时失败:', error)
-          ElMessage.error('保存课时失败')
+          ElMessage.error('保存课时失败：' + (error.response?.data?.message || '未知错误'))
         }
       }
 
@@ -1581,6 +1637,11 @@
       const showRejectReason = (course) => {
         currentCourse.value = course
         rejectReasonDialogVisible.value = true
+      }
+
+      // 在 setup 函数中添加 removeVideo 方法
+      const removeVideo = () => {
+        lessonForm.value.videoUrl = ''
       }
 
       return {
@@ -1653,7 +1714,10 @@
         getStatusType,
         getStatusText,
         rejectReasonDialogVisible,
-        showRejectReason
+        showRejectReason,
+        lessonDialogVisible,
+        lessonFormDialogVisible,
+        removeVideo
       }
     }
   }
@@ -1847,5 +1911,22 @@
     margin-top: 4px;
     color: #f56c6c;
     font-size: 12px;
+  }
+
+  .video-preview {
+    margin-top: 15px;
+    
+    .preview-video {
+      width: 100%;
+      max-height: 300px;
+      border-radius: 4px;
+      background-color: #f5f7fa;
+    }
+    
+    .video-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
   }
   </style>
