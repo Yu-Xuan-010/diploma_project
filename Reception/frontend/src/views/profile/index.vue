@@ -944,13 +944,15 @@
       watch(() => router.currentRoute.value.path, (newPath) => {
         if (newPath === '/profile') {
           fetchUserInfo()
+          fetchFavoriteCourses()
         }
       })
   
-      // 监听 store 中的用户信息变化
+      // 监听收藏课程变化
       watch(() => store.state.userInfo?.id, (newId, oldId) => {
         if (newId !== oldId) {
           fetchUserInfo()
+          fetchFavoriteCourses()
         }
       })
   
@@ -958,6 +960,7 @@
       watch(() => store.state.isLoggedIn, (newValue) => {
         if (newValue) {
           fetchUserInfo()
+          fetchFavoriteCourses()
         }
       })
   
@@ -1016,7 +1019,7 @@
       const removeFavorite = async (courseId) => {
         try {
           console.log('开始取消收藏课程:', courseId)
-          const response = await axios.delete(`/api/courses/favorites/${courseId}`, {
+          const response = await axios.delete(`/api/courses/${courseId}/favorite/cancel`, {
             headers: {
               Authorization: `Bearer ${store.state.token}`
             }
@@ -1025,8 +1028,8 @@
           console.log('取消收藏响应:', response.data)
           
           if (response.data.code === 200) {
-            // 重新从服务器拉取最新收藏课程
-            await store.dispatch('user/updateFavoriteCourses')
+            // 重新获取收藏课程列表
+            await fetchFavoriteCourses()
             
             ElMessage({
               type: 'success',

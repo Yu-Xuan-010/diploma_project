@@ -358,6 +358,11 @@ export default {
         if (response.data.code === 200) {
           isFavorited.value = !isFavorited.value
           ElMessage.success(isFavorited.value ? '收藏成功' : '已取消收藏')
+          
+          // 更新 Vuex store 中的收藏状态
+          if (store.state.user) {
+            store.dispatch('user/updateFavoriteCourses')
+          }
         } else {
           ElMessage.error(response.data.message || (isFavorited.value ? '取消收藏失败' : '收藏失败'))
         }
@@ -382,6 +387,20 @@ export default {
       console.log('标签页变化:', newVal)
       if (newVal === 'comments') {
         getComments()
+      }
+    })
+
+    // 监听路由变化，重新检查收藏状态
+    watch(() => route.params.courseId, (newId, oldId) => {
+      if (newId !== oldId) {
+        checkFavoriteStatus()
+      }
+    })
+
+    // 监听登录状态变化
+    watch(() => store.state.isLoggedIn, (newValue) => {
+      if (newValue) {
+        checkFavoriteStatus()
       }
     })
 
