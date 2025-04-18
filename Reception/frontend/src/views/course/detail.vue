@@ -373,6 +373,12 @@ export default {
     }
 
     onMounted(() => {
+      const courseId = route.params.courseId
+      if (!courseId) {
+        console.warn('courseId 为空，取消加载课程详情')
+        return
+      }
+
       getCourseDetail()
       checkUserComment()
       checkFavoriteStatus()
@@ -392,14 +398,15 @@ export default {
 
     // 监听路由变化，重新检查收藏状态
     watch(() => route.params.courseId, (newId, oldId) => {
-      if (newId !== oldId) {
+      if (newId && newId !== oldId) {
         checkFavoriteStatus()
+        getCourseDetail() // 重新获取课程详情
       }
     })
 
     // 监听登录状态变化
     watch(() => store.state.isLoggedIn, (newValue) => {
-      if (newValue) {
+      if (newValue && route.params.courseId) {
         checkFavoriteStatus()
       }
     })
