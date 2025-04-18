@@ -109,6 +109,24 @@
         </el-tabs>
       </div>
     </el-card>
+    <el-card class="study-records" v-if="studyRecords.length > 0">
+      <template #header>
+        <div class="card-header">
+          <span>学习记录</span>
+        </div>
+      </template>
+      <el-timeline>
+        <el-timeline-item
+          v-for="record in recentStudyRecords"
+          :key="record.id"
+          :timestamp="record.createTime"
+          :type="record.duration >= 300 ? 'success' : 'primary'"
+        >
+          <h4>{{ record.lessonName }}</h4>
+          <p>学习时长：{{ Math.floor(record.duration / 60) }}分钟</p>
+        </el-timeline-item>
+      </el-timeline>
+    </el-card>
   </div>
 </template>
 
@@ -119,6 +137,8 @@ import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import { Picture, Timer, Star, StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
+import VideoPlayer from '@/components/VideoPlayer.vue'
+import { getStudyRecords, getRecentStudyRecords } from '@/api/study'
 
 export default {
   name: 'CourseDetail',
@@ -126,7 +146,8 @@ export default {
     Picture,
     Timer,
     Star,
-    StarFilled
+    StarFilled,
+    VideoPlayer
   },
   setup() {
     const router = useRouter()
@@ -155,6 +176,9 @@ export default {
     const comments = ref([])
     const hasCommented = ref(false)
     const isFavorited = ref(false)
+    const courseId = ref(route.params.courseId)
+    const studyRecords = ref([])
+    const recentStudyRecords = ref([])
 
     const getDefaultAvatar = (name) => {
       return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || '')}`
@@ -372,20 +396,41 @@ export default {
       }
     }
 
+    const fetchCourseDetails = async () => {
+      try {
+        await getCourseDetail()
+        await checkUserComment()
+        await checkFavoriteStatus()
+        if (activeTab.value === 'comments') {
+          await getComments()
+        }
+      } catch (error) {
+        console.error('获取课程详情失败:', error)
+        ElMessage.error('获取课程详情失败')
+      }
+    }
+
+    const fetchStudyRecords = async () => {
+      try {
+        const [recordsResponse, recentResponse] = await Promise.all([
+          getStudyRecords(),
+          getRecentStudyRecords(5)
+        ])
+        studyRecords.value = recordsResponse.data
+        recentStudyRecords.value = recentResponse.data
+      } catch (error) {
+        console.error('获取学习记录失败:', error)
+        ElMessage.error('获取学习记录失败')
+      }
+    }
+
     onMounted(() => {
-      const courseId = route.params.courseId
-      if (!courseId) {
+      if (!courseId.value) {
         console.warn('courseId 为空，取消加载课程详情')
         return
       }
-
-      getCourseDetail()
-      checkUserComment()
-      checkFavoriteStatus()
-      // 如果当前是评论标签页，也加载评论
-      if (activeTab.value === 'comments') {
-        getComments()
-      }
+      fetchCourseDetails()
+      fetchStudyRecords()
     })
 
     // 监听标签页变化
@@ -400,7 +445,7 @@ export default {
     watch(() => route.params.courseId, (newId, oldId) => {
       if (newId && newId !== oldId) {
         checkFavoriteStatus()
-        getCourseDetail() // 重新获取课程详情
+        fetchCourseDetails() // 重新获取课程详情
       }
     })
 
@@ -428,7 +473,10 @@ export default {
       formatTime,
       getDefaultAvatar,
       getInitial,
-      toggleFavorite
+      toggleFavorite,
+      courseId,
+      studyRecords,
+      recentStudyRecords
     }
   }
 }
@@ -642,6 +690,16 @@ export default {
           text-align: center;
         }
       }
+    }
+  }
+
+  .study-records {
+    margin-top: 20px;
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
   }
 }

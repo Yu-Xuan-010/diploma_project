@@ -26,16 +26,11 @@
           </div>
           
           <div class="video-player">
-            <video
-              ref="videoPlayer"
-              class="video-js"
-              controls
-              preload="auto"
-              :poster="currentLesson.coverUrl"
-            >
-              <source :src="currentLesson.videoUrl" type="video/mp4">
-              您的浏览器不支持 HTML5 视频播放
-            </video>
+            <VideoPlayer
+              :video-url="currentLesson.videoUrl"
+              :lesson-id="currentLesson.id"
+              :course-id="courseId"
+            />
           </div>
 
           <div class="lesson-info">
@@ -172,6 +167,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ArrowRight, Timer, VideoPlay, Check } from '@element-plus/icons-vue'
+import VideoPlayer from '@/components/VideoPlayer.vue'
 import axios from 'axios'
 
 export default {
@@ -181,13 +177,13 @@ export default {
     ArrowRight,
     Timer,
     VideoPlay,
-    Check
+    Check,
+    VideoPlayer
   },
   setup() {
     const route = useRoute()
     const router = useRouter()
     const store = useStore()
-    const videoPlayer = ref(null)
     const courseId = route.params.courseId
     const lessonId = route.params.lessonId
 
@@ -461,7 +457,7 @@ export default {
       totalLessons,
       prevLesson,
       nextLesson,
-      videoPlayer,
+      courseId,
       navigateLesson,
       toggleComplete,
       showCommentDialog,
@@ -509,17 +505,6 @@ export default {
       margin-bottom: 20px;
       border-radius: 8px;
       overflow: hidden;
-      position: relative;
-      padding-top: 56.25%; /* 16:9 宽高比 */
-
-      video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
     }
 
     .lesson-info {
