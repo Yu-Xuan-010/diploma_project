@@ -5,6 +5,11 @@ export function getStudyRecords() {
   return request({
     url: '/api/study/records',
     method: 'get'
+  }).then(response => {
+    if (!response || !response.data) {
+      return { data: { code: 200, data: [] } }
+    }
+    return response
   })
 }
 
@@ -14,6 +19,11 @@ export function getRecentStudyRecords(limit = 5) {
     url: '/api/study/records/recent',
     method: 'get',
     params: { limit }
+  }).then(response => {
+    if (!response || !response.data) {
+      return { data: { code: 200, data: [] } }
+    }
+    return response
   })
 }
 

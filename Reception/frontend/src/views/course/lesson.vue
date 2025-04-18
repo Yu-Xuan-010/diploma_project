@@ -26,11 +26,10 @@
           </div>
           
           <div class="video-player">
-            <VideoPlayer
-              :video-url="currentLesson.videoUrl"
-              :lesson-id="currentLesson.id"
-              :course-id="courseId"
-            />
+            <div v-if="currentLesson.videoUrl" class="dplayer-container"></div>
+            <div v-else class="no-video">
+              <el-empty description="暂无视频内容" />
+            </div>
           </div>
 
           <div class="lesson-info">
@@ -162,13 +161,14 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ArrowRight, Timer, VideoPlay, Check } from '@element-plus/icons-vue'
 import VideoPlayer from '@/components/VideoPlayer.vue'
 import axios from 'axios'
+import DPlayer from 'dplayer'
 
 export default {
   name: 'LessonPlayer',
@@ -193,6 +193,8 @@ export default {
     const comments = ref([])
     const isCompleted = ref(false)
     const activeChapters = ref([])
+    const completedLessons = ref(new Set())
+    const videoPlayer = ref(null)
 
     // 评论相关
     const commentDialogVisible = ref(false)
@@ -253,6 +255,39 @@ export default {
       return null
     })
 
+    // 初始化视频播放器
+    const initVideoPlayer = () => {
+      if (videoPlayer.value) {
+        videoPlayer.value.destroy()
+        videoPlayer.value = null
+      }
+
+      if (currentLesson.value.videoUrl) {
+        videoPlayer.value = new DPlayer({
+          container: document.querySelector('.video-player'),
+          video: {
+            url: currentLesson.value.videoUrl,
+            type: 'auto'
+          },
+          autoplay: false,
+          theme: '#F56C6C',
+          loop: false,
+          screenshot: true,
+          hotkey: true,
+          preload: 'auto',
+          volume: 0.7,
+          playbackSpeed: [0.5, 0.75, 1, 1.25, 1.5, 2]
+        })
+      }
+    }
+
+    // 监听课时变化
+    watch(() => currentLesson.value, () => {
+      nextTick(() => {
+        initVideoPlayer()
+      })
+    })
+
     // 获取章节列表
     const fetchChapters = async () => {
       try {
@@ -266,10 +301,24 @@ export default {
           if (chapter) {
             activeChapters.value = [chapter.id]
           }
+          // 获取已完成课时列表
+          fetchCompletedLessons()
         }
       } catch (error) {
         console.error('获取章节列表失败:', error)
         ElMessage.error('获取章节列表失败')
+      }
+    }
+
+    // 获取已完成课时列表
+    const fetchCompletedLessons = async () => {
+      try {
+        const response = await axios.get(`/api/lessons/course/${courseId}/completed`)
+        if (response.data.success) {
+          completedLessons.value = new Set(response.data.data)
+        }
+      } catch (error) {
+        console.error('获取已完成课时列表失败:', error)
       }
     }
 
@@ -313,6 +362,9 @@ export default {
         const response = await axios.get(`/api/lessons/${lessonId}/completion`)
         if (response.data.success) {
           isCompleted.value = response.data.data.completed
+          if (isCompleted.value) {
+            completedLessons.value.add(lessonId)
+          }
         }
       } catch (error) {
         console.error('检查课时完成状态失败:', error)
@@ -326,6 +378,11 @@ export default {
         const response = await axios[method](`/api/lessons/${lessonId}/completion`)
         if (response.data.success) {
           isCompleted.value = !isCompleted.value
+          if (isCompleted.value) {
+            completedLessons.value.add(lessonId)
+          } else {
+            completedLessons.value.delete(lessonId)
+          }
           ElMessage.success(isCompleted.value ? '已标记为完成' : '已取消完成标记')
         }
       } catch (error) {
@@ -408,8 +465,7 @@ export default {
 
     // 检查课时是否完成
     const isLessonCompleted = (lessonId) => {
-      // TODO: 实现课时完成状态检查
-      return false
+      return completedLessons.value.has(lessonId)
     }
 
     // 评论分页处理
@@ -430,14 +486,16 @@ export default {
         fetchCurrentLesson(),
         fetchComments()
       ])
+      nextTick(() => {
+        initVideoPlayer()
+      })
     })
 
-    // 组件卸载前保存播放进度
+    // 组件销毁前清理
     onBeforeUnmount(() => {
       if (videoPlayer.value) {
-        const currentTime = videoPlayer.value.currentTime
-        // TODO: 保存播放进度到后端
-        console.log('保存播放进度:', currentTime)
+        videoPlayer.value.destroy()
+        videoPlayer.value = null
       }
     })
 
@@ -505,6 +563,20 @@ export default {
       margin-bottom: 20px;
       border-radius: 8px;
       overflow: hidden;
+
+      .dplayer-container {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+      }
+
+      .no-video {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f7fa;
+      }
     }
 
     .lesson-info {

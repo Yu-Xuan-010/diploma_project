@@ -1,173 +1,189 @@
 <template>
   <div class="video-player-container">
-    <video
-      ref="videoPlayer"
-      class="video-js"
-      :src="videoUrl"
-      @play="handlePlay"
-      @pause="handlePause"
-      @ended="handleEnded"
-      @timeupdate="handleTimeUpdate"
-      controls
-    ></video>
-    <div class="study-progress" v-if="totalStudyTime > 0">
-      <span>已学习时长：{{ formatDuration(totalStudyTime) }}</span>
-      <el-tag :type="hasStudied ? 'success' : 'info'">
-        {{ hasStudied ? '已完成学习' : '学习中' }}
-      </el-tag>
+    <div class="dplayer-container"></div>
+    <div class="video-info" v-if="totalStudyTime > 0">
+      <span>已学习时间: {{ formatDuration(totalStudyTime) }}</span>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useStore } from 'vuex'
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { updateStudyProgress, checkStudyStatus, getTotalStudyTime } from '@/api/study'
+import { 
+  updateStudyProgress as updateStudyProgressApi, 
+  checkStudyStatus as checkStudyStatusApi, 
+  getTotalStudyTime as getTotalStudyTimeApi 
+} from '@/api/study'
 
-export default {
-  name: 'VideoPlayer',
-  props: {
-    videoUrl: {
-      type: String,
-      required: true
-    },
-    lessonId: {
-      type: [String, Number],
-      required: true
-    }
+const props = defineProps({
+  videoUrl: {
+    type: String,
+    required: true
   },
-  setup(props) {
-    const store = useStore()
-    const videoPlayer = ref(null)
-    const startTime = ref(null)
-    const lastRecordedTime = ref(0)
-    const studyInterval = ref(null)
-    const hasStudied = ref(false)
-    const totalStudyTime = ref(0)
+  lessonId: {
+    type: [String, Number],
+    required: true
+  }
+})
 
-    // 记录学习时间
-    const recordStudyTime = async (duration) => {
-      try {
-        await updateStudyProgress(props.lessonId, duration)
-        totalStudyTime.value += duration
-        if (totalStudyTime.value >= 300) { // 5分钟 = 300秒
-          hasStudied.value = true
-        }
-      } catch (error) {
-        console.error('保存学习记录失败:', error)
-        ElMessage.error('保存学习记录失败')
+const player = ref(null)
+const isPlaying = ref(false)
+const currentTime = ref(0)
+const duration = ref(0)
+const progressInterval = ref(null)
+const hasStudied = ref(false)
+const totalStudyTime = ref(0)
+
+// 初始化播放器
+const initPlayer = () => {
+  if (player.value) {
+    player.value.pause()
+    player.value = null
+  }
+  
+  player.value = new DPlayer({
+    container: document.querySelector('.dplayer-container'),
+    video: {
+      url: props.videoUrl,
+      type: 'auto'
+    },
+    autoplay: false,
+    theme: '#F56C6C',
+    loop: false,
+    screenshot: true,
+    hotkey: true,
+    preload: 'auto',
+    volume: 0.7,
+    playbackSpeed: [0.5, 0.75, 1, 1.25, 1.5, 2],
+    contextmenu: [
+      {
+        text: '课程学习平台',
+        link: 'https://your-domain.com'
       }
+    ]
+  })
+
+  setupEventListeners()
+  checkStudyStatus()
+}
+
+// 设置事件监听器
+const setupEventListeners = () => {
+  if (!player.value) return
+
+  player.value.on('play', () => {
+    isPlaying.value = true
+    startProgressTracking()
+  })
+
+  player.value.on('pause', () => {
+    isPlaying.value = false
+    stopProgressTracking()
+    updateStudyProgress(props.lessonId, currentTime.value)
+  })
+
+  player.value.on('timeupdate', () => {
+    currentTime.value = player.value.video.currentTime
+    duration.value = player.value.video.duration
+  })
+
+  player.value.on('ended', () => {
+    isPlaying.value = false
+    stopProgressTracking()
+    updateStudyProgress(props.lessonId, duration.value)
+    ElMessage.success('视频播放完成！')
+  })
+}
+
+// 开始进度追踪
+const startProgressTracking = () => {
+  if (progressInterval.value) return
+  
+  progressInterval.value = setInterval(() => {
+    if (isPlaying.value && player.value) {
+      updateStudyProgress(props.lessonId, currentTime.value)
     }
+  }, 5000) // 每5秒更新一次进度
+}
 
-    // 开始播放时记录开始时间
-    const handlePlay = () => {
-      startTime.value = Date.now()
-      // 每分钟记录一次学习时间
-      studyInterval.value = setInterval(() => {
-        const currentTime = Date.now()
-        const duration = Math.floor((currentTime - startTime.value) / 1000) // 转换为秒
-        if (duration > lastRecordedTime.value) {
-          recordStudyTime(duration - lastRecordedTime.value)
-          lastRecordedTime.value = duration
-        }
-      }, 60000) // 每分钟检查一次
-    }
-
-    // 暂停时记录学习时间
-    const handlePause = () => {
-      if (startTime.value) {
-        const duration = Math.floor((Date.now() - startTime.value) / 1000)
-        recordStudyTime(duration - lastRecordedTime.value)
-        lastRecordedTime.value = duration
-        clearInterval(studyInterval.value)
-      }
-    }
-
-    // 视频结束时记录学习时间
-    const handleEnded = () => {
-      if (startTime.value) {
-        const duration = Math.floor((Date.now() - startTime.value) / 1000)
-        recordStudyTime(duration - lastRecordedTime.value)
-        lastRecordedTime.value = duration
-        clearInterval(studyInterval.value)
-      }
-    }
-
-    // 定期更新播放进度
-    const handleTimeUpdate = () => {
-      // 可以在这里添加进度更新逻辑
-    }
-
-    // 格式化时长
-    const formatDuration = (seconds) => {
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      if (hours > 0) {
-        return `${hours}小时${minutes}分钟`
-      }
-      return `${minutes}分钟`
-    }
-
-    // 组件挂载时检查学习状态
-    onMounted(async () => {
-      try {
-        const [statusResponse, timeResponse] = await Promise.all([
-          checkStudyStatus(props.lessonId),
-          getTotalStudyTime(props.lessonId)
-        ])
-        hasStudied.value = statusResponse.data
-        totalStudyTime.value = timeResponse.data
-      } catch (error) {
-        console.error('获取学习状态失败:', error)
-      }
-    })
-
-    // 组件卸载前清理
-    onBeforeUnmount(() => {
-      if (startTime.value) {
-        const duration = Math.floor((Date.now() - startTime.value) / 1000)
-        recordStudyTime(duration - lastRecordedTime.value)
-      }
-      if (studyInterval.value) {
-        clearInterval(studyInterval.value)
-      }
-    })
-
-    return {
-      videoPlayer,
-      hasStudied,
-      totalStudyTime,
-      handlePlay,
-      handlePause,
-      handleEnded,
-      handleTimeUpdate,
-      formatDuration
-    }
+// 停止进度追踪
+const stopProgressTracking = () => {
+  if (progressInterval.value) {
+    clearInterval(progressInterval.value)
+    progressInterval.value = null
   }
 }
+
+// 更新学习进度
+const updateStudyProgress = async (lessonId, currentTime) => {
+  try {
+    await updateStudyProgressApi({
+      lessonId,
+      progress: Math.floor((currentTime / duration.value) * 100)
+    })
+  } catch (error) {
+    console.error('更新学习进度失败:', error)
+  }
+}
+
+// 检查学习状态
+const checkStudyStatus = async () => {
+  try {
+    const response = await checkStudyStatusApi(props.lessonId)
+    hasStudied.value = response.data.hasStudied
+    totalStudyTime.value = response.data.totalStudyTime || 0
+  } catch (error) {
+    console.error('获取学习状态失败:', error)
+  }
+}
+
+// 获取总学习时间
+const getTotalStudyTime = async () => {
+  try {
+    const response = await getTotalStudyTimeApi(props.lessonId)
+    totalStudyTime.value = response.data.totalStudyTime || 0
+  } catch (error) {
+    console.error('获取总学习时间失败:', error)
+  }
+}
+
+// 监听视频URL变化
+watch(() => props.videoUrl, () => {
+  initPlayer()
+})
+
+// 组件挂载时初始化
+onMounted(() => {
+  initPlayer()
+})
+
+// 组件销毁前清理
+onBeforeUnmount(() => {
+  stopProgressTracking()
+  if (player.value) {
+    player.value.destroy()
+    player.value = null
+  }
+})
 </script>
 
 <style scoped>
 .video-player-container {
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.video-js {
+.dplayer-container {
   width: 100%;
-  height: auto;
-  aspect-ratio: 16/9;
+  aspect-ratio: 16 / 9;
+  background: #000;
 }
 
-.study-progress {
+.video-info {
   margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  color: #666;
+  font-size: 14px;
 }
 </style> 

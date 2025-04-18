@@ -119,11 +119,13 @@
         <el-timeline-item
           v-for="record in recentStudyRecords"
           :key="record.id"
-          :timestamp="record.createTime"
-          :type="record.duration >= 300 ? 'success' : 'primary'"
+          :timestamp="formatTime(record.studyDate)"
+          :type="record.status === 1 ? 'success' : 'primary'"
         >
-          <h4>{{ record.lessonName }}</h4>
-          <p>学习时长：{{ Math.floor(record.duration / 60) }}分钟</p>
+          <h4>{{ record.lessonTitle || '未知课程' }}</h4>
+          <p>学习时长：{{ formatDuration(record.duration) }}</p>
+          <p v-if="record.courseName">课程：{{ record.courseName }}</p>
+          <p v-if="record.teacherName">教师：{{ record.teacherName }}</p>
         </el-timeline-item>
       </el-timeline>
     </el-card>
@@ -340,6 +342,7 @@ export default {
     }
 
     const formatDuration = (seconds) => {
+      if (!seconds) return '0分钟'
       const hours = Math.floor(seconds / 3600)
       const minutes = Math.floor((seconds % 3600) / 60)
       if (hours > 0) {
@@ -416,11 +419,26 @@ export default {
           getStudyRecords(),
           getRecentStudyRecords(5)
         ])
-        studyRecords.value = recordsResponse.data
-        recentStudyRecords.value = recentResponse.data
+        
+        // 确保响应数据存在
+        if (recordsResponse?.data?.code === 200) {
+          studyRecords.value = recordsResponse.data.data || []
+        } else {
+          studyRecords.value = []
+          console.warn('获取学习记录失败:', recordsResponse?.data?.message || '未知错误')
+        }
+        
+        if (recentResponse?.data?.code === 200) {
+          recentStudyRecords.value = recentResponse.data.data || []
+        } else {
+          recentStudyRecords.value = []
+          console.warn('获取最近学习记录失败:', recentResponse?.data?.message || '未知错误')
+        }
       } catch (error) {
         console.error('获取学习记录失败:', error)
-        ElMessage.error('获取学习记录失败')
+        ElMessage.error('获取学习记录失败，请稍后重试')
+        studyRecords.value = []
+        recentStudyRecords.value = []
       }
     }
 
