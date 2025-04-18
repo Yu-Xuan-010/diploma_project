@@ -717,20 +717,7 @@
         { id: 1, courseName: 'Vue 课程', content: 'Vue 是一个渐进式框架', createTime: '2024-03-14' }
       ])
   
-      const favoriteCourses = ref([
-        {
-          id: 1,
-          name: 'Vue.js 高级教程',
-          description: '深入学习 Vue.js 的高级特性',
-          coverImage: '/course-1.jpg'
-        },
-        {
-          id: 2,
-          name: 'Spring Boot 实战',
-          description: '从零开始学习 Spring Boot',
-          coverImage: '/course-2.jpg'
-        }
-      ])
+      const favoriteCourses = ref([])  // 初始化为空数组
   
       const courseForm = ref({
         name: '',
@@ -936,13 +923,14 @@
         }
       }
   
-      // 组件挂载时获取用户信息、学院列表和专业列表
+      // 组件挂载时获取用户信息、学院列表、专业列表和收藏课程
       onMounted(async () => {
         try {
           await Promise.all([
             fetchUserInfo(),
             fetchColleges(),
-            fetchMajors()
+            fetchMajors(),
+            fetchFavoriteCourses()  // 添加获取收藏课程
           ])
         } catch (error) {
           console.error('初始化数据失败:', error)
@@ -1025,11 +1013,30 @@
   
       const removeFavorite = async (courseId) => {
         try {
-          await axios.delete(`/api/user/favorites/${courseId}`)
-          favoriteCourses.value = favoriteCourses.value.filter(course => course.id !== courseId)
-          ElMessage.success('已取消收藏')
+          console.log('开始取消收藏课程:', courseId)
+          const response = await axios.delete(`/api/courses/favorites/${courseId}`, {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          
+          console.log('取消收藏响应:', response.data)
+          
+          if (response.data.code === 200) {  // 修改判断条件
+            // 从列表中移除该课程
+            favoriteCourses.value = favoriteCourses.value.filter(course => course.id !== courseId)
+            ElMessage({
+              type: 'success',
+              message: '已取消收藏',
+              duration: 2000,
+              showClose: true
+            })
+          } else {
+            ElMessage.error(response.data.message || '取消收藏失败')
+          }
         } catch (error) {
-          ElMessage.error('取消收藏失败')
+          console.error('取消收藏失败:', error)
+          ElMessage.error('取消收藏失败：' + (error.response?.data?.message || '未知错误'))
         }
       }
   
@@ -1754,6 +1761,47 @@
         lessonForm.value.videoUrl = ''
       }
 
+      // 获取收藏的课程列表
+      const fetchFavoriteCourses = async () => {
+        try {
+          console.log('开始获取收藏课程')
+          const response = await axios.get('/api/courses/favorites', {
+            headers: {
+              Authorization: `Bearer ${store.state.token}`
+            }
+          })
+          
+          console.log('收藏课程响应:', response.data)
+          
+          if (response.data.code === 200) {  // 修改判断条件
+            if (!response.data.data || response.data.data.length === 0) {
+              console.log('没有收藏的课程')
+              favoriteCourses.value = []
+              return
+            }
+            
+            favoriteCourses.value = response.data.data.map(course => {
+              console.log('处理课程数据:', course)
+              return {
+                id: course.id,
+                name: course.name,
+                description: course.description,
+                coverImage: course.coverImage || '/default-course.jpg',
+                teacherName: course.teacherName,
+                createTime: course.createTime
+              }
+            })
+            console.log('处理后的收藏课程:', favoriteCourses.value)
+          } else {
+            console.error('获取收藏课程失败:', response.data.message)
+            ElMessage.error(response.data.message || '获取收藏课程失败')
+          }
+        } catch (error) {
+          console.error('获取收藏课程出错:', error)
+          ElMessage.error('获取收藏课程失败：' + (error.response?.data?.message || '未知错误'))
+        }
+      }
+
       return {
         activeTab,
         userInfo,
@@ -1832,7 +1880,8 @@
         handleCoverProgress,
         handleCoverSuccess,
         handleCoverError,
-        beforeCoverUpload
+        beforeCoverUpload,
+        fetchFavoriteCourses
       }
     }
   }
