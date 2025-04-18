@@ -75,13 +75,16 @@
                 <el-form-item label="头像">
                   <el-upload
                     class="avatar-uploader"
-                    action="/api/file/upload"
+                    action="http://localhost:8001/api/file/upload"
                     :show-file-list="false"
                     :on-success="handleAvatarSuccess"
                     :on-error="handleAvatarError"
                     :before-upload="beforeAvatarUpload"
-                    :disabled="!isEditing"
+                    :headers="{
+                      Authorization: `Bearer ${store.state.token}`
+                    }"
                     name="file"
+                    accept="image/*"
                   >
                     <img v-if="userInfo.avatar" :src="userInfo.avatar" class="avatar">
                     <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
@@ -226,7 +229,7 @@
                 <el-card class="course-card" shadow="hover">
                   <img :src="course.coverImage || '/default-course.jpg'" class="course-image">
                   <div class="course-info">
-                    <h3>{{ course.title }}</h3>
+                    <h3>{{ course.name }}</h3>
                     <p>{{ course.description }}</p>
                     <div class="course-footer">
                       <el-button type="primary" link @click="viewCourse(course.id)">
@@ -290,23 +293,42 @@
                   <el-input type="textarea" v-model="courseForm.description" rows="4" placeholder="请输入课程简介"></el-input>
                 </el-form-item>
                 <el-form-item label="课程封面" prop="coverImage">
-            <el-upload
+                  <el-upload
                     class="cover-uploader"
-                    action="/api/file/upload"
-              :show-file-list="false"
+                    action="http://localhost:8001/api/file/upload"
+                    :show-file-list="false"
                     :on-success="handleCoverSuccess"
                     :on-error="handleCoverError"
                     :before-upload="beforeCoverUpload"
-                    :headers="uploadHeaders"
-                    name="file"
-                    :on-progress="(event, file) => {
-                      console.log('上传进度:', event.percent)
+                    :on-progress="handleCoverProgress"
+                    :headers="{
+                      Authorization: `Bearer ${store.state.token}`
                     }"
+                    name="file"
+                    accept="image/*"
                   >
-                    <img v-if="courseForm.coverImage" :src="courseForm.coverImage" class="cover">
-                    <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
-            </el-upload>
-          </el-form-item>
+                    <template v-if="courseForm.coverImage">
+                      <img :src="courseForm.coverImage" class="cover">
+                      <div class="cover-hover">
+                        <el-icon class="cover-hover-icon"><Edit /></el-icon>
+                        <span>点击更换封面</span>
+                      </div>
+                    </template>
+                    <div v-else class="upload-placeholder">
+                      <el-icon class="upload-icon"><Plus /></el-icon>
+                      <div class="upload-text">点击上传封面</div>
+                    </div>
+                  </el-upload>
+                  <div class="upload-tip">建议尺寸：800x450px，支持jpg、png格式，大小不超过5MB</div>
+                  <el-progress 
+                    v-if="uploadProgress > 0 && uploadProgress < 100" 
+                    :percentage="uploadProgress"
+                    :format="percent => `${percent}%`"
+                    status="success"
+                    :stroke-width="4"
+                    class="upload-progress"
+                  />
+                </el-form-item>
                 <el-form-item label="课程分类" prop="category">
                   <el-select v-model="courseForm.category" placeholder="请选择课程分类">
                     <el-option
@@ -316,12 +338,12 @@
                       :value="item.value"
                     ></el-option>
                   </el-select>
-          </el-form-item>
+                </el-form-item>
                 <el-form-item>
                   <el-button type="primary" class="submit-course-btn" @click="submitCourse">提交课程</el-button>
                   <el-button @click="resetCourseForm">重置</el-button>
-          </el-form-item>
-        </el-form>
+                </el-form-item>
+              </el-form>
             </el-card>
           </div>
 
@@ -428,8 +450,8 @@
                 </el-table-column>
               </el-table>
               <el-empty v-else description="暂无课时" />
-            </div>
-          </el-dialog>
+        </div>
+      </el-dialog>
 
           <!-- 添加/编辑课时对话框 -->
           <el-dialog v-model="lessonFormDialogVisible" :title="editingLesson ? '编辑课时' : '添加课时'" width="500px">
@@ -443,13 +465,16 @@
               <el-form-item label="视频文件" prop="videoUrl">
                 <el-upload
                   class="video-uploader"
-                  action="/api/file/upload"
+                  action="http://localhost:8001/api/file/upload"
                   :show-file-list="false"
                   :on-success="handleVideoSuccess"
                   :on-error="handleVideoError"
                   :before-upload="beforeVideoUpload"
-                  :headers="uploadHeaders"
+                  :headers="{
+                    Authorization: `Bearer ${store.state.token}`
+                  }"
                   name="file"
+                  accept="video/*"
                 >
                   <el-button type="primary">选择视频文件</el-button>
                 </el-upload>
@@ -464,7 +489,7 @@
                     <el-button type="danger" link @click="removeVideo">
                       删除视频
                     </el-button>
-                  </div>
+    </div>
                 </div>
               </el-form-item>
               <el-form-item label="排序" prop="sortOrder">
@@ -568,15 +593,22 @@
     Upload,
     Plus,
     Collection,
-    Warning
+    Warning,
+    Edit
   } from '@element-plus/icons-vue'
   import axios from 'axios'
   import { getProfile, updateProfile } from '@/api/user'
   import { submitTeacherApplication as submitTeacherApplicationApi } from '@/api/teacher'
   import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+  import store from "../../store";
   
   export default {
     name: 'Profile',
+    computed: {
+      store() {
+        return store
+      }
+    },
     components: {
       User,
       Reading,
@@ -586,7 +618,8 @@
       Upload,
       Plus,
       Collection,
-      Warning
+      Warning,
+      Edit
     },
     setup() {
       const store = useStore()
@@ -1014,36 +1047,81 @@
         }
       }
   
+      const uploadProgress = ref(0)
+
+      const handleCoverProgress = (event) => {
+        uploadProgress.value = Math.round(event.percent)
+      }
+
       const handleCoverSuccess = (response) => {
-        console.log('文件上传响应:', response)
-        if (response.success) {
-          courseForm.value.coverImage = response.data;
-          ElMessage.success('课程封面上传成功');
+        console.log('课程封面上传响应:', response)
+        if (response.success && response.data) {
+          courseForm.value.coverImage = response.data  // 直接设置为图片 URL
+          uploadProgress.value = 100
+          ElMessage({
+            type: 'success',
+            message: '封面上传成功！',
+            duration: 2000,
+            showClose: true
+          })
+          // 延迟重置进度条
+          setTimeout(() => {
+            uploadProgress.value = 0
+          }, 1000)
         } else {
-          ElMessage.error(response.message || '课程封面上传失败');
+          uploadProgress.value = 0
+          ElMessage({
+            type: 'error',
+            message: '上传失败：' + (response.message || '未知错误'),
+            duration: 3000,
+            showClose: true
+          })
         }
       }
 
       const handleCoverError = (error) => {
-        console.error('文件上传错误:', error)
-        ElMessage.error('课程封面上传失败：' + (error.message || '未知错误'));
+        console.error('课程封面上传错误:', error)
+        uploadProgress.value = 0
+        ElMessage({
+          type: 'error',
+          message: '上传失败：' + (error.message || '未知错误'),
+          duration: 3000,
+          showClose: true
+        })
       }
 
       const beforeCoverUpload = (file) => {
-        const isImage = file.type.startsWith('image/');
-        const isLt5M = file.size / 1024 / 1024 < 5;
+        const isImage = file.type.startsWith('image/')
+        const isLt5M = file.size / 1024 / 1024 < 5
 
         if (!isImage) {
-          ElMessage.error('上传课程封面只能是图片格式!');
-          return false;
+          ElMessage({
+            type: 'warning',
+            message: '只能上传图片文件！',
+            duration: 2000,
+            showClose: true
+          })
+          return false
         }
         if (!isLt5M) {
-          ElMessage.error('上传课程封面大小不能超过 5MB!');
-          return false;
+          ElMessage({
+            type: 'warning',
+            message: '图片大小不能超过 5MB！',
+            duration: 2000,
+            showClose: true
+          })
+          return false
         }
-        return true;
+
+        uploadProgress.value = 0
+        ElMessage({
+          type: 'info',
+          message: '正在上传图片...',
+          duration: 2000
+        })
+        return true
       }
-  
+
       const showApplyTeacherDialog = () => {
         ElMessageBox.confirm(
           '申请成为教师后，需要管理员审核，是否继续？',
@@ -1131,13 +1209,30 @@
       }
   
       const handleAvatarSuccess = (response) => {
-        if (response.success) {
-          userInfo.value.avatar = response.data;
-          ElMessage.success('头像上传成功');
+        console.log('头像上传响应:', response)
+        if (response.success && response.data) {
+          // 更新本地状态
+          userInfo.value.avatar = response.data
+          // 更新 Vuex store
+          store.commit('user/setUserInfo', {
+            ...store.state.userInfo,
+            avatar: response.data
+          })
+          ElMessage({
+            type: 'success',
+            message: '头像上传成功',
+            duration: 2000,
+            showClose: true
+          })
           // 更新用户信息到后端
-          updateUserProfile();
+          updateUserProfile()
         } else {
-          ElMessage.error(response.message || '头像上传失败');
+          ElMessage({
+            type: 'error',
+            message: '上传失败：' + (response.message || '未知错误'),
+            duration: 3000,
+            showClose: true
+          })
         }
       }
 
@@ -1194,7 +1289,11 @@
       }
   
       const cancelEditing = () => {
+        // 恢复原始用户信息
         userInfo.value = JSON.parse(JSON.stringify(originalUserInfo.value))
+        // 恢复 Vuex store 中的用户信息
+        store.commit('user/setUserInfo', originalUserInfo.value)
+        // 关闭编辑模式
         isEditing.value = false
       }
   
@@ -1506,7 +1605,8 @@
       // 视频上传成功回调
       const handleVideoSuccess = (response) => {
         console.log('视频上传响应:', response)
-        if (response.success) {
+        if (response.code === 200) {  // 修改判断条件
+          // 确保使用正确的URL格式
           lessonForm.value.videoUrl = response.data
           // 计算视频时长
           const video = document.createElement('video')
@@ -1515,9 +1615,19 @@
             lessonForm.value.duration = Math.round(video.duration)
             console.log('视频时长:', lessonForm.value.duration, '秒')
           }
-          ElMessage.success('视频上传成功')
+          ElMessage({
+            type: 'success',
+            message: '视频上传成功',
+            duration: 2000,
+            showClose: true
+          })
         } else {
-          ElMessage.error(response.message || '视频上传失败')
+          ElMessage({
+            type: 'error',
+            message: response.message || '视频上传失败',
+            duration: 3000,
+            showClose: true
+          })
         }
       }
 
@@ -1652,6 +1762,7 @@
         favoriteCourses,
         courseForm,
         categories,
+        uploadHeaders,
         passwordDialogVisible,
         passwordForm,
         applyTeacherDialogVisible,
@@ -1669,7 +1780,6 @@
         removeFavorite,
         editNote,
         deleteNote,
-        handleCoverSuccess,
         submitCourse,
         showApplyTeacherDialog,
         submitTeacherApplication,
@@ -1717,7 +1827,12 @@
         showRejectReason,
         lessonDialogVisible,
         lessonFormDialogVisible,
-        removeVideo
+        removeVideo,
+        uploadProgress,
+        handleCoverProgress,
+        handleCoverSuccess,
+        handleCoverError,
+        beforeCoverUpload
       }
     }
   }
@@ -1819,30 +1934,78 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.3s;
-  
+      transition: all 0.3s;
+      width: 360px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
       &:hover {
         border-color: #409EFF;
+        .upload-icon {
+          color: #409EFF;
+        }
+        .cover-hover {
+          opacity: 1;
+        }
       }
     }
   }
-  
-  .cover-uploader-icon {
+
+  .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon {
     font-size: 28px;
     color: #8c939d;
-    width: 178px;
-    height: 178px;
-    text-align: center;
-    line-height: 178px;
+    margin-bottom: 8px;
   }
-  
+
+  .upload-text {
+    color: #8c939d;
+    font-size: 14px;
+  }
+
   .cover {
-    width: 178px;
-    height: 178px;
-    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    border-radius: 4px;
   }
-  
+
+  .cover-hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: #fff;
+
+    .cover-hover-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+  }
+
+  .upload-progress {
+    margin-top: 8px;
+    width: 360px;
+  }
+
   .apply-teacher-btn {
     margin-left: 20px;
   }
@@ -1850,14 +2013,22 @@
   .avatar-uploader {
     :deep(.el-upload) {
       border: 1px dashed #d9d9d9;
-      border-radius: 6px;
+      border-radius: 50%;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.3s;
-  
+      transition: all 0.3s;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
       &:hover {
         border-color: #409EFF;
+        .avatar-uploader-icon {
+          color: #409EFF;
+        }
       }
     }
   }
@@ -1865,18 +2036,13 @@
   .avatar-uploader-icon {
     font-size: 28px;
     color: #8c939d;
-    width: 100px;
-    height: 100px;
-    text-align: center;
-    line-height: 100px;
   }
   
   .avatar {
-    width: 100px;
-    height: 100px;
-    display: block;
-    object-fit: cover;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
+    object-fit: cover;
   }
   
   .profile-header {

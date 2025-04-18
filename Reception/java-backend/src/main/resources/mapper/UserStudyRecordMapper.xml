@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.UserStudyRecordMapper">
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.UserStudyRecord">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="course_id" property="courseId"/>
+        <result column="lesson_id" property="lessonId"/>
+        <result column="study_duration" property="studyDuration"/>
+        <result column="study_date" property="studyDate"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="course_name" property="courseName"/>
+        <result column="lesson_title" property="lessonTitle"/>
+        <result column="teacher_name" property="teacherName"/>
+    </resultMap>
+
+    <select id="getUserStudyRecords" resultMap="BaseResultMap">
+        SELECT 
+            r.*,
+            c.name as course_name,
+            l.title as lesson_title,
+            u.username as teacher_name
+        FROM user_study_record r
+        LEFT JOIN course c ON r.course_id = c.id
+        LEFT JOIN lesson l ON r.lesson_id = l.id
+        LEFT JOIN user u ON c.teacher_id = u.id
+        WHERE r.user_id = #{userId}
+        ORDER BY r.study_date DESC, r.create_time DESC
+    </select>
+
+    <select id="getRecentStudyRecords" resultMap="BaseResultMap">
+        SELECT 
+            r.*,
+            c.name as course_name,
+            l.title as lesson_title,
+            u.username as teacher_name
+        FROM user_study_record r
+        LEFT JOIN course c ON r.course_id = c.id
+        LEFT JOIN lesson l ON r.lesson_id = l.id
+        LEFT JOIN user u ON c.teacher_id = u.id
+        WHERE r.user_id = #{userId}
+        ORDER BY r.study_date DESC, r.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="getTotalStudyTime" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(study_duration), 0)
+        FROM user_study_record
+        WHERE user_id = #{userId}
+        AND course_id = #{courseId}
+    </select>
+
+    <insert id="insertStudyRecord" parameterType="com.cms.reception.entity.UserStudyRecord">
+        INSERT INTO user_study_record (
+            user_id, course_id, lesson_id, study_duration,
+            study_date, create_time, update_time
+        ) VALUES (
+            #{userId}, #{courseId}, #{lessonId}, #{studyDuration},
+            #{studyDate}, NOW(), NOW()
+        )
+    </insert>
+
+    <select id="getStudyRecordsByDateRange" resultMap="BaseResultMap">
+        SELECT 
+            r.*,
+            c.name as course_name,
+            l.title as lesson_title,
+            u.username as teacher_name
+        FROM user_study_record r
+        LEFT JOIN course c ON r.course_id = c.id
+        LEFT JOIN lesson l ON r.lesson_id = l.id
+        LEFT JOIN user u ON c.teacher_id = u.id
+        WHERE r.user_id = #{userId}
+        AND r.study_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY r.study_date DESC, r.create_time DESC
+    </select>
+</mapper> 

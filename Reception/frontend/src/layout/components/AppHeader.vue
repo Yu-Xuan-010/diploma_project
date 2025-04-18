@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -70,6 +70,22 @@ export default {
 
     const userInfo = computed(() => store.state.userInfo)
     const isLoggedIn = computed(() => store.getters.isAuthenticated)
+
+    // 获取用户信息
+    const fetchUserInfo = async () => {
+      if (isLoggedIn.value) {
+        try {
+          await store.dispatch('getUserProfile')
+        } catch (error) {
+          console.error('获取用户信息失败:', error)
+        }
+      }
+    }
+
+    // 在组件挂载时获取用户信息
+    onMounted(() => {
+      fetchUserInfo()
+    })
 
     const handleSearch = () => {
       if (searchQuery.value.trim()) {

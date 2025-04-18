@@ -30,45 +30,45 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
-            .cors().and()
-            .csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authorizeRequests()
-            .antMatchers(
-                "/user/login",
-                "/user/register",
-                "/api/category/list",
-                "/api/course/list",
-                "/api/course/recommended",
-                "/api/public/**",
-                "/api/file/upload",
-                "/file/uploads",
-                "/favicon.ico",
-                "/",
-                "/index.html",
-                "/static/**",
-                "/error",
-                "/majors",
-                "/api/majors",
-                "/colleges",
-                "/api/colleges"
-            ).permitAll()
-            .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .antMatchers("/api/auth/**").permitAll()
-            .antMatchers("/api/colleges", "/api/majors").permitAll()
-            .antMatchers("/api/user/profile").authenticated()
-            .antMatchers(
-                "/api/courses/*/favorite/check",
-                "/api/courses/*/favorite",
-                "/api/courses/*/favorite/cancel",
-                "/api/courses/favorites",
-                "/api/courses/*/favorite/count"
-            ).authenticated()
-            .anyRequest().authenticated()
-            .and()
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+                .cors().and()
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
+                .antMatchers(
+                        "/user/login",
+                        "/user/register",
+                        "/api/category/list",
+                        "/api/course/list",
+                        "/api/course/recommended",
+                        "/api/public/**",
+                        "/api/file/upload",
+                        "/file/uploads",
+                        "/favicon.ico",
+                        "/",
+                        "/index.html",
+                        "/static/**",
+                        "/error",
+                        "/majors",
+                        "/api/majors",
+                        "/colleges",
+                        "/api/colleges"
+                ).permitAll()
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/colleges", "/api/majors").permitAll()
+                .antMatchers("/api/user/profile").authenticated()
+                .antMatchers(
+                        "/api/courses/*/favorite/check",
+                        "/api/courses/*/favorite",
+                        "/api/courses/*/favorite/cancel",
+                        "/api/courses/favorites",
+                        "/api/courses/*/favorite/count"
+                ).authenticated()
+                .anyRequest().authenticated()
+                .and()
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
