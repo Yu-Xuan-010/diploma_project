@@ -1,8 +1,10 @@
 package com.cms.reception.service.impl;
 
 import com.cms.reception.entity.Favorite;
+import com.cms.reception.entity.Course;
 import com.cms.reception.repository.FavoriteRepository;
 import com.cms.reception.service.FavoriteService;
+import com.cms.reception.service.CourseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoriteServiceImpl implements FavoriteService {
@@ -18,6 +21,23 @@ public class FavoriteServiceImpl implements FavoriteService {
     
     @Autowired
     private FavoriteRepository favoriteRepository;
+    
+    @Autowired
+    private CourseService courseService;
+    
+    @Override
+    public List<Course> getUserFavoriteCourses(Long userId) {
+        try {
+            List<Favorite> favorites = favoriteRepository.findByUserId(userId);
+            return favorites.stream()
+                .map(favorite -> courseService.getCourseById(favorite.getCourseId()))
+                .filter(course -> course != null)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error getting user favorite courses for userId: {}", userId, e);
+            return List.of();
+        }
+    }
     
     @Override
     public List<Favorite> getUserFavorites(Long userId) {

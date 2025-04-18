@@ -624,6 +624,7 @@
     setup() {
       const store = useStore()
       const router = useRouter()
+
       
       // 确保 store 存在
       if (!store) {
@@ -716,8 +717,8 @@
       const notes = ref([
         { id: 1, courseName: 'Vue 课程', content: 'Vue 是一个渐进式框架', createTime: '2024-03-14' }
       ])
-  
-      const favoriteCourses = ref([])  // 初始化为空数组
+
+      const favoriteCourses = ref([])
   
       const courseForm = ref({
         name: '',
@@ -835,6 +836,7 @@
       // 在组件挂载时获取分类数据
       onMounted(() => {
         fetchCategories()
+        fetchFavoriteCourses()
       })
   
       const passwordForm = ref({
@@ -930,7 +932,7 @@
             fetchUserInfo(),
             fetchColleges(),
             fetchMajors(),
-            fetchFavoriteCourses()  // 添加获取收藏课程
+            fetchFavoriteCourses()
           ])
         } catch (error) {
           console.error('初始化数据失败:', error)
@@ -1022,9 +1024,10 @@
           
           console.log('取消收藏响应:', response.data)
           
-          if (response.data.code === 200) {  // 修改判断条件
-            // 从列表中移除该课程
-            favoriteCourses.value = favoriteCourses.value.filter(course => course.id !== courseId)
+          if (response.data.code === 200) {
+            // 重新从服务器拉取最新收藏课程
+            await store.dispatch('user/updateFavoriteCourses')
+            
             ElMessage({
               type: 'success',
               message: '已取消收藏',
@@ -1748,6 +1751,7 @@
         if (isTeacher.value) {
           fetchMyCourses()
         }
+        fetchFavoriteCourses()
       })
 
       // 显示驳回原因
@@ -1761,44 +1765,32 @@
         lessonForm.value.videoUrl = ''
       }
 
-      // 获取收藏的课程列表
+      // 获取收藏的课程
       const fetchFavoriteCourses = async () => {
         try {
           console.log('开始获取收藏课程')
-          const response = await axios.get('/api/courses/favorites', {
-            headers: {
-              Authorization: `Bearer ${store.state.token}`
-            }
-          })
-          
+          const response = await axios.get('/api/courses/favorites')
           console.log('收藏课程响应:', response.data)
           
-          if (response.data.code === 200) {  // 修改判断条件
+          if (response.data.code === 200) {
             if (!response.data.data || response.data.data.length === 0) {
-              console.log('没有收藏的课程')
+              console.log('没有找到收藏的课程')
               favoriteCourses.value = []
               return
             }
             
-            favoriteCourses.value = response.data.data.map(course => {
-              console.log('处理课程数据:', course)
-              return {
-                id: course.id,
-                name: course.name,
-                description: course.description,
-                coverImage: course.coverImage || '/default-course.jpg',
-                teacherName: course.teacherName,
-                createTime: course.createTime
-              }
-            })
-            console.log('处理后的收藏课程:', favoriteCourses.value)
+            favoriteCourses.value = response.data.data.map(course => ({
+              ...course,
+              coverImage: course.image || '/default-course-cover.jpg'
+            }))
+            console.log('成功设置收藏课程:', favoriteCourses.value)
           } else {
             console.error('获取收藏课程失败:', response.data.message)
             ElMessage.error(response.data.message || '获取收藏课程失败')
           }
         } catch (error) {
           console.error('获取收藏课程出错:', error)
-          ElMessage.error('获取收藏课程失败：' + (error.response?.data?.message || '未知错误'))
+          ElMessage.error('获取收藏课程失败，请稍后重试')
         }
       }
 

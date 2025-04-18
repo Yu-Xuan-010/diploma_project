@@ -2,6 +2,7 @@ package com.cms.reception.controller;
 
 import com.cms.reception.common.Result;
 import com.cms.reception.entity.Favorite;
+import com.cms.reception.entity.Course;
 import com.cms.reception.service.FavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,9 +35,9 @@ public class FavoriteController {
     }
     
     @GetMapping("/favorites")
-    public Result<List<Favorite>> getUserFavorites(@RequestAttribute Long userId) {
-        List<Favorite> favorites = favoriteService.getUserFavorites(userId);
-        return Result.success(favorites);
+    public Result<List<Course>> getUserFavorites(@RequestAttribute Long userId) {
+        List<Course> favoriteCourses = favoriteService.getUserFavoriteCourses(userId);
+        return Result.success(favoriteCourses);
     }
     
     @GetMapping("/{courseId}/favorite/count")

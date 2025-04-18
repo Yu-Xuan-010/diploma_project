@@ -1,10 +1,13 @@
 package com.cms.reception.service;
 
 import com.cms.reception.entity.Favorite;
+import com.cms.reception.entity.Course;
 import java.util.List;
 
 public interface FavoriteService {
     List<Favorite> getUserFavorites(Long userId);
+    
+    List<Course> getUserFavoriteCourses(Long userId);
     
     boolean isFavorite(Long userId, Long courseId);
     
