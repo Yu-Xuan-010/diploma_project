@@ -76,7 +76,11 @@ const routes = [
     path: '/course/:courseId/lesson/:lessonId',
     name: 'LessonPlayer',
     component: () => import('../views/course/lesson.vue'),
-    meta: { title: '课时学习' }
+    meta: { 
+      title: '课时学习',
+      keepAlive: false
+    },
+    props: true
   },
   // 添加通配符路由
   {
