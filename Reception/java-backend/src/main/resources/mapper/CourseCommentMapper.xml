@@ -6,42 +6,21 @@
         <result column="course_id" property="courseId"/>
         <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
-        <result column="rating" property="rating"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
         <result column="user_name" property="userName"/>
         <result column="user_avatar" property="userAvatar"/>
-        <collection property="replies" ofType="com.cms.reception.entity.CourseCommentReply">
-            <id column="reply_id" property="id"/>
-            <result column="reply_comment_id" property="commentId"/>
-            <result column="reply_user_id" property="userId"/>
-            <result column="reply_content" property="content"/>
-            <result column="reply_create_time" property="createTime"/>
-            <result column="reply_update_time" property="updateTime"/>
-            <result column="reply_user_name" property="userName"/>
-            <result column="reply_user_avatar" property="userAvatar"/>
-        </collection>
     </resultMap>
 
-    <select id="selectByCourseId" resultMap="BaseResultMap">
+    <select id="findByCourseId" resultMap="BaseResultMap">
         SELECT 
             cc.*,
             u.username as user_name,
-            u.avatar as user_avatar,
-            cr.id as reply_id,
-            cr.comment_id as reply_comment_id,
-            cr.user_id as reply_user_id,
-            cr.content as reply_content,
-            cr.create_time as reply_create_time,
-            cr.update_time as reply_update_time,
-            ru.username as reply_user_name,
-            ru.avatar as reply_user_avatar
+            u.avatar as user_avatar
         FROM course_comment cc
         LEFT JOIN user u ON cc.user_id = u.id
-        LEFT JOIN course_comment_reply cr ON cc.id = cr.comment_id
-        LEFT JOIN user ru ON cr.user_id = ru.id
         WHERE cc.course_id = #{courseId}
-        ORDER BY cc.create_time DESC, cr.create_time ASC
+        ORDER BY cc.create_time DESC
     </select>
 
     <insert id="insert" parameterType="com.cms.reception.entity.CourseComment" useGeneratedKeys="true" keyProperty="id">
@@ -49,48 +28,27 @@
             course_id,
             user_id,
             content,
-            rating,
             create_time,
             update_time
         ) VALUES (
             #{courseId},
             #{userId},
             #{content},
-            #{rating},
             NOW(),
             NOW()
         )
     </insert>
 
-    <delete id="deleteById">
-        DELETE FROM course_comment WHERE id = #{id}
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM course_comment WHERE id = #{id} AND user_id = #{userId}
     </delete>
 
-    <select id="selectById" resultMap="BaseResultMap">
-        SELECT 
-            cc.*,
-            u.username as user_name,
-            u.avatar as user_avatar,
-            cr.id as reply_id,
-            cr.comment_id as reply_comment_id,
-            cr.user_id as reply_user_id,
-            cr.content as reply_content,
-            cr.create_time as reply_create_time,
-            cr.update_time as reply_update_time,
-            ru.username as reply_user_name,
-            ru.avatar as reply_user_avatar
-        FROM course_comment cc
-        LEFT JOIN user u ON cc.user_id = u.id
-        LEFT JOIN course_comment_reply cr ON cc.id = cr.comment_id
-        LEFT JOIN user ru ON cr.user_id = ru.id
-        WHERE cc.id = #{id}
+    <select id="countByCourseId" resultType="int">
+        SELECT COUNT(*) FROM course_comment WHERE course_id = #{courseId}
     </select>
 
-    <select id="existsByCourseIdAndUserId" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1 FROM course_comment 
-            WHERE course_id = #{courseId} AND user_id = #{userId}
-            AND rating IS NOT NULL
-        )
+    <select id="countByCourseIdAndUserId" resultType="int">
+        SELECT COUNT(*) FROM course_comment 
+        WHERE course_id = #{courseId} AND user_id = #{userId}
     </select>
 </mapper> 

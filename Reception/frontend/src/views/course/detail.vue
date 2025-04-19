@@ -63,46 +63,106 @@
           </el-tab-pane>
           <el-tab-pane label="课程评论" name="comments">
             <div class="course-comments">
-              <div class="comment-form" v-if="!hasCommented">
-                <el-rate v-model="commentForm.rating" show-text></el-rate>
-                <el-input
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入您的评论"
-                  v-model="commentForm.content">
-                </el-input>
-                <div class="form-footer">
-                  <el-button type="primary" @click="submitComment">提交评论</el-button>
+              <!-- 评分区域 -->
+              <div class="rating-section" v-if="!hasRated">
+                <h3>课程评分</h3>
+                <div class="rating-form">
+                  <el-rate 
+                    v-model="ratingForm.rating" 
+                    show-text 
+                    :texts="['很差', '较差', '一般', '较好', '很好']"
+                    @change="handleRatingChange">
+                  </el-rate>
+                  <div class="rating-tip" v-if="ratingForm.rating">
+                    您给出的评分：{{ ratingForm.rating }}分
+                  </div>
                 </div>
               </div>
-              <div class="comment-list" v-if="comments && comments.length > 0">
-                <div class="comment-item" v-for="comment in comments" :key="comment.id">
-                  <div class="comment-user">
-                    <el-avatar 
-                      :size="40" 
-                      :src="comment.userAvatar"
-                      :fallback="getDefaultAvatar(comment.userName)">
-                      {{ getInitial(comment.userName) }}
-                    </el-avatar>
-                    <div class="user-info">
-                      <span class="username">{{ comment.userName }}</span>
-                      <div class="rating-wrapper">
-                        <el-rate 
-                          v-model="comment.rating"
-                          disabled
-                          :max="5"
-                          :colors="['#99A9BF', '#F7BA2A', '#FF9900']">
-                        </el-rate>
-                        <span class="rating-score">{{ comment.rating }}分</span>
+              <div class="rating-info" v-else>
+                <h3>课程评分</h3>
+                <div class="current-rating">
+                  <el-rate 
+                    v-model="userRating" 
+                    disabled 
+                    show-score>
+                  </el-rate>
+                  <span class="rating-text">您的评分：{{ userRating }}分</span>
+                </div>
+              </div>
+
+              <!-- 评论区域 -->
+              <div class="comment-section">
+                <h3>课程评论</h3>
+                <div class="comment-form">
+                  <el-input
+                    type="textarea"
+                    :rows="3"
+                    placeholder="请输入您的评论"
+                    v-model="commentForm.content">
+                  </el-input>
+                  <div class="form-footer">
+                    <el-button type="primary" @click="submitComment">发表评论</el-button>
+                  </div>
+                </div>
+
+                <div class="comment-list" v-if="comments && comments.length > 0">
+                  <div class="comment-item" v-for="comment in comments" :key="comment.id">
+                    <div class="comment-user">
+                      <el-avatar 
+                        :size="40" 
+                        :src="comment.userAvatar"
+                        :fallback="getDefaultAvatar(comment.userName)">
+                        {{ getInitial(comment.userName) }}
+                      </el-avatar>
+                      <div class="user-info">
+                        <span class="username">{{ comment.userName }}</span>
+                      </div>
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                    <div class="comment-actions">
+                      <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
+                      <div class="action-buttons">
+                        <el-button 
+                          type="text" 
+                          size="small" 
+                          @click="showReplyDialog(comment)"
+                          v-if="isLoggedIn">
+                          回复
+                        </el-button>
+                        <el-button 
+                          type="text" 
+                          size="small" 
+                          @click="deleteComment(comment)"
+                          v-if="isLoggedIn && currentUserId && comment.userId === currentUserId">
+                          删除
+                        </el-button>
+                        <el-button 
+                          type="text" 
+                          size="small" 
+                          @click="toggleReplies(comment)"
+                          v-if="comment.replies && comment.replies.length > 0">
+                          {{ comment.showReplies ? '收起回复' : `展开${comment.replies.length}条回复` }}
+                        </el-button>
+                      </div>
+                    </div>
+                    
+                    <!-- 回复列表 -->
+                    <div class="reply-list" v-if="comment.showReplies && comment.replies?.length > 0">
+                      <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
+                        <el-avatar :src="reply.userAvatar" size="small" />
+                        <div class="reply-content">{{ reply.content }}</div>
+                        <el-button
+                            v-if="isLoggedIn && reply.userId === currentUserId"
+                            @click="deleteReply(reply)">
+                          删除
+                        </el-button>
                       </div>
                     </div>
                   </div>
-                  <div class="comment-content">{{ comment.content }}</div>
-                  <div class="comment-time">{{ formatTime(comment.createTime) }}</div>
                 </div>
-              </div>
-              <div class="no-comments" v-else>
-                <el-empty description="暂无评论"></el-empty>
+                <div class="no-comments" v-else>
+                  <el-empty description="暂无评论"></el-empty>
+                </div>
               </div>
             </div>
           </el-tab-pane>
@@ -129,6 +189,29 @@
         </el-timeline-item>
       </el-timeline>
     </el-card>
+
+    <!-- 回复对话框 -->
+    <el-dialog
+      v-model="replyDialogVisible"
+      title="回复评论"
+      width="500px">
+      <el-form :model="replyForm" :rules="replyRules" ref="replyFormRef">
+        <el-form-item prop="content">
+          <el-input
+            type="textarea"
+            v-model="replyForm.content"
+            :rows="3"
+            placeholder="请输入回复内容">
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="replyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitReply">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -136,7 +219,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Picture, Timer, Star, StarFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 import VideoPlayer from '@/components/VideoPlayer.vue'
@@ -171,16 +254,33 @@ export default {
       children: 'children',
       label: 'title'
     }
+    const ratingForm = ref({
+      rating: 0
+    })
+    const userRating = ref(0)
     const commentForm = ref({
-      rating: 0,
       content: ''
     })
     const comments = ref([])
-    const hasCommented = ref(false)
+    const hasRated = ref(false)
     const isFavorited = ref(false)
     const courseId = ref(route.params.courseId)
     const studyRecords = ref([])
     const recentStudyRecords = ref([])
+    const isLoggedIn = ref(false)
+    const currentUserId = ref(null)
+    const replyDialogVisible = ref(false)
+    const replyForm = ref({
+      content: '',
+      commentId: null
+    })
+    const replyFormRef = ref(null)
+    const replyRules = {
+      content: [
+        { required: true, message: '请输入回复内容', trigger: 'blur' },
+        { min: 1, max: 500, message: '回复内容长度在1-500个字符之间', trigger: 'blur' }
+      ]
+    }
 
     const getDefaultAvatar = (name) => {
       return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || '')}`
@@ -258,57 +358,68 @@ export default {
       }
     }
 
-    const submitComment = async () => {
-      if (commentForm.value.rating === 0) {
-        ElMessage.warning('请选择评分')
-        return
-      }
-      if (!commentForm.value.content) {
-        ElMessage.warning('请输入评论内容')
-        return
-      }
-      try {
-        const courseId = route.params.courseId
-        const userInfo = store.state.user.userInfo
-        const params = {
-          courseId,
-          userId: userInfo.id,
-          content: commentForm.value.content,
-          rating: commentForm.value.rating
-        }
-        console.log('提交评论参数:', params)
-        const response = await axios.post(`/api/courses/${courseId}/comments`, params)
-        if (response.data.code === 200) {
-          ElMessage.success('评论提交成功')
-          commentForm.value.rating = 0
-          commentForm.value.content = ''
-          await getComments()
-          hasCommented.value = true
-        } else {
-          ElMessage.error(response.data.message || '评论提交失败')
-        }
-      } catch (error) {
-        console.error('提交评论失败:', error)
-        ElMessage.error('提交评论失败')
-      }
-    }
-
-    const formatTime = (time) => {
-      if (!time) return ''
-      const date = new Date(time)
-      return date.toLocaleString()
-    }
-
-    const checkUserComment = async () => {
+    const checkUserRating = async () => {
       try {
         const courseId = route.params.courseId
         const userInfo = store.state.user.userInfo
         if (!userInfo) return
         
-        const response = await axios.get(`/api/courses/${courseId}/comments/check/${userInfo.id}`)
-        hasCommented.value = response.data.code === 200 && response.data.data
+        const response = await axios.get(`/api/courses/${courseId}/rating/user/${userInfo.id}`, {
+          headers: {
+            'Authorization': `Bearer ${store.state.user.token}`
+          }
+        })
+        if (response.data.code === 200 && response.data.data) {
+          hasRated.value = true
+          userRating.value = response.data.data.rating
+        } else {
+          hasRated.value = false
+          userRating.value = 0
+        }
       } catch (error) {
-        console.error('检查用户评论状态失败:', error)
+        console.error('获取用户评分失败:', error)
+        hasRated.value = false
+        userRating.value = 0
+      }
+    }
+
+    const handleRatingChange = async (value) => {
+      if (!value) return
+      
+      try {
+        const courseId = route.params.courseId
+        const userInfo = store.state.user.userInfo
+        if (!userInfo) {
+          ElMessage.warning('请先登录后再评分')
+          return
+        }
+        
+        const response = await axios.post(`/api/courses/${courseId}/rating`, {
+          rating: value,
+          courseId: courseId,
+          userId: userInfo.id,
+          userName: userInfo.username,
+          userAvatar: userInfo.avatar
+        }, {
+          headers: {
+            'Authorization': `Bearer ${store.state.user.token}`
+          }
+        })
+        
+        if (response.data.code === 200) {
+          ElMessage.success('评分成功')
+          hasRated.value = true
+          userRating.value = value
+          ratingForm.value.rating = 0
+          // 更新课程平均评分
+          if (response.data.data && response.data.data.averageRating) {
+            course.value.averageRating = response.data.data.averageRating
+          }
+        }
+      } catch (error) {
+        console.error('提交评分失败:', error)
+        ElMessage.error('评分失败，请稍后重试')
+        ratingForm.value.rating = 0
       }
     }
 
@@ -316,20 +427,18 @@ export default {
       try {
         const courseId = route.params.courseId
         console.log('获取课程评论，课程ID:', courseId)
-        const response = await axios.get(`/api/courses/${courseId}/comments`)
+        const response = await axios.get(`/api/comments/course/${courseId}`)
         console.log('评论数据:', response.data)
         if (response.data.code === 200) {
-          // 确保数据是数组并且每个评论对象都有必要的字段
-          comments.value = (response.data.data || []).map(comment => ({
-            id: comment.id,
-            courseId: comment.courseId,
+          // 确保每个评论对象都包含必要的字段
+          comments.value = response.data.data.map(comment => ({
+            ...comment,
+            replies: comment.replies || [],
+            showReplies: false,  // 添加展开/收起状态
             userId: comment.userId,
-            content: comment.content,
-            rating: comment.rating,
-            createTime: comment.createTime,
-            updateTime: comment.updateTime,
-            userName: comment.userName || '未知用户',
-            userAvatar: comment.userAvatar || ''
+            userName: comment.userName,
+            userAvatar: comment.userAvatar,
+            createTime: comment.createTime
           }))
           console.log('处理后的评论列表:', comments.value)
         } else {
@@ -339,6 +448,49 @@ export default {
         console.error('获取课程评论失败:', error)
         ElMessage.error('获取课程评论失败')
       }
+    }
+
+    const submitComment = async () => {
+      if (!commentForm.value.content) {
+        ElMessage.warning('请输入评论内容')
+        return
+      }
+      
+      try {
+        const courseId = route.params.courseId
+        const userInfo = store.state.user.userInfo
+        if (!userInfo) {
+          ElMessage.warning('请先登录后再评论')
+          return
+        }
+        
+        const response = await axios.post(`/api/comments`, {
+          courseId: courseId,
+          userId: userInfo.id,
+          content: commentForm.value.content,
+          userName: userInfo.username,
+          userAvatar: userInfo.avatar
+        }, {
+          headers: {
+            'Authorization': `Bearer ${store.state.user.token}`
+          }
+        })
+        
+        if (response.data.code === 200) {
+          ElMessage.success('评论发表成功')
+          commentForm.value.content = ''
+          await getComments()
+        }
+      } catch (error) {
+        console.error('发表评论失败:', error)
+        ElMessage.error('发表评论失败')
+      }
+    }
+
+    const formatTime = (time) => {
+      if (!time) return ''
+      const date = new Date(time)
+      return date.toLocaleString()
     }
 
     const formatDuration = (seconds) => {
@@ -402,7 +554,7 @@ export default {
     const fetchCourseDetails = async () => {
       try {
         await getCourseDetail()
-        await checkUserComment()
+        await checkUserRating()
         await checkFavoriteStatus()
         if (activeTab.value === 'comments') {
           await getComments()
@@ -442,13 +594,162 @@ export default {
       }
     }
 
+    const deleteComment = async (comment) => {
+      try {
+        await ElMessageBox.confirm('确定删除？', '提示', { type: 'warning' });
+        const token = localStorage.getItem('token');
+        const res = await axios.delete(`/api/comments/${comment.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          data: { userId: currentUserId.value }
+        });
+        if (res.data.success) {
+          comments.value = comments.value.filter(c => c.id !== comment.id);
+        }
+      } catch (error) {
+        if (error !== 'cancel') ElMessage.error('删除失败');
+      }
+    };
+
+    const showReplyDialog = (comment) => {
+      replyForm.value = {
+        content: '',
+        commentId: comment.id
+      }
+      replyDialogVisible.value = true
+    }
+
+    const submitReply = async () => {
+      if (!replyFormRef.value) return
+      
+      try {
+        await replyFormRef.value.validate()
+        const userInfo = JSON.parse(localStorage.getItem("user"))
+        if (!userInfo) {
+          ElMessage.warning('请先登录后再回复')
+          return
+        }
+        
+        const token = localStorage.getItem('token')
+        if (!token) {
+          ElMessage.error('未登录或登录已过期')
+          return
+        }
+        
+        const response = await axios.post(`/api/comments/${replyForm.value.commentId}/reply`, {
+          userId: userInfo.id,
+          content: replyForm.value.content,
+          userName: userInfo.nickname || userInfo.username,
+          userAvatar: userInfo.avatar || ''
+        }, {
+          headers: {
+            'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
+          }
+        })
+        
+        if (response.data.code === 200) {
+          ElMessage.success('回复成功')
+          replyDialogVisible.value = false
+          replyForm.value.content = ''
+          await getComments()
+        } else {
+          ElMessage.error(response.data.message || '回复失败')
+        }
+      } catch (error) {
+        console.error('提交回复失败:', error)
+        ElMessage.error('提交回复失败')
+      }
+    }
+
+    const deleteReply = async (reply) => {
+      try {
+        await ElMessageBox.confirm('确定要删除这条回复吗？', '提示', {
+          type: 'warning'
+        })
+        
+        const token = localStorage.getItem('token')
+        if (!token) {
+          ElMessage.error('未登录或登录已过期')
+          return
+        }
+        
+        const response = await axios.delete(`/api/comments/reply/${reply.id}`, {
+          headers: {
+            'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
+          }
+        })
+        
+        if (response.data.code === 200) {
+          ElMessage.success('删除成功')
+          await getComments()
+        } else {
+          ElMessage.error(response.data.message || '删除失败')
+        }
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('删除回复失败:', error)
+          ElMessage.error('删除回复失败')
+        }
+      }
+    }
+
+    const toggleReplies = (comment) => {
+      comment.showReplies = !comment.showReplies
+    }
+
+    // 检查登录状态
+    const checkLoginStatus = () => {
+      try {
+        // 尝试不同的可能的key
+        const userStr = localStorage.getItem("user") || 
+                       localStorage.getItem("userInfo") || 
+                       localStorage.getItem("currentUser")
+        console.log('localStorage中的user字符串:', userStr)
+        
+        if (userStr) {
+          const user = JSON.parse(userStr)
+          console.log('解析后的用户信息:', user)
+          
+          if (user && user.id) {
+            isLoggedIn.value = true
+            currentUserId.value = user.id
+            console.log('设置登录状态为true, 用户ID:', user.id)
+          } else {
+            console.log('用户信息不完整，重置登录状态')
+            isLoggedIn.value = false
+            currentUserId.value = null
+          }
+        } else {
+          // 如果localStorage中没有，尝试从store中获取
+          const storeUser = store.state.user?.userInfo
+          console.log('从store中获取的用户信息:', storeUser)
+          
+          if (storeUser && storeUser.id) {
+            isLoggedIn.value = true
+            currentUserId.value = storeUser.id
+            console.log('从store设置登录状态为true, 用户ID:', storeUser.id)
+          } else {
+            console.log('未找到用户信息，重置登录状态')
+            isLoggedIn.value = false
+            currentUserId.value = null
+          }
+        }
+      } catch (error) {
+        console.error('检查登录状态时出错:', error)
+        isLoggedIn.value = false
+        currentUserId.value = null
+      }
+    }
+
     onMounted(() => {
+      console.log('组件挂载，开始检查登录状态')
+      checkLoginStatus()
       if (!courseId.value) {
         console.warn('courseId 为空，取消加载课程详情')
         return
       }
       fetchCourseDetails()
       fetchStudyRecords()
+      checkUserRating()
     })
 
     // 监听标签页变化
@@ -468,24 +769,29 @@ export default {
     })
 
     // 监听登录状态变化
-    watch(() => store.state.isLoggedIn, (newValue) => {
-      if (newValue && route.params.courseId) {
-        checkFavoriteStatus()
-      }
+    watch(() => store.state.user.isLoggedIn, (newValue) => {
+      checkLoginStatus()
     })
+
+    // 临时打印调试信息
+    console.log('登录状态:', isLoggedIn.value)
+    console.log('当前用户ID:', currentUserId.value)
+    console.log("评论数据", comments.value)
+
 
     return {
       loading,
       course,
       activeTab,
       defaultProps,
+      ratingForm,
+      userRating,
       commentForm,
       comments,
-      hasCommented,
+      hasRated,
       isFavorited,
       handleNodeClick,
       handleTabClick,
-      submitComment,
       getComments,
       formatDuration,
       formatTime,
@@ -494,7 +800,20 @@ export default {
       toggleFavorite,
       courseId,
       studyRecords,
-      recentStudyRecords
+      recentStudyRecords,
+      isLoggedIn,
+      currentUserId,
+      replyDialogVisible,
+      replyForm,
+      replyFormRef,
+      replyRules,
+      deleteComment,
+      showReplyDialog,
+      submitReply,
+      deleteReply,
+      handleRatingChange,
+      submitComment,
+      toggleReplies,
     }
   }
 }
@@ -634,19 +953,69 @@ export default {
       .course-comments {
         padding: 15px 5px;
 
-        .comment-form {
-          background: #f9f9f9;
-          padding: 20px;
-          border-radius: 8px;
+        .rating-section {
           margin-bottom: 30px;
+          padding: 20px;
+          background: #f9f9f9;
+          border-radius: 8px;
 
-          .el-rate {
+          h3 {
             margin-bottom: 15px;
+            color: #303133;
           }
 
-          .form-footer {
-            margin-top: 15px;
-            text-align: right;
+          .rating-form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+
+          .rating-tip {
+            color: #409EFF;
+            font-size: 14px;
+          }
+        }
+
+        .rating-info {
+          margin-bottom: 30px;
+          padding: 20px;
+          background: #f9f9f9;
+          border-radius: 8px;
+
+          h3 {
+            margin-bottom: 15px;
+            color: #303133;
+          }
+
+          .current-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            .rating-text {
+              color: #409EFF;
+              font-size: 14px;
+            }
+          }
+        }
+
+        .comment-section {
+          h3 {
+            margin-bottom: 15px;
+            color: #303133;
+          }
+
+          .comment-form {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+
+            .form-footer {
+              margin-top: 15px;
+              text-align: right;
+            }
           }
         }
 
@@ -674,18 +1043,6 @@ export default {
                   margin-bottom: 4px;
                   display: block;
                 }
-
-                .rating-wrapper {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-
-                  .rating-score {
-                    color: #F7BA2A;
-                    font-size: 14px;
-                    font-weight: 500;
-                  }
-                }
               }
             }
 
@@ -696,9 +1053,16 @@ export default {
               margin: 8px 0;
             }
 
-            .comment-time {
-              color: #909399;
-              font-size: 12px;
+            .comment-actions {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 8px;
+              
+              .action-buttons {
+                display: flex;
+                gap: 10px;
+              }
             }
           }
         }
@@ -718,6 +1082,70 @@ export default {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+  }
+
+  .comment-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  .reply-list {
+    margin-left: 50px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+
+    .reply-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #ebeef5;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .reply-user {
+        display: flex;
+        gap: 10px;
+
+        .reply-info {
+          flex: 1;
+
+          .username {
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 4px;
+            display: block;
+          }
+
+          .reply-content {
+            color: #606266;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 4px 0;
+          }
+
+          .reply-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+
+            .reply-time {
+              color: #909399;
+              font-size: 12px;
+            }
+          }
+        }
+      }
     }
   }
 }

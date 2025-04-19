@@ -28,7 +28,7 @@ public class TeacherApplicationController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
+            response.put("false", false);
             response.put("message", "申请提交失败: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }

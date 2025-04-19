@@ -49,11 +49,6 @@
             </dependency>
 
 
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
-                <version>3.5.4</version>  <!-- 确保使用最新版本 -->
-            </dependency>
 
             <!-- 覆盖SpringFramework的依赖配置-->
             <dependency>

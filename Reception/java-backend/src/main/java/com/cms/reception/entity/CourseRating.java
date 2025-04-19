@@ -1,20 +1,28 @@
 package com.cms.reception.entity;
 
 import lombok.Data;
+
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "course_rating")
 @Data
-public class CourseComment {
+public class CourseRating {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long courseId;
+
     private Long userId;
-    private String content;
+
+    private Integer rating;
+
     private LocalDateTime createTime;
+
     private LocalDateTime updateTime;
-    
-    // 非数据库字段
+
     private String userName;
     private String userAvatar;
-    
-    private Long parentId;
-} 
+}

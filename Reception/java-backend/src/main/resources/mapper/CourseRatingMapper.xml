@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cms.reception.mapper.CourseRatingMapper">
+    
+    <resultMap id="BaseResultMap" type="com.cms.reception.entity.CourseRating">
+        <id column="id" property="id"/>
+        <result column="course_id" property="courseId"/>
+        <result column="user_id" property="userId"/>
+        <result column="rating" property="rating"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_avatar" property="userAvatar"/>
+    </resultMap>
+    
+    <select id="findByCourseIdAndUserId" resultMap="BaseResultMap">
+        SELECT 
+            cr.*,
+            u.username as user_name,
+            u.avatar as user_avatar
+        FROM course_rating cr
+        LEFT JOIN user u ON cr.user_id = u.id
+        WHERE cr.course_id = #{courseId} AND cr.user_id = #{userId}
+    </select>
+    
+    <select id="getAverageRating" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM course_rating WHERE course_id = #{courseId}
+    </select>
+    
+    <select id="countByCourseId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM course_rating WHERE course_id = #{courseId}
+    </select>
+    
+    <select id="findByCourseId" resultMap="BaseResultMap">
+        SELECT 
+            cr.*,
+            u.username as user_name,
+            u.avatar as user_avatar
+        FROM course_rating cr
+        LEFT JOIN user u ON cr.user_id = u.id
+        WHERE cr.course_id = #{courseId}
+        ORDER BY cr.create_time DESC
+    </select>
+    
+    <select id="existsByCourseIdAndUserId" resultType="java.lang.Boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM course_rating 
+            WHERE course_id = #{courseId} AND user_id = #{userId}
+        )
+    </select>
+
+
+    <insert id="insert" parameterType="com.cms.reception.entity.CourseRating" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course_rating (
+            course_id,
+            user_id,
+            rating,
+            create_time,
+            update_time
+        ) VALUES (
+            #{courseId},
+            #{userId},
+            #{rating},
+            NOW(),
+            NOW()
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.cms.reception.entity.CourseRating">
+        UPDATE course_rating
+        SET rating = #{rating},
+            update_time = NOW()
+        WHERE course_id = #{courseId} AND user_id = #{userId}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM course_rating WHERE id = #{id}
+    </delete>
+</mapper>
