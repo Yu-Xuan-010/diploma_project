@@ -12,12 +12,14 @@ public class SecurityUtils {
      */
     public static Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            return Long.parseLong(userDetails.getUsername());
+        if (authentication != null && authentication.getPrincipal() instanceof User) {
+            User user = (User) authentication.getPrincipal();
+            return user.getId();
         }
         throw new RuntimeException("用户未登录");
     }
+
+
 
     /**
      * 获取当前登录用户信息

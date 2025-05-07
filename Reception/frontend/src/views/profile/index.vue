@@ -212,24 +212,34 @@
 
         <!-- 学习记录 -->
         <div v-if="activeTab === 'learning'" class="content-section">
-          <h2>学习记录</h2>
-          <el-table :data="learningRecords" style="width: 100%">
-            <el-table-column prop="courseName" label="课程名称"/>
-            <el-table-column prop="studyDuration" label="学习时长">
-              <template #default="scope">
-                {{ scope.row.studyDuration }} 分钟
+          <h2 class="mb-4 text-xl font-bold">学习记录</h2>
+
+          <el-table :data="learningRecords" stripe style="width: 100%">
+            <el-table-column prop="courseName" label="课程名称" width="180" />
+            <el-table-column prop="lessonTitle" label="课时标题" width="200" />
+            <el-table-column label="学习时长">
+              <template #default="{ row }">
+                {{ Math.floor(row.totalDuration / 60) }} 分钟
               </template>
             </el-table-column>
-            <el-table-column prop="lastLearnTime" label="最后学习时间"/>
-            <el-table-column label="操作">
-              <template #default="scope">
-                <el-button type="primary" link @click="continueLearning(scope.row)">
+            <el-table-column prop="lastStudyTime" label="最后学习时间" />
+            <el-table-column prop="status" label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'warning'">
+                  {{ row.status === 1 ? '已完成' : '未完成' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ row }">
+                <el-button type="primary" link @click="continueLearning(row)">
                   继续学习
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
-          <el-empty v-if="learningRecords.length === 0" description="暂无学习记录"/>
+
+          <el-empty v-if="learningRecords.length === 0" description="暂无学习记录" />
         </div>
 
         <!-- 课程收藏 -->
@@ -648,6 +658,7 @@ export default {
     Edit
   },
   setup() {
+
     const store = useStore()
     const router = useRouter()
 
@@ -660,7 +671,8 @@ export default {
     }
 
     // 状态管理
-    const activeTab = ref('basic')
+    const learningRecords = ref([])
+    const activeTab = ref('learning')
     const passwordDialogVisible = ref(false)
     const applyTeacherDialogVisible = ref(false)
     const rejectReasonDialogVisible = ref(false)
@@ -735,7 +747,6 @@ export default {
       address: ''
     })
 
-    const learningRecords = ref([])
 
     const favoriteCourses = ref([])
 
@@ -1027,12 +1038,9 @@ export default {
       // 实现邮箱绑定逻辑
     }
 
-    const continueLearning = (record) => {
-      if (record.courseId) {
-        router.push(`/course/${record.courseId}`)
-      } else {
-        ElMessage.warning('无法获取课程信息')
-      }
+    const continueLearning = (row) => {
+      if (!row.lessonId) return
+      router.push(`/lesson/${row.lessonId}`) // 跳转到课时详情页
     }
 
     const viewCourse = (courseId) => {
@@ -1835,36 +1843,42 @@ export default {
     // 获取学习记录
     const fetchLearningRecords = async () => {
       try {
-        console.log('开始获取学习记录')
-        const response = await axios.get('/api/learning-records', {
-          headers: {
-            Authorization: `Bearer ${store.state.token}`
-          }
-        })
-        console.log('获取学习记录响应:', response.data)
-
-        if (response.data.code === 200) {
-          if (!response.data.data || response.data.data.length === 0) {
-            console.log('没有找到学习记录')
-            learningRecords.value = []
-            return
-          }
-
-          learningRecords.value = response.data.data.map(record => ({
-            courseName: record.courseName,
-            studyDuration: record.studyDuration,
-            lastLearnTime: formatDateTime(record.lastLearnTime)
-          }))
-          console.log('成功设置学习记录:', learningRecords.value)
-        } else {
-          console.error('获取学习记录失败:', response.data.message)
-          ElMessage.error(response.data.message || '获取学习记录失败')
-        }
-      } catch (error) {
-        console.error('获取学习记录出错:', error)
-        ElMessage.error('获取学习记录失败，请稍后重试')
+        const res = await axios.get('/api/study/records') // 可改为带课程名的接口
+        learningRecords.value = res.data.data
+      } catch (err) {
+        ElMessage.error('加载学习记录失败')
       }
     }
+    onMounted(() => {
+      if (activeTab.value === 'learning') {
+        fetchLearningRecords()
+      }
+    })
+
+    // 加载学习记录
+    const loadStudyRecords = async () => {
+      try {
+        const response = await axios.get('/api/study/records')
+        if (response.data.success) {
+          learningRecords.value = response.data.data
+        } else {
+          ElMessage.error('获取学习记录失败：' + response.data.message)
+        }
+      } catch (error) {
+        ElMessage.error('加载学习记录时发生错误')
+        console.error('请求失败：', error)
+      }
+    }
+    // 监听 tab 切换，切换到学习记录时重新加载
+    watch(activeTab, (newTab) => {
+      if (newTab === 'learning') {
+        loadStudyRecords()
+      }
+    })
+    // 页面加载时获取学习记录
+    onMounted(() => {
+      loadStudyRecords()
+    })
 
     // 在 setup 函数中添加
     const videoUploadProgress = ref(0)
@@ -1963,7 +1977,10 @@ export default {
       fetchLearningRecords,
       videoUploadProgress,
       handleVideoProgress,
-      handleVideoMetadata
+      handleVideoMetadata,
+      store,
+      router,
+      loadStudyRecords
     }
   }
 }

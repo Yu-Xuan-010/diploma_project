@@ -345,11 +345,24 @@ export default {
       }
     }
 
-    const handleNodeClick = (data) => {
-      if (data.type === 'lesson') {
-        router.push(`/course/${course.value.id}/lesson/${data.id}`)
+    const handleNodeClick = async (nodeData) => {
+      if (nodeData.type === 'lesson') {
+        try {
+          // 提交学习记录
+          await axios.post('/api/study/records', {
+            lessonId: route.params.lessonId,
+            totalDuration: 0
+          })
+
+          // 跳转到课时页面（需要拿到 courseId）
+          await router.push(`/course/${course.value.id}/lesson/${nodeData.id}`)
+        } catch (error) {
+          console.error('跳转失败', error)
+          ElMessage.error('无法进入课时学习页面')
+        }
       }
     }
+
 
     const handleTabClick = (tab) => {
       console.log('切换到标签页:', tab.props.name)
