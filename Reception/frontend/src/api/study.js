@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from '../utils/request'
 
 // 获取用户学习记录
 export function getStudyRecords() {
@@ -7,11 +7,20 @@ export function getStudyRecords() {
     method: 'get'
   }).then(response => {
     if (!response || !response.data) {
-      return { data: { code: 200, data: [] } }
+      console.error('No data received from API')
+      return { data: [] }  // 返回一个空数组，防止出现未定义错误
     }
-    return response
+    console.log('Received data:', response.data)
+    return response.data  // 这里确保返回的数据是正确的
+  }).catch(error => {
+    console.error('API Request failed:', error)
+    throw error  // 抛出错误，以便外部处理
   })
 }
+
+
+
+
 
 // 获取最近的学习记录
 export function getRecentStudyRecords(limit = 5) {

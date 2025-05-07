@@ -205,36 +205,39 @@
         </div>
 
         <!-- 学习记录 -->
-        <div v-if="activeTab === 'learning'" class="content-section">
-          <h2 class="mb-4 text-xl font-bold">学习记录</h2>
+        <el-tab-pane label="学习记录" name="learning">
+          <template v-if="learningRecords && learningRecords.length > 0">
+            <el-table :data="learningRecords" stripe style="width: 100%">
+              <el-table-column prop="courseName" label="课程名称" width="180" />
+              <el-table-column prop="lessonTitle" label="课时标题" width="200" />
+              <el-table-column label="学习时长">
+                <template #default="{ row }">
+                  {{ Math.floor(row.totalDuration) }} 秒
+                </template>
+              </el-table-column>
+              <el-table-column prop="lastStudyTime" label="最后学习时间" />
+              <el-table-column prop="status" label="状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="row.status === 1 ? 'success' : 'warning'">
+                    {{ row.status === 1 ? '已完成' : '未完成' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="120">
+                <template #default="{ row }">
+                  <el-button type="primary" link @click="continueLearning(row)">
+                    继续学习
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </template>
+          <template v-else>
+            <el-empty description="暂无学习记录" />
+          </template>
+        </el-tab-pane>
 
-          <el-table :data="learningRecords" stripe style="width: 100%">
-            <el-table-column prop="courseName" label="课程名称" width="180" />
-            <el-table-column prop="lessonTitle" label="课时标题" width="200" />
-            <el-table-column label="学习时长">
-              <template #default="{ row }">
-                {{ Math.floor(row.totalDuration ) }} 秒
-              </template>
-            </el-table-column>
-            <el-table-column prop="lastStudyTime" label="最后学习时间" />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="row.status === 1 ? 'success' : 'warning'">
-                  {{ row.status === 1 ? '已完成' : '未完成' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="120">
-              <template #default="{ row }">
-                <el-button type="primary" link @click="continueLearning(row)">
-                  继续学习
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
 
-          <el-empty v-if="learningRecords.length === 0" description="暂无学习记录" />
-        </div>
 
         <!-- 课程收藏 -->
         <div v-if="activeTab === 'favorites'" class="content-section">
@@ -592,6 +595,7 @@ import {submitTeacherApplication as submitTeacherApplicationApi} from '@/api/tea
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import store from "../../store";
 
+
 export default {
   name: 'Profile',
   computed: {
@@ -617,6 +621,12 @@ export default {
     const router = useRouter()
 
 
+
+
+
+
+
+
     // 确保 store 存在
     if (!store) {
       console.error('Vuex store is not available')
@@ -624,8 +634,11 @@ export default {
       return
     }
 
+
     // 状态管理
-    const learningRecords = ref([])
+    const learningRecords = ref([])  // 而不是 null 或 undefined
+
+
     const activeTab = ref('learning')
     const applyTeacherDialogVisible = ref(false)
     const rejectReasonDialogVisible = ref(false)
@@ -1783,19 +1796,13 @@ export default {
         ElMessage.error('加载学习记录失败')
       }
     }
-    onMounted(() => {
-      if (activeTab.value === 'learning') {
-        fetchLearningRecords()
-      }
-    })
+
 
 
     const loadStudyRecords = async () => {
       try {
-        const response = await axios.get('/api/study/records' , {
-          params: {
-            userId: userId // 确保 this.userId 有值
-          }
+        const response = await axios.get('/api/study/records', {
+          params: { userId }
         })
         if (response.data.success) {
           learningRecords.value = response.data.data
@@ -1815,9 +1822,10 @@ export default {
         loadStudyRecords()
       }
     })
-    // 页面加载时获取学习记录
     onMounted(() => {
-      loadStudyRecords()
+      if (activeTab.value === 'learning') {
+        loadStudyRecords()
+      }
     })
 
     // 在 setup 函数中添加

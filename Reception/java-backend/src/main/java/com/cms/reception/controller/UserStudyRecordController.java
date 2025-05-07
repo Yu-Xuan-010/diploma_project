@@ -12,11 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.cms.reception.utils.SecurityUtils.getCurrentUserId;
 
 @RestController
 @RequestMapping("/api/study")
@@ -55,9 +58,11 @@ public class UserStudyRecordController {
 
 
     @GetMapping("/records")
-    public ResponseEntity<List<StudyRecordDTO>> getUserRecords(@RequestParam("userId") Long userId) {
+    public ResponseEntity<List<StudyRecordDTO>> getUserRecords() {
+        Long userId = getCurrentUserId();
         System.out.println("Received userId: " + userId);
         List<Object[]> rawList = studyRecordRepository.findStudyRecordRaw(userId);
+
         List<StudyRecordDTO> result = rawList.stream().map(obj -> new StudyRecordDTO(
                 ((Number) obj[0]).longValue(),       // sr.id
                 ((Number) obj[1]).longValue(),       // sr.user_id
@@ -69,7 +74,7 @@ public class UserStudyRecordController {
                 ((Timestamp) obj[7]).toLocalDateTime(), // last_study_time
                 ((Number) obj[8]).intValue()         // status
         )).collect(Collectors.toList());
-
+        System.out.println("获取到的学习记录：" + result);
         return ResponseEntity.ok(result);
     }
 
@@ -81,7 +86,7 @@ public class UserStudyRecordController {
             if (!SecurityUtils.isAuthenticated()) {
                 return ApiResponse.error("用户未登录");
             }
-            Long userId = SecurityUtils.getCurrentUserId();
+            Long userId = getCurrentUserId();
             List<UserStudyRecord> records = studyRecordService.getRecentStudyRecords(userId, limit);
             return ApiResponse.success(records);
         } catch (Exception e) {
@@ -95,7 +100,7 @@ public class UserStudyRecordController {
             if (!SecurityUtils.isAuthenticated()) {
                 return ApiResponse.error("用户未登录");
             }
-            Long userId = SecurityUtils.getCurrentUserId();
+            Long userId = getCurrentUserId();
             boolean hasStudied = studyRecordService.hasStudied(userId, lessonId);
             return ApiResponse.success(hasStudied);
         } catch (Exception e) {
@@ -109,7 +114,7 @@ public class UserStudyRecordController {
             if (!SecurityUtils.isAuthenticated()) {
                 return ApiResponse.error("用户未登录");
             }
-            Long userId = SecurityUtils.getCurrentUserId();
+            Long userId = getCurrentUserId();
             Integer totalTime = studyRecordService.getTotalStudyTime(userId, lessonId);
             return ApiResponse.success(totalTime);
         } catch (Exception e) {
@@ -126,7 +131,7 @@ public class UserStudyRecordController {
             if (!SecurityUtils.isAuthenticated()) {
                 return ApiResponse.error("用户未登录");
             }
-            Long userId = SecurityUtils.getCurrentUserId();
+            Long userId = getCurrentUserId();
             UserStudyRecord record = new UserStudyRecord();
             record.setUserId(userId);
             record.setLessonId(lessonId);
