@@ -21,7 +21,8 @@ import java.util.Optional;
  * &#064;Version: 1.0
  */
 public interface UserStudyRecordRepository  extends JpaRepository<UserStudyRecord, Integer> {
-    Optional<UserStudyRecord> findByUserIdAndLessonId(Long userId, Long lessonId);
+    Optional<UserStudyRecord> findByUserIdAndLessonId(@Param("userId") Long userId, @Param("lessonId") Long lessonId);
+
     @Query(value = "SELECT c.name as courseName, l.title as lessonTitle, r.last_study_time as lastStudyTime, " +
             "r.total_duration as totalDuration, l.id as lessonId, r.status as status " +
             "FROM user_study_record r " +

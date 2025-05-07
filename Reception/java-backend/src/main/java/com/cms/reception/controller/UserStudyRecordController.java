@@ -55,7 +55,7 @@ public class UserStudyRecordController {
 
 
     @GetMapping("/records")
-    public ResponseEntity<List<StudyRecordDTO>> getUserRecords(@RequestParam Long userId) {
+    public ResponseEntity<List<StudyRecordDTO>> getUserRecords(@RequestParam("userId") Long userId) {
         System.out.println("Received userId: " + userId);
         List<Object[]> rawList = studyRecordRepository.findStudyRecordRaw(userId);
         List<StudyRecordDTO> result = rawList.stream().map(obj -> new StudyRecordDTO(

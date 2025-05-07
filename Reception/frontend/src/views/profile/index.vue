@@ -515,26 +515,7 @@
       </el-col>
     </el-row>
 
-    <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
-      <el-form :model="passwordForm" label-width="100px">
-        <el-form-item label="原密码">
-          <el-input v-model="passwordForm.oldPassword" type="password"></el-input>
-        </el-form-item>
-        <el-form-item label="新密码">
-          <el-input v-model="passwordForm.newPassword" type="password"></el-input>
-        </el-form-item>
-        <el-form-item label="确认密码">
-          <el-input v-model="passwordForm.confirmPassword" type="password"></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="passwordDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="changePassword">确认</el-button>
-          </span>
-      </template>
-    </el-dialog>
+
 
     <!-- 申请成为教师对话框 -->
     <el-dialog v-model="applyTeacherDialogVisible" title="申请成为教师" width="500px">
@@ -1788,10 +1769,15 @@ export default {
       }
     }
 
+    const userId = store.state.user.userInfo?.id;
     // 获取学习记录
     const fetchLearningRecords = async () => {
       try {
-        const res = await axios.get('/api/study/records' ) // 可改为带课程名的接口
+        const res = await axios.get('/api/study/records', {
+          params: {
+            userId: userId // 确保 this.userId 有值
+          }
+        } ) // 可改为带课程名的接口
         learningRecords.value = res.data.data
       } catch (err) {
         ElMessage.error('加载学习记录失败')
@@ -1803,10 +1789,14 @@ export default {
       }
     })
 
-    // 加载学习记录
+
     const loadStudyRecords = async () => {
       try {
-        const response = await axios.get('/api/study/records')
+        const response = await axios.get('/api/study/records' , {
+          params: {
+            userId: userId // 确保 this.userId 有值
+          }
+        })
         if (response.data.success) {
           learningRecords.value = response.data.data
         } else {
@@ -1817,6 +1807,8 @@ export default {
         console.error('请求失败：', error)
       }
     }
+
+
     // 监听 tab 切换，切换到学习记录时重新加载
     watch(activeTab, (newTab) => {
       if (newTab === 'learning') {
