@@ -26,12 +26,6 @@
             </el-icon>
             <span>课程收藏</span>
           </el-menu-item>
-          <el-menu-item index="security">
-            <el-icon>
-              <Lock/>
-            </el-icon>
-            <span>账号安全</span>
-          </el-menu-item>
           <el-menu-item v-if="isTeacher" index="upload">
             <el-icon>
               <Upload/>
@@ -219,7 +213,7 @@
             <el-table-column prop="lessonTitle" label="课时标题" width="200" />
             <el-table-column label="学习时长">
               <template #default="{ row }">
-                {{ Math.floor(row.totalDuration / 60) }} 分钟
+                {{ Math.floor(row.totalDuration ) }} 秒
               </template>
             </el-table-column>
             <el-table-column prop="lastStudyTime" label="最后学习时间" />
@@ -266,27 +260,6 @@
           </el-row>
         </div>
 
-        <!-- 账号安全 -->
-        <div v-if="activeTab === 'security'" class="content-section">
-          <h2>账号安全</h2>
-          <el-card>
-            <el-form label-width="100px">
-              <el-form-item label="登录密码">
-                <el-button type="primary" link @click="showChangePassword">修改密码</el-button>
-              </el-form-item>
-              <el-form-item label="手机绑定">
-                <el-button type="primary" link @click="showBindPhone">
-                  {{ userInfo.phoneNumber ? '修改手机号' : '绑定手机号' }}
-                </el-button>
-              </el-form-item>
-              <el-form-item label="邮箱绑定">
-                <el-button type="primary" link @click="showBindEmail">
-                  {{ userInfo.email ? '修改邮箱' : '绑定邮箱' }}
-                </el-button>
-              </el-form-item>
-            </el-form>
-          </el-card>
-        </div>
 
         <!-- 上传课程（仅教师可见） -->
         <div v-if="activeTab === 'upload' && isTeacher" class="content-section">
@@ -673,7 +646,6 @@ export default {
     // 状态管理
     const learningRecords = ref([])
     const activeTab = ref('learning')
-    const passwordDialogVisible = ref(false)
     const applyTeacherDialogVisible = ref(false)
     const rejectReasonDialogVisible = ref(false)
     const lessonDialogVisible = ref(false)
@@ -707,6 +679,7 @@ export default {
         {type: 'number', message: '排序序号必须为数字', trigger: 'blur'}
       ]
     }
+
 
     const uploadHeaders = computed(() => ({
       Authorization: `Bearer ${store.state.token}`
@@ -1008,39 +981,14 @@ export default {
       activeTab.value = index
     }
 
-    const showChangePassword = () => {
-      passwordDialogVisible.value = true
-    }
 
-    const changePassword = async () => {
-      if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-        ElMessage.error('两次输入的密码不一致')
-        return
-      }
-
-      try {
-        await axios.post('/api/user/change-password', {
-          oldPassword: passwordForm.value.oldPassword,
-          newPassword: passwordForm.value.newPassword
-        })
-        ElMessage.success('密码修改成功')
-        passwordDialogVisible.value = false
-      } catch (error) {
-        ElMessage.error('密码修改失败：' + error.response?.data?.message || '未知错误')
-      }
-    }
-
-    const showBindPhone = () => {
-      // 实现手机绑定逻辑
-    }
-
-    const showBindEmail = () => {
-      // 实现邮箱绑定逻辑
-    }
 
     const continueLearning = (row) => {
-      if (!row.lessonId) return
-      router.push(`/lesson/${row.lessonId}`) // 跳转到课时详情页
+      if (row.courseId && row.lessonId) {
+        router.push(`/course/${row.courseId}/lesson/${row.lessonId}`)
+      } else {
+        console.warn('课程ID或课时ID缺失，无法跳转', row)
+      }
     }
 
     const viewCourse = (courseId) => {
@@ -1843,7 +1791,7 @@ export default {
     // 获取学习记录
     const fetchLearningRecords = async () => {
       try {
-        const res = await axios.get('/api/study/records') // 可改为带课程名的接口
+        const res = await axios.get('/api/study/records' ) // 可改为带课程名的接口
         learningRecords.value = res.data.data
       } catch (err) {
         ElMessage.error('加载学习记录失败')
@@ -1905,18 +1853,14 @@ export default {
       courseForm,
       categories,
       uploadHeaders,
-      passwordDialogVisible,
-      passwordForm,
+
+
       applyTeacherDialogVisible,
       applyForm,
       expertiseOptions,
       isTeacher,
       roleText,
       handleMenuSelect,
-      showChangePassword,
-      changePassword,
-      showBindPhone,
-      showBindEmail,
       continueLearning,
       viewCourse,
       removeFavorite,

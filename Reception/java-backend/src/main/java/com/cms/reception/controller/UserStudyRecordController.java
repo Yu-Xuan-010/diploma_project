@@ -1,20 +1,22 @@
 package com.cms.reception.controller;
 
 import com.cms.reception.dto.ApiResponse;
+import com.cms.reception.dto.StudyRecordDTO;
 import com.cms.reception.entity.User;
 import com.cms.reception.entity.UserStudyRecord;
+import com.cms.reception.repository.UserStudyRecordRepository;
 import com.cms.reception.service.UserService;
 import com.cms.reception.service.UserStudyRecordService;
 import com.cms.reception.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/study")
@@ -24,6 +26,8 @@ public class UserStudyRecordController {
     private UserStudyRecordService studyRecordService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserStudyRecordRepository studyRecordRepository;
 
     @PostMapping("/records")
     public ApiResponse<Void> addStudyRecord(@RequestBody UserStudyRecord record, Principal principal) {
@@ -51,32 +55,22 @@ public class UserStudyRecordController {
 
 
     @GetMapping("/records")
-    public ApiResponse<List<UserStudyRecord>> getStudyRecords(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
-        try {
-            if (!SecurityUtils.isAuthenticated()) {
-                return ApiResponse.error("用户未登录");
-            }
+    public ResponseEntity<List<StudyRecordDTO>> getUserRecords(@RequestParam Long userId) {
+        System.out.println("Received userId: " + userId);
+        List<Object[]> rawList = studyRecordRepository.findStudyRecordRaw(userId);
+        List<StudyRecordDTO> result = rawList.stream().map(obj -> new StudyRecordDTO(
+                ((Number) obj[0]).longValue(),       // sr.id
+                ((Number) obj[1]).longValue(),       // sr.user_id
+                ((Number) obj[2]).longValue(),       // sr.lesson_id
+                (String) obj[3],                     // lesson_title
+                ((Number) obj[4]).longValue(),       // course_id
+                (String) obj[5],                     // course_name
+                ((Number) obj[6]).intValue(),        // total_duration
+                ((Timestamp) obj[7]).toLocalDateTime(), // last_study_time
+                ((Number) obj[8]).intValue()         // status
+        )).collect(Collectors.toList());
 
-            // 获取当前登录用户的 ID
-            Long userId = SecurityUtils.getCurrentUserId();
-
-            // 处理日期，若没有传递则使用默认值
-            if (startDate == null) {
-                startDate = new Date(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000); // 默认30天前
-            }
-            if (endDate == null) {
-                endDate = new Date(); // 默认当前时间
-            }
-
-            // 查询学习记录
-            List<UserStudyRecord> records = studyRecordService.getStudyRecordsByDateRange(userId, startDate, endDate);
-            return ApiResponse.success(records);
-
-        } catch (Exception e) {
-            return ApiResponse.error("获取学习记录失败：" + e.getMessage());
-        }
+        return ResponseEntity.ok(result);
     }
 
 

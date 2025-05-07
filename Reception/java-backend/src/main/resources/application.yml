@@ -34,9 +34,9 @@ qiniu:
   # 密钥
   secretKey: wX3cagWsnf93FIm5la38-k0tWSBSbkQ08HCt6Exb
   # 存储空间名
-  bucket: uocms1123
+  bucket: uocms0012
   # 访问域名
-  domain: sucnv6mbd.hn-bkt.clouddn.com
+  domain: svvrblb4c.hn-bkt.clouddn.com
 
 jwt:
   secret: your_jwt_secret_key_here_make_it_long_and_secure_123456

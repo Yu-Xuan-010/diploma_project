@@ -26,11 +26,18 @@
           </div>
 
           <div class="video-player">
-            <div v-show="currentLesson.videoUrl" class="dplayer-container"></div>
-            <div v-show="!currentLesson.videoUrl" class="no-video">
+            <video
+                v-if="currentLesson.videoUrl"
+                ref="videoRef"
+                controls
+                :src="currentLesson.videoUrl"
+                style="width: 100%;"
+            ></video>
+            <div v-else class="no-video">
               <el-empty description="暂无视频内容" />
             </div>
           </div>
+
 
 
           <div class="lesson-info">
@@ -162,16 +169,55 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
+import {ref, computed, watch, nextTick, onUnmounted, onMounted} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DPlayer from 'dplayer'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ArrowRight, Timer, VideoPlay, Check } from '@element-plus/icons-vue'
 import axios from 'axios'
 
+const videoRef = ref(null)
 const route = useRoute()
 const router = useRouter()
+let lastSentTime = 0
 
+
+const reportStudyProgress = async (duration) => {
+  try {
+    const courseId = Number(route.params.courseId)
+    const lessonId = Number(route.params.lessonId)
+    await axios.post('/api/study/records', {
+      courseId,
+      lessonId,
+      duration: Math.floor(duration),
+      status: 0
+    })
+    console.log('✅ 学习记录已上报', { courseId, lessonId, duration })
+  } catch (e) {
+    console.error('❌ 学习记录上报失败', e)
+  }
+}
+
+const handleTimeUpdate = () => {
+  const currentTime = videoRef.value?.currentTime || 0
+  if (currentTime - lastSentTime >= 15) {
+    reportStudyProgress(15)
+    lastSentTime = currentTime
+  }
+}
+
+watch(videoRef, (video) => {
+  if (video) {
+    console.log('✅ videoRef 绑定成功，添加事件监听')
+    video.addEventListener('timeupdate', handleTimeUpdate)
+  }
+})
+
+onUnmounted(() => {
+  if (videoRef.value) {
+    videoRef.value.removeEventListener('timeupdate', handleTimeUpdate)
+  }
+})
 // 基础数据
 const currentLesson = ref({})
 const videoPlayer = ref(null)
@@ -431,6 +477,17 @@ const navigateLesson = (lesson) => {
   router.push(`/course/${courseId.value}/lesson/${lesson.id}`)
 }
 
+function handlePlay(sectionId) {
+  axios.post('/api/study-record/save', {
+    courseId: props.courseId,
+    sectionId: sectionId,
+    duration: 0
+  }).then(() => {
+    console.log('学习记录已保存')
+  }).catch(err => {
+    console.error('保存失败', err)
+  })
+}
 // 显示评论对话框
 const showCommentDialog = () => {
   commentDialogVisible.value = true
