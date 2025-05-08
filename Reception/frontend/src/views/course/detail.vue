@@ -611,9 +611,10 @@ export default {
       try {
         await ElMessageBox.confirm('确定删除？', '提示', { type: 'warning' });
         const token = localStorage.getItem('token');
+        console.log('当前 token:', token);
         const res = await axios.delete(`/api/comments/${comment.id}`, {
           headers: { 'Authorization': `Bearer ${token}` },
-          data: { userId: currentUserId.value }
+          params: { userId: currentUserId.value }
         });
         if (res.data.success) {
           comments.value = comments.value.filter(c => c.id !== comment.id);

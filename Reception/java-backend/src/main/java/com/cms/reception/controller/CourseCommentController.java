@@ -36,13 +36,18 @@ public class CourseCommentController {
         CourseComment savedComment = courseCommentService.addComment(comment);
         return Result.success(savedComment);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long id,
             @RequestParam Long userId,
             @RequestHeader("Authorization") String token) {
         try {
+            // 处理 Bearer 前缀
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7); // 去除 "Bearer " 前缀
+            }
+
             // 验证用户身份
             if (!JwtUtil.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -56,6 +61,14 @@ public class CourseCommentController {
                         .body(new ApiResponse<>(false, "评论不存在", null));
             }
 
+            // 检查评论的 userId 是否为 null
+            if (comment.getUserId() == null) {
+                log.warn("评论ID {} 的 userId 为 null", id);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse<>(false, "评论的用户ID为null，无法删除", null));
+            }
+
+
             // 检查是否是评论作者
             if (!comment.getUserId().equals(userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -63,7 +76,7 @@ public class CourseCommentController {
             }
 
             // 删除评论
-            courseCommentService.deleteComment(id,userId);
+            courseCommentService.deleteComment(id, userId);
             return ResponseEntity.ok(new ApiResponse<>(true, "删除成功", null));
         } catch (Exception e) {
             log.error("删除评论失败", e);
@@ -71,7 +84,9 @@ public class CourseCommentController {
                     .body(new ApiResponse<>(false, "删除评论失败: " + e.getMessage(), null));
         }
     }
-    
+
+
+
     @GetMapping("/course/{courseId}/count")
     public Result<Integer> getCommentCount(@PathVariable Long courseId) {
         int count = courseCommentService.getCommentCount(courseId);

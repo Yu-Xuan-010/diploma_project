@@ -59,49 +59,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 评论区 -->
-        <div class="comment-section">
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>课时评论</span>
-                <el-button type="primary" @click="showCommentDialog">发表评论</el-button>
-              </div>
-            </template>
-
-            <div class="comment-list">
-              <div v-if="comments.length === 0" class="no-comments">
-                暂无评论，快来发表第一条评论吧！
-              </div>
-              <div v-else v-for="comment in comments" :key="comment.id" class="comment-item">
-                <div class="comment-header">
-                  <el-avatar :size="40" :src="comment.userAvatar"></el-avatar>
-                  <div class="comment-info">
-                    <span class="username">{{ comment.username }}</span>
-                    <span class="time">{{ formatDateTime(comment.createTime) }}</span>
-                  </div>
-                </div>
-                <div class="comment-content">
-                  {{ comment.content }}
-                </div>
-              </div>
-            </div>
-
-            <!-- 评论分页 -->
-            <div class="comment-pagination">
-              <el-pagination
-                  :current-page="commentPage"
-                  :page-size="commentPageSize"
-                  :total="totalComments"
-                  :page-sizes="[5, 10, 20, 50]"
-                  layout="total, sizes, prev, pager, next"
-                  @size-change="handleCommentSizeChange"
-                  @current-change="handleCommentPageChange"
-              />
-            </div>
-          </el-card>
-        </div>
       </el-col>
 
       <!-- 右侧课时列表 -->
@@ -146,25 +103,6 @@
       </el-col>
     </el-row>
 
-    <!-- 评论对话框 -->
-    <el-dialog v-model="commentDialogVisible" title="发表评论" width="500px">
-      <el-form :model="commentForm" :rules="commentRules" ref="commentFormRef" label-width="80px">
-        <el-form-item label="评论内容" prop="content">
-          <el-input
-              type="textarea"
-              v-model="commentForm.content"
-              :rows="4"
-              placeholder="请输入您的评论"
-          ></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="commentDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitComment">发表评论</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -234,12 +172,7 @@ const commentForm = ref({ content: '' })
 const commentPage = ref(1)
 const commentPageSize = ref(10)
 const totalComments = ref(0)
-const commentRules = {
-  content: [
-    { required: true, message: '请输入评论内容', trigger: 'blur' },
-    { min: 5, max: 500, message: '评论内容长度在5-500个字符之间', trigger: 'blur' }
-  ]
-}
+
 
 // 获取课程 ID 和课时 ID
 const courseId = ref(route.params.courseId)
@@ -373,7 +306,6 @@ const loadLesson = async () => {
       currentLesson.value = lessonRes.data.data
       await checkLessonCompletion()
       await initVideoPlayer()
-      await fetchComments()
     } else {
       ElMessage.warning('暂无课时数据')
     }
@@ -417,24 +349,7 @@ const fetchCompletedLessons = async () => {
   }
 }
 
-// 获取评论列表
-const fetchComments = async () => {
-  try {
-    const response = await axios.get(`/api/lessons/${lessonId.value}/comments`, {
-      params: {
-        page: commentPage.value,
-        pageSize: commentPageSize.value
-      }
-    })
-    if (response.data.success) {
-      comments.value = response.data.data.list
-      totalComments.value = response.data.data.total
-    }
-  } catch (error) {
-    console.error('获取评论列表失败:', error)
-    ElMessage.error('获取评论列表失败')
-  }
-}
+
 
 // 检查课时完成状态
 const checkLessonCompletion = async () => {
@@ -488,29 +403,8 @@ function handlePlay(sectionId) {
     console.error('保存失败', err)
   })
 }
-// 显示评论对话框
-const showCommentDialog = () => {
-  commentDialogVisible.value = true
-}
 
-// 提交评论
-const submitComment = async () => {
-  if (!commentFormRef.value) return
-  
-  try {
-    await commentFormRef.value.validate()
-    const response = await axios.post(`/api/lessons/${lessonId.value}/comments`, commentForm.value)
-    if (response.data.success) {
-      ElMessage.success('评论发表成功')
-      commentDialogVisible.value = false
-      commentForm.value = { content: '' }
-      fetchComments()
-    }
-  } catch (error) {
-    console.error('发表评论失败:', error)
-    ElMessage.error('发表评论失败，请稍后重试')
-  }
-}
+
 
 // 格式化时长
 const formatDuration = (seconds) => {
@@ -555,16 +449,6 @@ const isLessonCompleted = (lessonId) => {
   return completedLessons.value.has(lessonId)
 }
 
-// 评论分页处理
-const handleCommentSizeChange = (val) => {
-  commentPageSize.value = val
-  fetchComments()
-}
-
-const handleCommentPageChange = (val) => {
-  commentPage.value = val
-  fetchComments()
-}
 
 // 监听路由参数变化
 watch(
