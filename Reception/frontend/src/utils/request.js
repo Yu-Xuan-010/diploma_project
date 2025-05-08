@@ -15,14 +15,14 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    console.log('发送请求:', {
-      method: config.method.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      headers: config.headers,
-      data: config.data
-    });
-    
+    // console.log('发送请求:', {
+    //   method: config.method.toUpperCase(),
+    //   url: config.url,
+    //   baseURL: config.baseURL,
+    //   headers: config.headers,
+    //   data: config.data
+    // });
+
     // 从 localStorage 获取 token
     const token = localStorage.getItem('token')
     if (token) {

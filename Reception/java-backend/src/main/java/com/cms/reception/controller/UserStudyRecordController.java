@@ -8,7 +8,9 @@ import com.cms.reception.repository.UserStudyRecordRepository;
 import com.cms.reception.service.UserService;
 import com.cms.reception.service.UserStudyRecordService;
 import com.cms.reception.utils.SecurityUtils;
+import org.apache.poi.hssf.record.Record;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,6 +56,12 @@ public class UserStudyRecordController {
         } catch (Exception e) {
             return ApiResponse.error("保存学习记录失败：" + e.getMessage());
         }
+    }
+
+    @GetMapping("/findRecordByLessonId")
+    public ResponseEntity<UserStudyRecord> getRecordsByLessonId(@RequestParam("lessonId") Long lessonId) {
+
+        return ResponseEntity.ok(studyRecordService.findRecordByLessonId(getCurrentUserId(), lessonId));
     }
 
 
@@ -126,7 +134,7 @@ public class UserStudyRecordController {
     public ApiResponse<Void> updateStudyProgress(
             @RequestParam Long lessonId,
             @RequestParam Integer duration,
-    @RequestParam(required = false, defaultValue = "0") Integer status) {
+            @RequestParam(required = false, defaultValue = "0") Integer status) {
         try {
             if (!SecurityUtils.isAuthenticated()) {
                 return ApiResponse.error("用户未登录");

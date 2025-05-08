@@ -14,14 +14,20 @@
         </el-input>
       </el-form-item>
       <el-form-item prop="password">
-        <el-input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter="handleLogin">
+        <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="密码"
+            show-password
+            @keyup.enter="handleLogin"
+        >
           <template #prefix>
             <el-icon><Lock /></el-icon>
           </template>
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button :loading="loading" type="primary" style="width:100%;" @click="handleLogin">
+        <el-button :loading="loading" type="primary" style="width: 100%" @click="handleLogin">
           登录
         </el-button>
       </el-form-item>
@@ -34,7 +40,7 @@
 </template>
 
 <script>
-import { User, Lock } from '@element-plus/icons-vue';
+import { User, Lock } from '@element-plus/icons-vue'
 
 export default {
   name: 'Login',
@@ -53,49 +59,49 @@ export default {
         password: [{ required: true, trigger: 'blur', message: '请输入密码' }]
       },
       loading: false
-    };
+    }
   },
   methods: {
     async handleLogin() {
-      if (!this.$refs.loginFormRef) return;
-      
+      if (!this.$refs.loginFormRef) return
+
       try {
-        await this.$refs.loginFormRef.validate();
-        this.loading = true;
-        
-        console.log('开始登录，表单数据:', this.loginForm);
-        
+        await this.$refs.loginFormRef.validate()
+        this.loading = true
+
+        console.log('开始登录，表单数据:', this.loginForm)
+
         const result = await this.$store.dispatch('login', {
           username: this.loginForm.username,
           password: this.loginForm.password
-        });
-        
-        console.log('登录结果:', result);
-        
+        })
+
+        console.log('登录结果:', result)
+
         if (result.success) {
-          this.$message.success('登录成功');
-          const redirect = this.$route.query.redirect || '/home';
-          console.log('准备跳转到:', redirect);
-          await this.$router.replace(redirect);
+          this.$message.success('登录成功')
+          const redirect = this.$route.query.redirect || '/home'
+          await this.$router.replace(redirect)
         } else {
-          this.$message.error(result.message || '登录失败');
+          this.$message.error(result.message || '登录失败')
         }
       } catch (error) {
-        console.error('登录错误:', error);
-        this.$message.error(error.message || '登录失败，请重试');
+        console.error('登录错误:', error)
+        this.$message.error(error.message || '登录失败，请重试')
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     }
   },
   created() {
-    document.getElementById('app').classList.add('login-page');
+    document.getElementById('app').classList.add('login-page')
   },
-  destroyed() {
-    document.getElementById('app').classList.remove('login-page');
+  unmounted() {
+    document.getElementById('app').classList.remove('login-page')
   }
-};
+}
 </script>
+
 
 <style lang="scss" scoped>
 .login-container {

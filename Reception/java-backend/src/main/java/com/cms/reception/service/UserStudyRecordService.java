@@ -35,4 +35,6 @@ public interface UserStudyRecordService {
      * 更新学习状态
      */
     void updateStudyStatus(Long userId, Long lessonId);
-} 
+
+    UserStudyRecord findRecordByLessonId(Long userId,Long lessonId);
+}

@@ -44,13 +44,13 @@ axios.defaults.headers.post['Content-Type'] = 'application/json'
 // 添加请求拦截器，用于调试
 axios.interceptors.request.use(
   config => {
-    console.log('发送请求:', {
+   /* console.log('发送请求:', {
       method: config.method.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
       headers: config.headers,
       data: config.data
-    });
+    });*/
     return config;
   },
   error => {
@@ -62,12 +62,12 @@ axios.interceptors.request.use(
 // 添加响应拦截器，用于调试
 axios.interceptors.response.use(
   response => {
-    console.log('收到响应:', {
+    /*console.log('收到响应:', {
       status: response.status,
       statusText: response.statusText,
       headers: response.headers,
       data: response.data
-    });
+    });*/
     return response;
   },
   error => {

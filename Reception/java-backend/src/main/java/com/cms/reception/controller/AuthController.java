@@ -106,13 +106,17 @@ public class AuthController {
             String token = jwtUtil.generateToken(userDetails);
             User user = userService.findByUsername(userDetails.getUsername());
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("token", token);
-            response.put("username", userDetails.getUsername());
-            response.put("userId", user.getId());
-            response.put("email", user.getEmail());
-            response.put("nickname", user.getNickname());
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("username", userDetails.getUsername());
+            data.put("userId", user.getId());
+            data.put("email", user.getEmail());
+            data.put("nickname", user.getNickname());
 
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", data);
+            System.out.println(response);
             logger.info("Login successful for user: {}", loginRequest.get("username"));
             return ResponseEntity.ok(response);
         } catch (Exception e) {

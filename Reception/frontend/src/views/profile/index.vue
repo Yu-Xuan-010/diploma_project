@@ -205,14 +205,14 @@
         </div>
 
         <!-- 学习记录 -->
-        <el-tab-pane label="学习记录" name="learning">
-          <template v-if="learningRecords && learningRecords.length > 0">
+        <el-tabs v-model="activeTab">
+          <el-tab-pane label="学习记录" name="learning">
             <el-table :data="learningRecords" stripe style="width: 100%">
               <el-table-column prop="courseName" label="课程名称" width="180" />
               <el-table-column prop="lessonTitle" label="课时标题" width="200" />
               <el-table-column label="学习时长">
                 <template #default="{ row }">
-                  {{ Math.floor(row.totalDuration) }} 秒
+                  {{ Math.floor(row.totalDuration || 0) }} 秒
                 </template>
               </el-table-column>
               <el-table-column prop="lastStudyTime" label="最后学习时间" />
@@ -231,11 +231,11 @@
                 </template>
               </el-table-column>
             </el-table>
-          </template>
-          <template v-else>
-            <el-empty description="暂无学习记录" />
-          </template>
-        </el-tab-pane>
+          </el-tab-pane>
+        </el-tabs>
+
+
+
 
 
 
@@ -457,11 +457,11 @@
               <div class="video-upload-container">
                 <!-- 视频预览区域 -->
                 <div v-if="lessonForm.videoUrl" class="video-preview-container">
-                  <video 
-                    :src="lessonForm.videoUrl" 
-                    controls 
-                    class="preview-video"
-                    @loadedmetadata="handleVideoMetadata"
+                  <video
+                      :src="lessonForm.videoUrl"
+                      controls
+                      class="preview-video"
+                      @loadedmetadata="handleVideoMetadata"
                   ></video>
                   <div class="video-info">
                     <span>时长: {{ formatDuration(lessonForm.duration) }}</span>
@@ -473,34 +473,34 @@
 
                 <!-- 上传组件 -->
                 <el-upload
-                  v-if="!lessonForm.videoUrl"
-                  class="video-uploader"
-                  action="http://localhost:8001/api/file/upload"
-                  :show-file-list="false"
-                  :on-success="handleVideoSuccess"
-                  :on-error="handleVideoError"
-                  :before-upload="beforeVideoUpload"
-                  :on-progress="handleVideoProgress"
-                  :headers="{
+                    v-if="!lessonForm.videoUrl"
+                    class="video-uploader"
+                    action="http://localhost:8001/api/file/upload"
+                    :show-file-list="false"
+                    :on-success="handleVideoSuccess"
+                    :on-error="handleVideoError"
+                    :before-upload="beforeVideoUpload"
+                    :on-progress="handleVideoProgress"
+                    :headers="{
                     'Authorization': `Bearer ${store.state.token}`,
                     'Accept': 'application/json'
                   }"
-                  name="file"
-                  accept="video/*"
+                    name="file"
+                    accept="video/*"
                 >
                   <el-button type="primary">选择视频文件</el-button>
                 </el-upload>
 
                 <!-- 上传进度条 -->
-                <el-progress 
-                  v-if="videoUploadProgress > 0 && videoUploadProgress < 100" 
-                  :percentage="videoUploadProgress"
-                  :format="percent => `${percent}%`"
-                  status="success"
-                  :stroke-width="4"
-                  class="upload-progress"
+                <el-progress
+                    v-if="videoUploadProgress > 0 && videoUploadProgress < 100"
+                    :percentage="videoUploadProgress"
+                    :format="percent => `${percent}%`"
+                    status="success"
+                    :stroke-width="4"
+                    class="upload-progress"
                 />
-                
+
                 <div class="upload-tip">支持mp4、mov等格式，大小不超过200MB</div>
               </div>
             </el-form-item>
@@ -517,7 +517,6 @@
         </el-dialog>
       </el-col>
     </el-row>
-
 
 
     <!-- 申请成为教师对话框 -->
@@ -621,12 +620,6 @@ export default {
     const router = useRouter()
 
 
-
-
-
-
-
-
     // 确保 store 存在
     if (!store) {
       console.error('Vuex store is not available')
@@ -636,7 +629,7 @@ export default {
 
 
     // 状态管理
-    const learningRecords = ref([])  // 而不是 null 或 undefined
+    const learningRecords = ref()  // 而不是 null 或 undefined
 
 
     const activeTab = ref('learning')
@@ -742,7 +735,7 @@ export default {
           }
 
           categories.value = response.data.data.map(category => {
-            console.log('处理分类数据:', category)
+            // console.log('处理分类数据:', category)
             return {
               value: category.id,
               label: category.name
@@ -974,7 +967,6 @@ export default {
     const handleMenuSelect = (index) => {
       activeTab.value = index
     }
-
 
 
     const continueLearning = (row) => {
@@ -1627,7 +1619,7 @@ export default {
         ElMessage.error('视频大小不能超过 200MB！')
         return false
       }
-      
+
       // 显示上传进度
       ElMessage.info('视频上传中，请稍候...')
       return true
@@ -1636,28 +1628,28 @@ export default {
     // 保存课时
     const saveLesson = async () => {
       if (!lessonFormRef.value) return
-      
+
       try {
         await lessonFormRef.value.validate()
-        
+
         // 确保有视频URL
         if (!lessonForm.value.videoUrl) {
           ElMessage.warning('请先上传视频')
           return
         }
-        
+
         // 确保有视频时长
         if (!lessonForm.value.duration) {
           ElMessage.warning('正在计算视频时长，请稍候...')
           return
         }
-        
-        const url = editingLesson.value 
-          ? `/api/lessons/${editingLesson.value.id}`
-          : `/api/lessons/course/${currentCourse.value.id}`
-        
+
+        const url = editingLesson.value
+            ? `/api/lessons/${editingLesson.value.id}`
+            : `/api/lessons/course/${currentCourse.value.id}`
+
         const method = editingLesson.value ? 'put' : 'post'
-        
+
         // 准备要发送的数据
         const lessonData = {
           title: lessonForm.value.title,
@@ -1667,15 +1659,15 @@ export default {
           sortOrder: lessonForm.value.sortOrder,
           courseId: currentCourse.value.id
         }
-        
+
         console.log('保存课时数据:', lessonData)
-        
+
         const response = await axios[method](url, lessonData, {
           headers: {
             Authorization: `Bearer ${store.state.token}`
           }
         })
-        
+
         if (response.data.code === 200) {
           ElMessage.success(editingLesson.value ? '更新成功' : '添加成功')
           lessonFormDialogVisible.value = false
@@ -1784,35 +1776,14 @@ export default {
 
     const userId = store.state.user.userInfo?.id;
     // 获取学习记录
-    const fetchLearningRecords = async () => {
-      try {
-        const res = await axios.get('/api/study/records', {
-          params: {
-            userId: userId // 确保 this.userId 有值
-          }
-        } ) // 可改为带课程名的接口
-        learningRecords.value = res.data.data
-      } catch (err) {
-        ElMessage.error('加载学习记录失败')
-      }
-    }
-
 
 
     const loadStudyRecords = async () => {
-      try {
-        const response = await axios.get('/api/study/records', {
-          params: { userId }
-        })
-        if (response.data.success) {
-          learningRecords.value = response.data.data
-        } else {
-          ElMessage.error('获取学习记录失败：' + response.data.message)
-        }
-      } catch (error) {
-        ElMessage.error('加载学习记录时发生错误')
-        console.error('请求失败：', error)
-      }
+      const response = await axios.get('/api/study/records', {
+        params: {userId}
+      })
+      learningRecords.value = response.data
+      console.log(learningRecords.value)
     }
 
 
@@ -1918,7 +1889,6 @@ export default {
       handleCoverError,
       beforeCoverUpload,
       fetchFavoriteCourses,
-      fetchLearningRecords,
       videoUploadProgress,
       handleVideoProgress,
       handleVideoMetadata,
@@ -2219,14 +2189,14 @@ export default {
   background: #f5f7fa;
   border-radius: 8px;
   padding: 10px;
-  
+
   .preview-video {
     width: 100%;
     max-height: 400px;
     border-radius: 4px;
     background-color: #000;
   }
-  
+
   .video-info {
     margin-top: 10px;
     display: flex;

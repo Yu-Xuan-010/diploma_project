@@ -114,48 +114,42 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, ArrowRight, Timer, VideoPlay, Check } from '@element-plus/icons-vue'
 import axios from 'axios'
 
-const videoRef = ref(null)
+
+const videoRef = ref()
 const route = useRoute()
 const router = useRouter()
 let lastSentTime = 0
 
 
-const reportStudyProgress = async (duration) => {
-  try {
+const reportStudyProgress = async (currentTime) => {
     const courseId = Number(route.params.courseId)
     const lessonId = Number(route.params.lessonId)
+
     await axios.post('/api/study/records', {
       courseId,
       lessonId,
-      duration: Math.floor(duration),
+      totalDuration: currentTime,
       status: 0
     })
-    console.log('✅ 学习记录已上报', { courseId, lessonId, duration })
-  } catch (e) {
-    console.error('❌ 学习记录上报失败', e)
-  }
 }
+
+
 
 const handleTimeUpdate = () => {
   const currentTime = videoRef.value?.currentTime || 0
-  if (currentTime - lastSentTime >= 15) {
-    reportStudyProgress(15)
+  if (currentTime - lastSentTime >= 1) {
+    reportStudyProgress(currentTime)
     lastSentTime = currentTime
   }
 }
 
 watch(videoRef, (video) => {
   if (video) {
-    console.log('✅ videoRef 绑定成功，添加事件监听')
     video.addEventListener('timeupdate', handleTimeUpdate)
   }
 })
 
-onUnmounted(() => {
-  if (videoRef.value) {
-    videoRef.value.removeEventListener('timeupdate', handleTimeUpdate)
-  }
-})
+
 // 基础数据
 const currentLesson = ref({})
 const videoPlayer = ref(null)
@@ -172,6 +166,9 @@ const commentForm = ref({ content: '' })
 const commentPage = ref(1)
 const commentPageSize = ref(10)
 const totalComments = ref(0)
+
+
+
 
 
 // 获取课程 ID 和课时 ID
@@ -479,11 +476,16 @@ onUnmounted(() => {
   if (videoPlayer.value) {
     videoPlayer.value.destroy()
   }
+  if (videoRef.value) {
+    videoRef.value.removeEventListener('timeupdate', handleTimeUpdate)
+  }
 })
 
-// 初始化加载
-fetchChapters()
-loadLesson()
+onMounted(async () =>{
+  // 初始化加载
+  await fetchChapters()
+  await loadLesson()
+})
 </script>
 
 

@@ -3,13 +3,15 @@
     <el-card class="course-info">
       <div class="course-header">
         <div class="course-cover">
-          <el-image 
-            :src="course.image" 
-            fit="cover"
-            :preview-src-list="[course.image]">
+          <el-image
+              :src="course.image"
+              fit="cover"
+              :preview-src-list="[course.image]">
             <template #error>
               <div class="image-placeholder">
-                <el-icon><Picture /></el-icon>
+                <el-icon>
+                  <Picture/>
+                </el-icon>
               </div>
             </template>
           </el-image>
@@ -20,11 +22,11 @@
             <span><a>作者：</a><i class="el-icon-user"></i> {{ course.teacher?.name }}</span>
             <span><a>学习人数：</a><i class="el-icon-user"></i> {{ course.studentCount }}</span>
             <span><a>评分：</a><i class="el-icon-star-on"></i> {{ course.averageRating }}</span>
-            <el-button 
-              :type="isFavorited ? 'danger' : 'primary'" 
-              :icon="isFavorited ? 'Star' : 'StarFilled'"
-              @click="toggleFavorite"
-              class="favorite-btn">
+            <el-button
+                :type="isFavorited ? 'danger' : 'primary'"
+                :icon="isFavorited ? 'Star' : 'StarFilled'"
+                @click="toggleFavorite"
+                class="favorite-btn">
               {{ isFavorited ? '取消收藏' : '收藏课程' }}
             </el-button>
           </div>
@@ -38,9 +40,9 @@
           <el-tab-pane label="课程目录" name="catalog">
             <div class="course-catalog">
               <el-tree
-                :data="course.lessons"
-                :props="defaultProps"
-                @node-click="handleNodeClick">
+                  :data="course.lessons"
+                  :props="defaultProps"
+                  @node-click="handleNodeClick">
                 <template #default="{ node, data }">
                   <span class="custom-tree-node">
                     <span class="lesson-title">
@@ -52,7 +54,7 @@
                         {{ data.status === 1 ? '已完成' : '未学习' }}
                       </el-tag>
                       <span class="lesson-duration" v-if="data.duration">
-                        <el-icon><Timer /></el-icon>
+                        <el-icon><Timer/></el-icon>
                         {{ formatDuration(data.duration) }}
                       </span>
                     </span>
@@ -67,11 +69,11 @@
               <div class="rating-section" v-if="!hasRated">
                 <h3>课程评分</h3>
                 <div class="rating-form">
-                  <el-rate 
-                    v-model="ratingForm.rating" 
-                    show-text 
-                    :texts="['很差', '较差', '一般', '较好', '很好']"
-                    @change="handleRatingChange">
+                  <el-rate
+                      v-model="ratingForm.rating"
+                      show-text
+                      :texts="['很差', '较差', '一般', '较好', '很好']"
+                      @change="handleRatingChange">
                   </el-rate>
                   <div class="rating-tip" v-if="ratingForm.rating">
                     您给出的评分：{{ ratingForm.rating }}分
@@ -81,10 +83,10 @@
               <div class="rating-info" v-else>
                 <h3>课程评分</h3>
                 <div class="current-rating">
-                  <el-rate 
-                    v-model="userRating" 
-                    disabled 
-                    show-score>
+                  <el-rate
+                      v-model="userRating"
+                      disabled
+                      show-score>
                   </el-rate>
                   <span class="rating-text">您的评分：{{ userRating }}分</span>
                 </div>
@@ -95,10 +97,10 @@
                 <h3>课程评论</h3>
                 <div class="comment-form">
                   <el-input
-                    type="textarea"
-                    :rows="3"
-                    placeholder="请输入您的评论"
-                    v-model="commentForm.content">
+                      type="textarea"
+                      :rows="3"
+                      placeholder="请输入您的评论"
+                      v-model="commentForm.content">
                   </el-input>
                   <div class="form-footer">
                     <el-button type="primary" @click="submitComment">发表评论</el-button>
@@ -108,10 +110,10 @@
                 <div class="comment-list" v-if="comments && comments.length > 0">
                   <div class="comment-item" v-for="comment in comments" :key="comment.id">
                     <div class="comment-user">
-                      <el-avatar 
-                        :size="40" 
-                        :src="comment.userAvatar"
-                        :fallback="getDefaultAvatar(comment.userName)">
+                      <el-avatar
+                          :size="40"
+                          :src="comment.userAvatar"
+                          :fallback="getDefaultAvatar(comment.userName)">
                         {{ getInitial(comment.userName) }}
                       </el-avatar>
                       <div class="user-info">
@@ -122,37 +124,37 @@
                     <div class="comment-actions">
                       <span class="comment-time">{{ formatTime(comment.createTime) }}</span>
                       <div class="action-buttons">
-                        <el-button 
-                          type="text" 
-                          size="small" 
-                          @click="showReplyDialog(comment)"
-                          v-if="isLoggedIn">
+                        <el-button
+                            type="text"
+                            size="small"
+                            @click="showReplyDialog(comment)"
+                        >
                           回复
                         </el-button>
-                        <el-button 
-                          type="text" 
-                          size="small" 
-                          @click="deleteComment(comment)"
-                          v-if="isLoggedIn && currentUserId && comment.userId === currentUserId">
+                        <el-button
+                            type="text"
+                            size="small"
+                            @click="deleteComment(comment)"
+                            v-if=" comment.userId === currentUserId.value">
                           删除
                         </el-button>
-                        <el-button 
-                          type="text" 
-                          size="small" 
-                          @click="toggleReplies(comment)"
-                          v-if="comment.replies && comment.replies.length > 0">
+                        <el-button
+                            type="text"
+                            size="small"
+                            @click="toggleReplies(comment)"
+                            v-if="comment.replies && comment.replies.length > 0">
                           {{ comment.showReplies ? '收起回复' : `展开${comment.replies.length}条回复` }}
                         </el-button>
                       </div>
                     </div>
-                    
+
                     <!-- 回复列表 -->
                     <div class="reply-list" v-if="comment.showReplies && comment.replies?.length > 0">
                       <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-                        <el-avatar :src="reply.userAvatar" size="small" />
+                        <el-avatar :src="reply.userAvatar" size="small"/>
                         <div class="reply-content">{{ reply.content }}</div>
                         <el-button
-                            v-if="isLoggedIn && reply.userId === currentUserId"
+                            v-if="reply.userId === currentUserId.value"
                             @click="deleteReply(reply)">
                           删除
                         </el-button>
@@ -177,10 +179,10 @@
       </template>
       <el-timeline>
         <el-timeline-item
-          v-for="record in recentStudyRecords"
-          :key="record.id"
-          :timestamp="formatTime(record.studyDate)"
-          :type="record.status === 1 ? 'success' : 'primary'"
+            v-for="record in recentStudyRecords"
+            :key="record.id"
+            :timestamp="formatTime(record.studyDate)"
+            :type="record.status === 1 ? 'success' : 'primary'"
         >
           <h4>{{ record.lessonTitle || '未知课程' }}</h4>
           <p>学习时长：{{ formatDuration(record.duration) }}</p>
@@ -192,16 +194,16 @@
 
     <!-- 回复对话框 -->
     <el-dialog
-      v-model="replyDialogVisible"
-      title="回复评论"
-      width="500px">
+        v-model="replyDialogVisible"
+        title="回复评论"
+        width="500px">
       <el-form :model="replyForm" :rules="replyRules" ref="replyFormRef">
         <el-form-item prop="content">
           <el-input
-            type="textarea"
-            v-model="replyForm.content"
-            :rows="3"
-            placeholder="请输入回复内容">
+              type="textarea"
+              v-model="replyForm.content"
+              :rows="3"
+              placeholder="请输入回复内容">
           </el-input>
         </el-form-item>
       </el-form>
@@ -216,17 +218,23 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useStore } from 'vuex'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Picture, Timer, Star, StarFilled } from '@element-plus/icons-vue'
+import {ref, onMounted, watch} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import {useStore} from 'vuex'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {Picture, Timer, Star, StarFilled} from '@element-plus/icons-vue'
 import axios from 'axios'
 import VideoPlayer from '@/components/VideoPlayer.vue'
-import { getStudyRecords, getRecentStudyRecords } from '@/api/study'
+import {getStudyRecords, getRecentStudyRecords} from '@/api/study'
+import user from "../../store/modules/user";
 
 export default {
   name: 'CourseDetail',
+  computed: {
+    user() {
+      return user
+    }
+  },
   components: {
     Picture,
     Timer,
@@ -267,7 +275,6 @@ export default {
     const courseId = ref(route.params.courseId)
     const studyRecords = ref([])
     const recentStudyRecords = ref([])
-    const isLoggedIn = ref(false)
     const currentUserId = ref(null)
     const replyDialogVisible = ref(false)
     const replyForm = ref({
@@ -277,10 +284,12 @@ export default {
     const replyFormRef = ref(null)
     const replyRules = {
       content: [
-        { required: true, message: '请输入回复内容', trigger: 'blur' },
-        { min: 1, max: 500, message: '回复内容长度在1-500个字符之间', trigger: 'blur' }
+        {required: true, message: '请输入回复内容', trigger: 'blur'},
+        {min: 1, max: 500, message: '回复内容长度在1-500个字符之间', trigger: 'blur'}
       ]
     }
+
+    currentUserId.value = Number(localStorage.getItem('currentUserId'))
 
     const getDefaultAvatar = (name) => {
       return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || '')}`
@@ -294,8 +303,7 @@ export default {
       try {
         loading.value = true
         const courseId = route.params.courseId
-        console.log('获取课程详情，课程ID:', courseId)
-        
+
         // 获取课程基本信息
         const courseResponse = await axios.get(`/api/courses/${courseId}`)
         if (courseResponse.data.success) {
@@ -320,7 +328,7 @@ export default {
           }
           console.log('课程基本信息:', course.value)
         }
-        
+
         // 获取课程课时列表
         const lessonsResponse = await axios.get(`/api/lessons/course/${courseId}`)
         if (lessonsResponse.data.success) {
@@ -334,7 +342,7 @@ export default {
             duration: lesson.duration,
             sortOrder: lesson.sortOrder
           })).sort((a, b) => a.sortOrder - b.sortOrder)
-          
+
           console.log('课程课时列表:', course.value.lessons)
         }
       } catch (error) {
@@ -376,7 +384,7 @@ export default {
         const courseId = route.params.courseId
         const userInfo = store.state.user.userInfo
         if (!userInfo) return
-        
+
         const response = await axios.get(`/api/courses/${courseId}/rating/user/${userInfo.id}`, {
           headers: {
             'Authorization': `Bearer ${store.state.user.token}`
@@ -398,7 +406,7 @@ export default {
 
     const handleRatingChange = async (value) => {
       if (!value) return
-      
+
       try {
         const courseId = route.params.courseId
         const userInfo = store.state.user.userInfo
@@ -406,7 +414,7 @@ export default {
           ElMessage.warning('请先登录后再评分')
           return
         }
-        
+
         const response = await axios.post(`/api/courses/${courseId}/rating`, {
           rating: value,
           courseId: courseId,
@@ -418,7 +426,7 @@ export default {
             'Authorization': `Bearer ${store.state.user.token}`
           }
         })
-        
+
         if (response.data.code === 200) {
           ElMessage.success('评分成功')
           hasRated.value = true
@@ -468,7 +476,7 @@ export default {
         ElMessage.warning('请输入评论内容')
         return
       }
-      
+
       try {
         const courseId = route.params.courseId
         const userInfo = store.state.user.userInfo
@@ -476,7 +484,7 @@ export default {
           ElMessage.warning('请先登录后再评论')
           return
         }
-        
+
         const response = await axios.post(`/api/comments`, {
           courseId: courseId,
           userId: userInfo.id,
@@ -488,7 +496,7 @@ export default {
             'Authorization': `Bearer ${store.state.user.token}`
           }
         })
-        
+
         if (response.data.code === 200) {
           ElMessage.success('评论发表成功')
           commentForm.value.content = ''
@@ -521,7 +529,7 @@ export default {
         const courseId = route.params.courseId
         const userInfo = store.state.user.userInfo
         if (!userInfo) return
-        
+
         const response = await axios.get(`/api/courses/${courseId}/favorite/check`)
         isFavorited.value = response.data.code === 200 && response.data.data
         console.log('收藏状态:', isFavorited.value)
@@ -538,19 +546,19 @@ export default {
           ElMessage.warning('请先登录后再收藏课程')
           return
         }
-        
-        const url = isFavorited.value 
-          ? `/api/courses/${courseId}/favorite/cancel`
-          : `/api/courses/${courseId}/favorite`
-        
+
+        const url = isFavorited.value
+            ? `/api/courses/${courseId}/favorite/cancel`
+            : `/api/courses/${courseId}/favorite`
+
         const method = isFavorited.value ? 'delete' : 'post'
-        
+
         const response = await axios[method](url)
-        
+
         if (response.data.code === 200) {
           isFavorited.value = !isFavorited.value
           ElMessage.success(isFavorited.value ? '收藏成功' : '已取消收藏')
-          
+
           // 更新 Vuex store 中的收藏状态
           if (store.state.user) {
             store.dispatch('user/updateFavoriteCourses')
@@ -584,7 +592,7 @@ export default {
           getStudyRecords(),
           getRecentStudyRecords(5)
         ])
-        
+
         // 确保响应数据存在
         if (recordsResponse?.data?.code === 200) {
           studyRecords.value = recordsResponse.data.data || []
@@ -592,7 +600,7 @@ export default {
           studyRecords.value = []
           console.warn('获取学习记录失败:', recordsResponse?.data?.message || '未知错误')
         }
-        
+
         if (recentResponse?.data?.code === 200) {
           recentStudyRecords.value = recentResponse.data.data || []
         } else {
@@ -609,12 +617,12 @@ export default {
 
     const deleteComment = async (comment) => {
       try {
-        await ElMessageBox.confirm('确定删除？', '提示', { type: 'warning' });
+        await ElMessageBox.confirm('确定删除？', '提示', {type: 'warning'});
         const token = localStorage.getItem('token');
         console.log('当前 token:', token);
         const res = await axios.delete(`/api/comments/${comment.id}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: { userId: currentUserId.value }
+          headers: {'Authorization': `Bearer ${token}`},
+          params: {userId: currentUserId.value}
         });
         if (res.data.success) {
           comments.value = comments.value.filter(c => c.id !== comment.id);
@@ -634,7 +642,7 @@ export default {
 
     const submitReply = async () => {
       if (!replyFormRef.value) return
-      
+
       try {
         await replyFormRef.value.validate()
         const userInfo = JSON.parse(localStorage.getItem("user"))
@@ -642,13 +650,13 @@ export default {
           ElMessage.warning('请先登录后再回复')
           return
         }
-        
+
         const token = localStorage.getItem('token')
         if (!token) {
           ElMessage.error('未登录或登录已过期')
           return
         }
-        
+
         const response = await axios.post(`/api/comments/${replyForm.value.commentId}/reply`, {
           userId: userInfo.id,
           content: replyForm.value.content,
@@ -659,7 +667,7 @@ export default {
             'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
           }
         })
-        
+
         if (response.data.code === 200) {
           ElMessage.success('回复成功')
           replyDialogVisible.value = false
@@ -679,19 +687,19 @@ export default {
         await ElMessageBox.confirm('确定要删除这条回复吗？', '提示', {
           type: 'warning'
         })
-        
+
         const token = localStorage.getItem('token')
         if (!token) {
           ElMessage.error('未登录或登录已过期')
           return
         }
-        
+
         const response = await axios.delete(`/api/comments/reply/${reply.id}`, {
           headers: {
             'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
           }
         })
-        
+
         if (response.data.code === 200) {
           ElMessage.success('删除成功')
           await getComments()
@@ -710,53 +718,8 @@ export default {
       comment.showReplies = !comment.showReplies
     }
 
-    // 检查登录状态
-    const checkLoginStatus = () => {
-      try {
-        // 尝试不同的可能的key
-        const userStr = localStorage.getItem("user") || 
-                       localStorage.getItem("userInfo") || 
-                       localStorage.getItem("currentUser")
-        console.log('localStorage中的user字符串:', userStr)
-        
-        if (userStr) {
-          const user = JSON.parse(userStr)
-          console.log('解析后的用户信息:', user)
-          
-          if (user && user.id) {
-            isLoggedIn.value = true
-            currentUserId.value = user.id
-            console.log('设置登录状态为true, 用户ID:', user.id)
-          } else {
-            console.log('用户信息不完整，重置登录状态')
-            isLoggedIn.value = false
-            currentUserId.value = null
-          }
-        } else {
-          // 如果localStorage中没有，尝试从store中获取
-          const storeUser = store.state.user?.userInfo
-          console.log('从store中获取的用户信息:', storeUser)
-          
-          if (storeUser && storeUser.id) {
-            isLoggedIn.value = true
-            currentUserId.value = storeUser.id
-            console.log('从store设置登录状态为true, 用户ID:', storeUser.id)
-          } else {
-            console.log('未找到用户信息，重置登录状态')
-            isLoggedIn.value = false
-            currentUserId.value = null
-          }
-        }
-      } catch (error) {
-        console.error('检查登录状态时出错:', error)
-        isLoggedIn.value = false
-        currentUserId.value = null
-      }
-    }
 
     onMounted(() => {
-      console.log('组件挂载，开始检查登录状态')
-      checkLoginStatus()
       if (!courseId.value) {
         console.warn('courseId 为空，取消加载课程详情')
         return
@@ -782,16 +745,6 @@ export default {
       }
     })
 
-    // 监听登录状态变化
-    watch(() => store.state.user.isLoggedIn, (newValue) => {
-      checkLoginStatus()
-    })
-
-    // 临时打印调试信息
-    console.log('登录状态:', isLoggedIn.value)
-    console.log('当前用户ID:', currentUserId.value)
-    console.log("评论数据", comments.value)
-
 
     return {
       loading,
@@ -815,7 +768,6 @@ export default {
       courseId,
       studyRecords,
       recentStudyRecords,
-      isLoggedIn,
       currentUserId,
       replyDialogVisible,
       replyForm,
@@ -904,7 +856,7 @@ export default {
               margin-right: 6px;
             }
           }
-          
+
           .favorite-btn {
             margin-left: auto;
           }
@@ -1072,7 +1024,7 @@ export default {
               justify-content: space-between;
               align-items: center;
               margin-top: 8px;
-              
+
               .action-buttons {
                 display: flex;
                 gap: 10px;
@@ -1091,7 +1043,7 @@ export default {
 
   .study-records {
     margin-top: 20px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -1104,7 +1056,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-top: 8px;
-    
+
     .action-buttons {
       display: flex;
       gap: 10px;

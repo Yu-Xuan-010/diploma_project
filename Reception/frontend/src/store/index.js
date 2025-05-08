@@ -48,36 +48,31 @@ export default createStore({
         async login({ commit }, { username, password }) {
             try {
                 console.log('Vuex login action 开始执行:', { username, password });
-                
+
                 const response = await axios.post('/api/auth/login', {
                     username,
                     password
                 });
-                
+
                 console.log('登录响应:', response.data);
-                
-                if (response.data && response.data.token) {
-                    // 保存token到localStorage
-                    localStorage.setItem('token', response.data.token);
-                    
-                    // 设置axios默认headers
-                    axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-                    
-                    // 提交到vuex
-                    commit('SET_TOKEN', response.data.token);
-                    
-                    // 如果有用户信息，也保存
-                    if (response.data.user) {
-                        commit('SET_USER', response.data.user);
-                    }
-                    
+
+                if (response.data.success && response.data.data) {
+                    const { token, username, userId, email, nickname } = response.data.data;
+                    localStorage.setItem('currentUserId', userId);
+                    // 保存 token 到 localStorage
+                    localStorage.setItem('token', token);
+
+                    // 设置 axios 默认 headers
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+                    // 提交到 vuex
+                    commit('SET_TOKEN', token);
+                    commit('SET_USER', { username, userId, email, nickname });
+
                     return { success: true, message: '登录成功' };
                 } else {
                     console.error('登录失败:', response.data.message);
-                    return { 
-                        success: false, 
-                        message: response.data.message || '登录失败'
-                    };
+                    return { success: false, message: response.data.message || '登录失败' };
                 }
             } catch (error) {
                 console.error('登录 action 错误:', error);

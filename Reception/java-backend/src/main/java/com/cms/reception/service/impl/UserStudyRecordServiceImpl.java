@@ -37,8 +37,8 @@ public class UserStudyRecordServiceImpl implements UserStudyRecordService {
             UserStudyRecord existing = optional.get();
 
             // 累加学习时长
-            int updatedDuration = existing.getTotalDuration() + newDuration;
-            existing.setTotalDuration(updatedDuration);
+
+            existing.setTotalDuration(newDuration);
 
             // 更新时间
             existing.setLastStudyTime(LocalDateTime.now());
@@ -93,5 +93,10 @@ public class UserStudyRecordServiceImpl implements UserStudyRecordService {
     @Transactional
     public void updateStudyStatus(Long userId, Long lessonId) {
         studyRecordMapper.updateStatus(userId, lessonId);
+    }
+
+    @Override
+    public UserStudyRecord findRecordByLessonId(Long userId,Long lessonId) {
+        return userStudyRecordRepository.findByUserIdAndLessonId(userId,lessonId).orElse(null);
     }
 } 
