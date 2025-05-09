@@ -8,13 +8,13 @@
         <id     property="id"        column="id"         />
         <result property="commentId" column="comment_id" />
         <result property="userId"    column="user_id"    />
-        <result property="replyText" column="reply_text" />
-        <result property="createdAt" column="created_at" />
+        <result property="content" column="content" />
+        <result property="createTime" column="create_time" />
         <result property="userName"  column="username"  />
     </resultMap>
 
     <sql id="selectCourseCommentReplyVo">
-        select r.id, r.comment_id, r.user_id, r.reply_text, r.created_at,
+        select r.id, r.comment_id, r.user_id, r.content, r.create_time,
                u.username
         from course_comment_reply r
                  left join user u on r.user_id = u.id
@@ -27,13 +27,13 @@
             <if test="userId != null "> and r.user_id = #{userId}</if>
             <if test="replyText != null  and replyText != ''"> and r.reply_text like concat('%', #{replyText}, '%')</if>
         </where>
-        order by r.created_at desc
+        order by r.create_time desc
     </select>
 
     <select id="selectCourseCommentReplyByCommentId" parameterType="Long" resultMap="CourseCommentReplyResult">
         <include refid="selectCourseCommentReplyVo"/>
         where r.comment_id = #{commentId}
-        order by r.created_at desc
+        order by r.create_time desc
     </select>
 
     <insert id="insertCourseCommentReply" parameterType="com.sen.web.controller.sen.domain.CourseCommentReply" useGeneratedKeys="true" keyProperty="id">

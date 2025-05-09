@@ -75,7 +75,6 @@
         <el-descriptions-item label="申请理由" :span="2">{{ form.reason }}</el-descriptions-item>
         <el-descriptions-item label="教学经验" :span="2">{{ form.experience }}</el-descriptions-item>
         <template v-if="form.status !== 'PENDING'">
-          <el-descriptions-item label="审核人">{{ form.reviewerName }}</el-descriptions-item>
           <el-descriptions-item label="审核时间">{{ parseTime(form.reviewedAt) }}</el-descriptions-item>
           <el-descriptions-item label="审核意见" :span="2">{{ form.reviewComment }}</el-descriptions-item>
         </template>
@@ -168,12 +167,12 @@ export default {
         if (this.queryParams.status) {
           url = `/system/teacherApplication/list/${this.queryParams.status}`;
         }
-        
+
         const response = await request({
           url: url,
           method: 'get'
         });
-        
+
         console.log('Teacher application response:', response); // 添加日志
         if (response.code === 200) {
           this.applicationList = response.data;
@@ -192,7 +191,7 @@ export default {
       try {
         // 确保 expertise 是字符串，防止传入数组
         const expertiseStr = Array.isArray(expertise) ? expertise.join(',') : String(expertise);
-        
+
         return expertiseStr.split(',')
           .map(id => {
             const major = this.majorList.find(m => m.id === parseInt(id.trim()));
@@ -308,12 +307,12 @@ export default {
               this.$message.error('无法获取当前用户信息')
               return
             }
-            
+
             const reviewData = {
               ...this.reviewForm,
               reviewerId: this.currentUser.userId
             }
-            
+
             await reviewTeacherApplication(reviewData)
             this.$message.success('审核成功')
             this.reviewOpen = false

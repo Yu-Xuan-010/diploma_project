@@ -11,12 +11,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="videoUrl"    column="video_url"    />
         <result property="description"    column="description"    />
         <result property="sortOrder"    column="sort_order"    />
-        <result property="createdAt"    column="created_at"    />
-        <result property="updatedAt"    column="updated_at"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
     </resultMap>
 
     <sql id="selectLessonVo">
-        select id, course_id, title, video_url, description, sort_order, created_at, updated_at from lesson
+        select id, course_id, title, video_url, description, sort_order, create_time, update_time from lesson
     </sql>
 
     <select id="selectLessonList" parameterType="Lesson" resultMap="LessonResult">

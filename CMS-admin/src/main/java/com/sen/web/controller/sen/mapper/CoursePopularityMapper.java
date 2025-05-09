@@ -7,7 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface CoursePopularityMapper {
-    
+
     @Select("SELECT " +
             "cp.course_id as courseId, " +
             "cp.course_name as courseName, " +
@@ -15,6 +15,8 @@ public interface CoursePopularityMapper {
             "cp.student_count as studentCount, " +
             "cp.created_at as createdAt " +
             "FROM course_popularity cp " +
+            "JOIN course c ON cp.course_id = c.id " +
+            "WHERE c.status = 'approved' " +
             "ORDER BY cp.created_at DESC")
     List<CoursePopularityDTO> getCoursePopularityList();
 
@@ -24,7 +26,10 @@ public interface CoursePopularityMapper {
             "SUM(cp.view_count) as viewCount, " +
             "MAX(cp.student_count) as studentCount " +
             "FROM course_popularity cp " +
+            "JOIN course c ON cp.course_id = c.id " +
+            "WHERE c.status = 'approved' " +
             "GROUP BY cp.course_id, cp.course_name " +
             "ORDER BY viewCount DESC")
     List<CoursePopularityDTO> getCoursePopularityTotal();
+
 } 

@@ -31,7 +31,11 @@ public class Favorites extends BaseEntity
     /** 收藏时间 */
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Excel(name = "收藏时间", width = 30, dateFormat = "yyyy-MM-dd")
-    private Date createdAt;
+    private Date createTime;
+
+    private String userName;
+    private String courseName;
+
 
     public void setId(Long id) 
     {
@@ -62,14 +66,28 @@ public class Favorites extends BaseEntity
     }
     public void setCreatedAt(Date createdAt) 
     {
-        this.createdAt = createdAt;
+        this.createTime = createdAt;
     }
 
     public Date getCreatedAt() 
     {
-        return createdAt;
+        return createTime;
+    }
+    public String getUserName() {
+        return userName;
     }
 
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)

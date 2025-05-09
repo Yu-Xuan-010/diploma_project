@@ -24,7 +24,7 @@ public class CourseCommentReply extends BaseEntity {
 
     /** 回复内容 */
     @Excel(name = "回复内容")
-    private String replyText;
+    private String content;
 
     /** 创建时间 */
     @Excel(name = "创建时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
@@ -59,11 +59,11 @@ public class CourseCommentReply extends BaseEntity {
     }
 
     public String getReplyText() {
-        return replyText;
+        return content;
     }
 
-    public void setReplyText(String replyText) {
-        this.replyText = replyText;
+    public void setReplyText(String content) {
+        this.content = content;
     }
 
     public Date getCreatedAt() {

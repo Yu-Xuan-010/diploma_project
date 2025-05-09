@@ -17,16 +17,21 @@ import java.util.List;
 @Mapper
 public interface CourseStatisticsMapper {
 
-    @Select("SELECT " +
-            "c.name AS courseName, " +
-            "COUNT(DISTINCT up.user_id) AS totalStudents, " +
-            "COUNT(DISTINCT CASE WHEN up.progress = 100 THEN up.user_id END) AS completedStudents, " +
-            "AVG(up.progress) AS averageProgress, " +
-            "AVG(up.study_time) AS averageStudyTime, " +
-            "COUNT(DISTINCT CASE WHEN up.last_study_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN up.user_id END) AS activeStudents, " +
-            "ROUND((COUNT(DISTINCT CASE WHEN up.progress = 100 THEN up.user_id END) / COUNT(DISTINCT up.user_id)) * 100, 2) AS completionRate " +
-            "FROM course c " +
-            "LEFT JOIN user_progress up ON c.id = up.course_id " +
-            "GROUP BY c.id, c.name")
+    @Select("SELECT\n" +
+            "  c.name AS courseName,\n" +
+            "  COUNT(DISTINCT usr.user_id) AS totalStudents,\n" +
+            "  COUNT(DISTINCT CASE WHEN usr.status = 1 THEN usr.user_id END) AS completedStudents,\n" +
+            "  NULL AS averageProgress,\n" +
+            "  ROUND(AVG(usr.total_duration), 2) AS averageStudyTime,\n" +
+            "  COUNT(DISTINCT CASE WHEN usr.last_study_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN usr.user_id END) AS activeStudents,\n" +
+            "  ROUND(\n" +
+            "    (COUNT(DISTINCT CASE WHEN usr.status = 1 THEN usr.user_id END) / NULLIF(COUNT(DISTINCT usr.user_id), 0)) * 100,\n" +
+            "    2\n" +
+            "  ) AS completionRate\n" +
+            "FROM course c\n" +
+            "LEFT JOIN lesson l ON c.id = l.course_id\n" +
+            "LEFT JOIN user_study_record usr ON l.id = usr.lesson_id\n" +
+            "WHERE c.status = 'approved'  -- ✅ 只统计审核通过的课程\n" +
+            "GROUP BY c.id, c.name;\n")
     List<CourseStatisticsDTO> getCourseStatistics();
 }

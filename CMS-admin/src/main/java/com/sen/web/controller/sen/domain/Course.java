@@ -57,6 +57,9 @@ public class Course extends BaseEntity
     /** 驳回原因 */
     private String rejectReason;
 
+    private String categoryName;
+    private String teacherName;
+
     public void setId(Long id) 
     {
         this.id = id;
@@ -165,6 +168,24 @@ public class Course extends BaseEntity
     public String getRejectReason() 
     {
         return rejectReason;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public Course setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+        return this;
+    }
+
+    public String getTeacherName() {
+        return teacherName;
+    }
+
+    public Course setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
+        return this;
     }
 
     @Override

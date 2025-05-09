@@ -74,9 +74,9 @@
       <el-table-column label="id" align="center" prop="id" />
       <el-table-column label="用户名" align="center" prop="username" />
       <el-table-column label="邮箱" align="center" prop="email" />
-      <el-table-column label="创建时间" align="center" prop="createdAt" width="180">
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.createdAt, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="用户角色" align="center" prop="role" />
@@ -101,7 +101,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -124,22 +124,6 @@
         </el-form-item>
         <el-form-item label="头像" prop="avatar">
           <el-input v-model="form.avatar" placeholder="请输入头像" />
-        </el-form-item>
-        <el-form-item label="创建时间" prop="createdAt">
-          <el-date-picker clearable
-            v-model="form.createdAt"
-            type="date"
-            value-format="yyyy-MM-dd"
-            placeholder="请选择创建时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="更新时间" prop="updatedAt">
-          <el-date-picker clearable
-            v-model="form.updatedAt"
-            type="date"
-            value-format="yyyy-MM-dd"
-            placeholder="请选择更新时间">
-          </el-date-picker>
         </el-form-item>
         <el-form-item label="用户角色" prop="role">
           <el-input v-model="form.role" placeholder="请输入用户角色" />
@@ -250,8 +234,8 @@ export default {
         password: null,
         email: null,
         avatar: null,
-        createdAt: null,
-        updatedAt: null,
+        createTime: null,
+        updateTime: null,
         role: null,
         phoneNumber: null,
         realName: null,

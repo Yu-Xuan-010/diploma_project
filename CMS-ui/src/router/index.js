@@ -183,19 +183,6 @@ export const dynamicRoutes = [
     ]
   },
   {
-    path: '/system/settings',
-    component: Layout,
-    hidden: false,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/system/settings/index'),
-        name: 'Settings',
-        meta: { title: '系统设置', icon: 'system', permissions: ['system:settings:list'] }
-      }
-    ]
-  },
-  {
     path: '/userManage',
     component: Layout,
     name: 'UserManage',
@@ -207,16 +194,6 @@ export const dynamicRoutes = [
         name: 'UserList',
         meta: { title: '用户列表', icon: 'user' }
       },
-      {
-        path: 'userlist/analytics',
-        component: () => import('@/views/system/user/analytics/index'),
-        name: 'UserAnalytics',
-        meta: { 
-          title: '用户数据分析', 
-          icon: 'chart',
-          permissions: ['system:user:analytics']
-        }
-      }
     ]
   }
 ]

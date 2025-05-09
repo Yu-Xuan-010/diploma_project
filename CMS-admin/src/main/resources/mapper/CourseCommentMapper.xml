@@ -9,14 +9,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="userId"    column="user_id"    />
         <result property="courseId"  column="course_id"  />
         <result property="content"   column="content"    />
-        <result property="createdAt" column="created_at" />
+        <result property="createTime" column="create_time" />
         <result property="status"    column="status"     />
         <result property="userName"  column="username"  />
         <result property="courseName" column="course_name"/>
     </resultMap>
 
     <sql id="selectCourseCommentVo">
-        select cc.id, cc.user_id, cc.course_id, cc.content, cc.created_at, cc.status,
+        select cc.id, cc.user_id, cc.course_id, cc.content, cc.create_time,
                u.username, c.name as course_name
         from course_comment cc
                  left join user u on cc.user_id = u.id
@@ -33,7 +33,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="courseName != null and courseName != ''"> and c.name like concat('%', #{courseName}, '%')</if>
             <if test="userName != null and userName != ''"> and u.user_name like concat('%', #{userName}, '%')</if>
         </where>
-        order by cc.created_at desc
+        order by cc.create_time desc
     </select>
     
     <select id="selectCourseCommentById" parameterType="Long" resultMap="CourseCommentResult">

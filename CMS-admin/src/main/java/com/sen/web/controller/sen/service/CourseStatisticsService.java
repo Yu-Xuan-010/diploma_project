@@ -22,6 +22,7 @@ public class CourseStatisticsService {
     private CourseStatisticsMapper courseStatisticsMapper;
 
     public List<CourseStatisticsDTO> getCourseStatistics() {
+        System.out.println("执行了getCourseStatistics");
         return courseStatisticsMapper.getCourseStatistics();
     }
 }

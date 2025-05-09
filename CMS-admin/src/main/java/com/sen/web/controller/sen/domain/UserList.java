@@ -37,10 +37,10 @@ public class UserList extends BaseEntity
     /** 创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Excel(name = "创建时间", width = 30, dateFormat = "yyyy-MM-dd")
-    private Date createdAt;
+    private Date createTime;
 
     /** 更新时间 */
-    private Date updatedAt;
+    private Date updateTime;
 
     /** 用户角色 */
     @Excel(name = "用户角色")
@@ -117,23 +117,23 @@ public class UserList extends BaseEntity
     {
         return avatar;
     }
-    public void setCreatedAt(Date createdAt) 
+    public void setCreatedAt(Date createTime)
     {
-        this.createdAt = createdAt;
+        this.createTime = createTime;
     }
 
     public Date getCreatedAt() 
     {
-        return createdAt;
+        return createTime;
     }
-    public void setUpdatedAt(Date updatedAt) 
+    public void setUpdatedAt(Date updateTime)
     {
-        this.updatedAt = updatedAt;
+        this.updateTime = updateTime;
     }
 
     public Date getUpdatedAt() 
     {
-        return updatedAt;
+        return updateTime;
     }
     public void setRole(String role) 
     {

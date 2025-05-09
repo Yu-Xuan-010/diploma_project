@@ -18,30 +18,14 @@
           <i class="el-icon-refresh"></i> 刷新数据
         </el-button>
       </div>
-      <el-table 
+      <el-table
         v-loading="loading"
-        :data="statisticsList" 
-        border 
+        :data="statisticsList"
+        border
         stripe>
         <el-table-column prop="courseName" label="课程名称" />
-        <el-table-column prop="totalStudents" label="总学习人数" />
         <el-table-column prop="completedStudents" label="完成人数" />
         <el-table-column prop="activeStudents" label="活跃学习者" />
-        <el-table-column prop="averageProgress" label="平均进度">
-          <template slot-scope="scope">
-            {{formatNumber(scope.row.averageProgress)}}%
-          </template>
-        </el-table-column>
-        <el-table-column prop="completionRate" label="完成率">
-          <template slot-scope="scope">
-            {{formatNumber(scope.row.completionRate)}}%
-          </template>
-        </el-table-column>
-        <el-table-column prop="averageStudyTime" label="平均学习时长">
-          <template slot-scope="scope">
-            {{formatStudyTime(scope.row.averageStudyTime)}}
-          </template>
-        </el-table-column>
       </el-table>
     </el-card>
 
@@ -71,16 +55,7 @@
 import * as echarts from 'echarts';
 import { getCourseStatistics } from '@/api/system/statistical';
 
-/**
- * @typedef {Object} CourseStatistics
- * @property {string} courseName - 课程名称
- * @property {number} totalStudents - 总学习人数
- * @property {number} completedStudents - 完成人数
- * @property {number} activeStudents - 活跃学习者
- * @property {number} averageProgress - 平均进度
- * @property {number} completionRate - 完成率
- * @property {number} averageStudyTime - 平均学习时长
- */
+
 
 export default {
   name: 'CourseStatistics',
@@ -147,13 +122,11 @@ export default {
     },
     calculateSummary() {
       try {
-        const totalStudents = this.statisticsList.reduce((sum, item) => sum + (item.totalStudents || 0), 0);
-        const avgCompletion = this.statisticsList.reduce((sum, item) => sum + (item.completionRate || 0), 0) / 
+        const avgCompletion = this.statisticsList.reduce((sum, item) => sum + (item.completionRate || 0), 0) /
           (this.statisticsList.length || 1);
         const activeStudents = this.statisticsList.reduce((sum, item) => sum + (item.activeStudents || 0), 0);
-        
+
         this.summaryData = [
-          { title: '总学习人数', value: totalStudents },
           { title: '平均完成率', value: this.formatNumber(avgCompletion) + '%' },
           { title: '活跃学习者', value: activeStudents },
           { title: '课程数量', value: this.statisticsList.length }
@@ -241,7 +214,7 @@ export default {
           }
         },
         legend: {
-          data: ['总学习人数', '活跃学习者', '完成人数']
+          data: ['活跃学习者', '完成人数']
         },
         grid: {
           left: '3%',
@@ -262,11 +235,6 @@ export default {
           name: '人数'
         },
         series: [
-          {
-            name: '总学习人数',
-            type: 'bar',
-            data: this.statisticsList.map(item => item.totalStudents || 0)
-          },
           {
             name: '活跃学习者',
             type: 'bar',

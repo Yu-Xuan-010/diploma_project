@@ -86,7 +86,7 @@
       <el-table-column label="id" align="center" prop="id"/>
       <el-table-column label="课程名称" align="center" prop="name"/>
       <el-table-column label="课程描述" align="center" prop="description"/>
-      <el-table-column label="课程种类" align="center" prop="categoryId"/>
+      <el-table-column label="课程种类" align="center" prop="categoryName"/>
       <el-table-column label="评分" align="center" prop="averageRating"/>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
@@ -95,8 +95,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="教师ID" align="center" prop="teacherId"/>
-      <el-table-column label="学习人数" align="center" prop="studentCount"/>
+      <el-table-column label="教师" align="center" prop="teacherName"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -230,7 +229,7 @@ export default {
         description: null,
         categoryId: null,
         teacherId: null,
-        status: null  // 添加 status 字段
+        status: null
       },
       // 表单参数
       form: {},

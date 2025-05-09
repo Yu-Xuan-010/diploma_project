@@ -17,11 +17,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="teacherId"    column="teacher_id"    />
         <result property="studentCount"    column="student_count"    />
         <result property="rejectReason"    column="reject_reason"    />
+        <result property="categoryName" column="category_name"/>
+        <result property="teacherName" column="teacher_name"/>
     </resultMap>
 
     <sql id="selectCourseVo">
-        select id, name, description, category_id, image, created_at, updated_at, average_rating, status, teacher_id, student_count, reject_reason from course
+        SELECT
+            c.id, c.name, c.description, c.category_id, c.image,
+            c.created_at, c.updated_at, c.average_rating, c.status,
+            c.teacher_id, c.student_count, c.reject_reason,
+            cat.name AS category_name,
+            u.username AS teacher_name
+        FROM course c
+                 LEFT JOIN category cat ON c.category_id = cat.id
+                 LEFT JOIN user u ON c.teacher_id = u.id
     </sql>
+
 
     <select id="selectCourseList" parameterType="Course" resultMap="CourseResult">
         <include refid="selectCourseVo"/>

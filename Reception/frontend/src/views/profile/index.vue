@@ -370,7 +370,6 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="studentCount" label="学习人数"/>
               <el-table-column prop="viewCount" label="浏览次数"/>
               <el-table-column label="操作" width="200">
                 <template #default="scope">

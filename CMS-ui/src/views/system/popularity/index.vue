@@ -10,12 +10,6 @@
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover" class="data-card">
-          <div class="card-title">总学习人数</div>
-          <div class="card-value">{{ totalStudentCount }}</div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover" class="data-card">
           <div class="card-title">课程数量</div>
           <div class="card-value">{{ courseCount }}</div>
         </el-card>
@@ -50,20 +44,15 @@
           <i class="el-icon-refresh"></i> 刷新数据
         </el-button>
       </div>
-      <el-table 
+      <el-table
         v-loading="loading"
-        :data="tableData" 
-        border 
+        :data="tableData"
+        border
         stripe>
         <el-table-column prop="courseName" label="课程名称" />
         <el-table-column prop="viewCount" label="播放量" sortable>
           <template slot-scope="scope">
             {{ scope.row.viewCount || 0 }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="studentCount" label="学习人数" sortable>
-          <template slot-scope="scope">
-            {{ scope.row.studentCount || 0 }}
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="统计时间" width="180">
@@ -154,7 +143,7 @@ export default {
           }
         },
         legend: {
-          data: ['播放量', '学习人数']
+          data: ['播放量']
         },
         grid: {
           left: '3%',
@@ -186,12 +175,6 @@ export default {
             type: 'bar',
             data: data.map(item => item.viewCount || 0)
           },
-          {
-            name: '学习人数',
-            type: 'line',
-            yAxisIndex: 1,
-            data: data.map(item => item.studentCount || 0)
-          }
         ]
       };
       chart.setOption(option);
@@ -201,7 +184,7 @@ export default {
       const chart = echarts.init(document.getElementById('trendChart'));
       const dates = [...new Set(data.map(item => parseTime(item.createdAt, '{y}-{m}-{d}')))];
       const courseNames = [...new Set(data.map(item => item.courseName))];
-      
+
       // 按课程名称分组数据
       const seriesData = courseNames.map(name => {
         const courseData = data.filter(item => item.courseName === name);
@@ -282,4 +265,4 @@ export default {
 .box-card {
   margin-bottom: 20px;
 }
-</style> 
+</style>

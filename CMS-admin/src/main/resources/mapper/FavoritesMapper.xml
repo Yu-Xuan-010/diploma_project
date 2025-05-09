@@ -8,22 +8,36 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="id"    column="id"    />
         <result property="userId"    column="user_id"    />
         <result property="courseId"    column="course_id"    />
-        <result property="createdAt"    column="created_at"    />
+        <result property="userName"  column="user_name" />
+        <result property="courseName" column="course_name" />
     </resultMap>
 
     <sql id="selectFavoritesVo">
-        select id, user_id, course_id, created_at from favorites
+        SELECT
+            f.id,
+            f.user_id,
+            u.username AS user_name,
+            f.course_id,
+            c.name AS course_name
+        FROM favorites f
+                 LEFT JOIN user u ON f.user_id = u.id
+                 LEFT JOIN course c ON f.course_id = c.id
     </sql>
 
-    <select id="selectFavoritesList" parameterType="Favorites" resultMap="FavoritesResult">
-        <include refid="selectFavoritesVo"/>
-        <where>  
-            <if test="userId != null "> and user_id = #{userId}</if>
-            <if test="courseId != null "> and course_id = #{courseId}</if>
-            <if test="createdAt != null "> and created_at = #{createdAt}</if>
+    <select id="selectFavoritesList" resultMap="FavoritesResult">
+        <include refid="selectFavoritesVo" />
+        <!-- 可选的筛选条件 -->
+        <where>
+            <if test="userName != null and userName != ''">
+                AND u.username LIKE CONCAT('%', #{userName}, '%')
+            </if>
+            <if test="courseName != null and courseName != ''">
+                AND c.name LIKE CONCAT('%', #{courseName}, '%')
+            </if>
         </where>
     </select>
-    
+
+
     <select id="selectFavoritesById" parameterType="Long" resultMap="FavoritesResult">
         <include refid="selectFavoritesVo"/>
         where id = #{id}

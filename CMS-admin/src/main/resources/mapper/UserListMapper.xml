@@ -10,8 +10,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="password"    column="password"    />
         <result property="email"    column="email"    />
         <result property="avatar"    column="avatar"    />
-        <result property="createdAt"    column="created_at"    />
-        <result property="updatedAt"    column="updated_at"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
         <result property="role"    column="role"    />
         <result property="phoneNumber"    column="phone_number"    />
         <result property="realName"    column="real_name"    />
@@ -24,7 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectUserListVo">
-        select id, username, password, email, avatar, created_at, updated_at, role, phone_number, real_name, status, last_login, login_attempts, gender, birthday, address from user
+        select id, username, password, email, avatar, create_time, update_time, role, phone_number, real_name, status, last_login, login_attempts, gender, birthday, address from user
     </sql>
 
     <select id="selectUserListList" parameterType="UserList" resultMap="UserListResult">

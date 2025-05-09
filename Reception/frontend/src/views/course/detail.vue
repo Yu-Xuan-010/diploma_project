@@ -20,7 +20,6 @@
           <h1 class="course-title">{{ course.name }}</h1>
           <div class="course-meta">
             <span><a>作者：</a><i class="el-icon-user"></i> {{ course.teacher?.name }}</span>
-            <span><a>学习人数：</a><i class="el-icon-user"></i> {{ course.studentCount }}</span>
             <span><a>评分：</a><i class="el-icon-star-on"></i> {{ course.averageRating }}</span>
             <el-button
                 :type="isFavorited ? 'danger' : 'primary'"

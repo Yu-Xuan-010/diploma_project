@@ -41,10 +41,10 @@ public class Lesson extends BaseEntity
     private Long sortOrder;
 
     /** 创建时间 */
-    private Date createdAt;
+    private Date createTime;
 
     /** 更新时间 */
-    private Date updatedAt;
+    private Date updateTime;
 
     public void setId(Long id) 
     {
@@ -100,23 +100,23 @@ public class Lesson extends BaseEntity
     {
         return sortOrder;
     }
-    public void setCreatedAt(Date createdAt) 
+    public void setCreateTime(Date createTime)
     {
-        this.createdAt = createdAt;
+        this.createTime = createTime;
     }
 
     public Date getCreatedAt() 
     {
-        return createdAt;
+        return createTime;
     }
-    public void setUpdatedAt(Date updatedAt) 
+    public void setUpdatedAt(Date updateTime)
     {
-        this.updatedAt = updatedAt;
+        this.updateTime = updateTime;
     }
 
     public Date getUpdatedAt() 
     {
-        return updatedAt;
+        return updateTime;
     }
 
     @Override

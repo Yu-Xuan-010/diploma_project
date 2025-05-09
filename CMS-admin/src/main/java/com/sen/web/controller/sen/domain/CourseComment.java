@@ -28,7 +28,7 @@ public class CourseComment extends BaseEntity {
 
     /** 创建时间 */
     @Excel(name = "创建时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date createdAt;
+    private Date createTime;
 
     /** 状态（0隐藏 1显示） */
     @Excel(name = "状态", readConverterExp = "0=隐藏,1=显示")
@@ -75,11 +75,11 @@ public class CourseComment extends BaseEntity {
     }
 
     public Date getCreatedAt() {
-        return createdAt;
+        return createTime;
     }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
+    public void setCreatedAt(Date createTime) {
+        this.createTime = createTime;
     }
 
     public Integer getStatus() {

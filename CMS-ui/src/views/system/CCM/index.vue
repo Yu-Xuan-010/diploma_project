@@ -10,13 +10,12 @@
         <el-table-column prop="courseName" label="课程名称" width="150" />
         <el-table-column prop="userName" label="用户昵称" width="120" />
         <el-table-column prop="content" label="评论内容" />
-        <el-table-column prop="createdAt" label="评论时间" width="180" />
-        <el-table-column label="状态" width="120">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 1" type="success">正常</el-tag>
-            <el-tag v-else type="warning">待审核</el-tag>
+        <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+          <template slot-scope="scope">
+            <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
+
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button size="small" @click="approveComment(row.id)" v-if="row.status === 0">通过</el-button>
@@ -52,7 +51,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="replyText" label="回复内容" />
-          <el-table-column prop="createdAt" label="回复时间" width="180" />
+          <el-table-column prop="createTime" label="回复时间" width="180" />
           <el-table-column label="操作" width="120">
             <template #default="{ row }">
               <el-button size="small" type="danger" @click="deleteReply(row.id)">删除</el-button>
