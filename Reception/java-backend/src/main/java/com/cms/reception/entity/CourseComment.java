@@ -15,6 +15,6 @@ public class CourseComment {
     // 非数据库字段
     private String userName;
     private String userAvatar;
-    
-    private Long parentId;
+
+    private Long commentId;
 } 

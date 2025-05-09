@@ -82,6 +82,11 @@ const routes = [
     },
     props: true
   },
+    {
+        path: '/recommend',
+        name: 'CourseRecommend',
+        component: () => import('../views/CourseRecommend.vue'),  // 动态加载组件
+    },
   // 添加通配符路由
   {
     path: '/:pathMatch(.*)*',

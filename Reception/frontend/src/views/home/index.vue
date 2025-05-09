@@ -244,6 +244,8 @@ export default {
     async viewCourse(courseId) {
       try {
         await axios.post(`/api/courses/${courseId}/view`)
+        await this.fetchCourses()
+        await this.fetchRecommendedCourses()
         this.$router.push(`/course/${courseId}`)
       } catch (error) {
         console.error('更新课程浏览量失败:', error)

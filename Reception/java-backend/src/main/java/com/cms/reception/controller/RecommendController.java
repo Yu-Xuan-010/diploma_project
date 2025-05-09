@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.cms.reception.utils.SecurityUtils.getCurrentUserId;
 
 /**
  * &#064;BelongsProject: diploma_project
@@ -26,18 +29,25 @@ public class RecommendController {
     private CourseMapper courseMapper;
 
     @GetMapping("/by-study")
-    public List<Course> recommendByStudy(@RequestParam Long userId) {
-        return courseMapper.findRecommendedByRecentCategories(userId);
+    public List<Course> recommendByStudy() {
+        Long userId = getCurrentUserId();
+        return courseMapper.findRecommendedByRecentCategories(userId).stream()
+                .filter(course -> course.getStatus().equals("approved"))  // 仅显示审核通过的课程
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/high-rated")
     public List<Course> recommendHighRated() {
-        return courseMapper.findHighRatedCourses();
+        return courseMapper.findHighRatedCourses().stream()
+                .filter(course -> course.getStatus().equals("approved"))  // 仅显示审核通过的课程
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/hot")
     public List<Course> recommendHotCourses() {
-        return courseMapper.findHotCourses();
+        return courseMapper.findHotCourses().stream()
+                .filter(course -> course.getStatus().equals("approved"))  // 仅显示审核通过的课程
+                .collect(Collectors.toList());
     }
 }
 

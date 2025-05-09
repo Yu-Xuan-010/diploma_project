@@ -829,11 +829,6 @@ export default {
       fetchFavoriteCourses()
     })
 
-    const passwordForm = ref({
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    })
 
     const applyForm = ref({
       reason: '',

@@ -1,7 +1,9 @@
 package com.cms.reception.service.impl;
 
 import com.cms.reception.entity.Course;
+import com.cms.reception.entity.CoursePopularity;
 import com.cms.reception.mapper.CourseMapper;
+import com.cms.reception.mapper.CoursePopularityMapper;
 import com.cms.reception.service.CourseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ public class CourseServiceImpl implements CourseService {
 
     @Autowired
     private CourseMapper courseMapper;
+    @Autowired
+    private CoursePopularityMapper coursePopularityMapper;
 
     @Override
     public List<Course> searchCourses(String keyword) {
@@ -71,12 +75,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public void incrementViewCount(Long courseId) {
-        Course course = courseMapper.selectCourseById(courseId);
-        if (course == null) {
-            throw new RuntimeException("课程不存在");
-        }
-        course.setViewCount(course.getViewCount() + 1);
-        courseMapper.updateCourse(course);
+        coursePopularityMapper.incrementViewCount(courseId);
     }
 
     @Override

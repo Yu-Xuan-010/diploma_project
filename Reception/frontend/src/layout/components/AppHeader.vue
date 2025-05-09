@@ -21,8 +21,7 @@
 
     <el-menu mode="horizontal" :router="true" class="nav-menu" background-color="#fff">
       <el-menu-item index="/home">课程中心</el-menu-item>
-      <el-menu-item index="/learning">课程推荐</el-menu-item>
-      <el-menu-item index="/discussion">讨论区</el-menu-item>
+      <el-menu-item index="/recommend">课程推荐</el-menu-item>
     </el-menu>
 
     <div class="right-menu">

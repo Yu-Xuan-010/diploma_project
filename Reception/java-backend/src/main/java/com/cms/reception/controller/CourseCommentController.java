@@ -24,7 +24,7 @@ public class CourseCommentController {
     @Autowired
     private CourseCommentService courseCommentService;
 
-    
+
     @GetMapping("/course/{courseId}")
     public Result<List<CourseComment>> getCommentsByCourseId(@PathVariable Long courseId) {
         List<CourseComment> comments = courseCommentService.getCommentsByCourseId(courseId);
@@ -92,7 +92,7 @@ public class CourseCommentController {
         int count = courseCommentService.getCommentCount(courseId);
         return Result.success(count);
     }
-    
+
     @GetMapping("/course/{courseId}/user/{userId}/has-commented")
     public Result<Boolean> hasUserCommented(@PathVariable Long courseId, @PathVariable Long userId) {
         boolean hasCommented = courseCommentService.hasUserCommented(courseId, userId);
@@ -101,26 +101,14 @@ public class CourseCommentController {
     
     @PostMapping("/reply")
     public ResponseEntity<ApiResponse<CourseComment>> replyComment(
-            @RequestBody CourseComment comment,
-            @RequestHeader("Authorization") String token) {
+            @RequestBody CourseComment comment) {
         try {
-            // 验证用户身份
-            if (!JwtUtil.validateToken(token)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(false, "未授权", null));
-            }
-
             // 获取父评论信息
-            CourseComment parentComment = courseCommentService.getCommentById(comment.getParentId());
+            System.out.println(comment);
+            CourseComment parentComment = courseCommentService.getCommentById(comment.getCommentId());
             if (parentComment == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>(false, "父评论不存在", null));
-            }
-
-            // 检查是否是评论作者
-            if (!parentComment.getUserId().equals(comment.getUserId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ApiResponse<>(false, "只能回复自己的评论", null));
             }
 
             // 设置回复信息

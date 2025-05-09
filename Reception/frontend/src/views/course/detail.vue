@@ -135,7 +135,7 @@
                             type="text"
                             size="small"
                             @click="deleteComment(comment)"
-                            v-if=" comment.userId === currentUserId.value">
+                            v-if=" comment.userId === currentUserId">
                           删除
                         </el-button>
                         <el-button
@@ -154,7 +154,7 @@
                         <el-avatar :src="reply.userAvatar" size="small"/>
                         <div class="reply-content">{{ reply.content }}</div>
                         <el-button
-                            v-if="reply.userId === currentUserId.value"
+                            v-if="reply.userId === currentUserId"
                             @click="deleteReply(reply)">
                           删除
                         </el-button>
@@ -447,9 +447,7 @@ export default {
     const getComments = async () => {
       try {
         const courseId = route.params.courseId
-        console.log('获取课程评论，课程ID:', courseId)
         const response = await axios.get(`/api/comments/course/${courseId}`)
-        console.log('评论数据:', response.data)
         if (response.data.code === 200) {
           // 确保每个评论对象都包含必要的字段
           comments.value = response.data.data.map(comment => ({
@@ -461,7 +459,10 @@ export default {
             userAvatar: comment.userAvatar,
             createTime: comment.createTime
           }))
-          console.log('处理后的评论列表:', comments.value)
+          for (let comment of comments.value){
+            let res = await axios.get(`/api/course/comment/reply/${comment.id}`)
+            comment.replies=res.data.data
+          }
         } else {
           ElMessage.error(response.data.message || '获取评论失败')
         }
@@ -625,7 +626,8 @@ export default {
           params: {userId: currentUserId.value}
         });
         if (res.data.success) {
-          comments.value = comments.value.filter(c => c.id !== comment.id);
+         await getComments()
+          ElMessage.success("删除成功")
         }
       } catch (error) {
         if (error !== 'cancel') ElMessage.error('删除失败');
@@ -657,18 +659,18 @@ export default {
           return
         }
 
-        const response = await axios.post(`/api/comments/${replyForm.value.commentId}/reply`, {
-          userId: userInfo.id,
+        const response = await axios.post(`/api/course/comment/reply`, {
+          userId: currentUserId.value,
           content: replyForm.value.content,
-          userName: userInfo.nickname || userInfo.username,
-          userAvatar: userInfo.avatar || ''
+          courseId:route.params.courseId,
+         commentId:replyForm.value.commentId
         }, {
           headers: {
             'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
           }
         })
 
-        if (response.data.code === 200) {
+        if (response.data.success) {
           ElMessage.success('回复成功')
           replyDialogVisible.value = false
           replyForm.value.content = ''
@@ -694,13 +696,13 @@ export default {
           return
         }
 
-        const response = await axios.delete(`/api/comments/reply/${reply.id}`, {
+        const response = await axios.delete(`/api/course/comment/reply/${reply.id}`, {
           headers: {
             'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`
           }
         })
 
-        if (response.data.code === 200) {
+        if (response.data.success) {
           ElMessage.success('删除成功')
           await getComments()
         } else {
