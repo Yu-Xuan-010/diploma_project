@@ -5,7 +5,7 @@
         <h1>在线学习平台</h1>
       </router-link>
     </div>
-    
+
     <div class="search-box">
       <el-input
         v-model="searchQuery"
@@ -20,8 +20,8 @@
     </div>
 
     <el-menu mode="horizontal" :router="true" class="nav-menu" background-color="#fff">
-      <el-menu-item index="/course">课程中心</el-menu-item>
-      <el-menu-item index="/learning">学习进度</el-menu-item>
+      <el-menu-item index="/home">课程中心</el-menu-item>
+      <el-menu-item index="/learning">课程推荐</el-menu-item>
       <el-menu-item index="/discussion">讨论区</el-menu-item>
     </el-menu>
 

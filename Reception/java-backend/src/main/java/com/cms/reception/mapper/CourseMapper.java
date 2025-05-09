@@ -51,4 +51,35 @@ public interface CourseMapper {
      * @return 课程列表
      */
     List<Course> selectByTeacherId(Long teacherId);
+
+    // CourseMapper.java
+    @Select("""
+    SELECT DISTINCT c2.*
+    FROM user_study_record r
+    JOIN lesson l ON r.lesson_id = l.id
+    JOIN course c1 ON l.course_id = c1.id
+    JOIN course c2 ON c2.category_id = c1.category_id
+    WHERE r.user_id = #{userId}
+    ORDER BY r.last_study_time DESC
+    LIMIT 10
+""")
+    List<Course> findRecommendedByRecentCategories(@Param("userId") Long userId);
+
+    @Select("""
+    SELECT *
+    FROM course
+    WHERE average_rating >= 4.5
+    ORDER BY average_rating DESC
+    LIMIT 10
+""")
+    List<Course> findHighRatedCourses();
+
+    @Select("""
+    SELECT *
+    FROM course
+    ORDER BY student_count DESC
+    LIMIT 10
+""")
+    List<Course> findHotCourses();
+
 }
