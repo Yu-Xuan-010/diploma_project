@@ -25,13 +25,13 @@ public class FavoriteController {
     @PostMapping("/{courseId}/favorite")
     public Result<Void> addFavorite(@PathVariable Long courseId, @RequestAttribute Long userId) {
         favoriteService.addFavorite(userId, courseId);
-        return Result.success("收藏成功",null);
+        return Result.success("选择成功",null);
     }
     
     @DeleteMapping("/{courseId}/favorite/cancel")
     public Result<Void> removeFavorite(@PathVariable Long courseId, @RequestAttribute Long userId) {
         favoriteService.removeFavorite(userId, courseId);
-        return Result.success("取消收藏成功",null);
+        return Result.success("取消选择成功",null);
     }
     
     @GetMapping("/favorites")

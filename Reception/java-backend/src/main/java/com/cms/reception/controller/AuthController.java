@@ -58,7 +58,7 @@ public class AuthController {
             }
 
             // 加密密码并注册用户
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setPassword(user.getPassword());
             User registeredUser = userService.register(user);
             logger.info("User registered successfully: {}", registeredUser.getUsername());
 
@@ -93,22 +93,25 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         try {
-            logger.info("Attempting login for user: {}", loginRequest.get("username"));
+            String username = loginRequest.get("username");
+            String password = loginRequest.get("password");
+            logger.info("Attempting login for user: {}", username);
 
+            // 执行认证
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginRequest.get("username"),
-                    loginRequest.get("password")
-                )
+                    new UsernamePasswordAuthenticationToken(username, password)
             );
 
+            // 生成 token
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtUtil.generateToken(userDetails);
+
+            // 获取完整用户信息
             User user = userService.findByUsername(userDetails.getUsername());
 
             Map<String, Object> data = new HashMap<>();
             data.put("token", token);
-            data.put("username", userDetails.getUsername());
+            data.put("username", user.getUsername());
             data.put("userId", user.getId());
             data.put("email", user.getEmail());
             data.put("nickname", user.getNickname());
@@ -116,13 +119,14 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", data);
-            System.out.println(response);
-            logger.info("Login successful for user: {}", loginRequest.get("username"));
+
+            logger.info("Login successful for user: {}", username);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Login failed for user: {}", loginRequest.get("username"), e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Invalid username or password"
+            logger.error("Login failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "用户名或密码错误"
             ));
         }
     }

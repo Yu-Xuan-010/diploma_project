@@ -46,9 +46,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
     
     <select id="selectCourseById" parameterType="Long" resultMap="CourseResult">
-        <include refid="selectCourseVo"/>
-        where id = #{id}
-    </select>
+    <include refid="selectCourseVo"/>
+    WHERE c.id = #{id}
+</select>
+
 
     <insert id="insertCourse" parameterType="Course" useGeneratedKeys="true" keyProperty="id">
         insert into course

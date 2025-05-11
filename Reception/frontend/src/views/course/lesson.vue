@@ -7,21 +7,6 @@
           <div class="video-header">
             <h2>{{ currentLesson.title }}</h2>
             <div class="lesson-navigation">
-              <el-button
-                  :disabled="!prevLesson"
-                  @click="navigateLesson(prevLesson)"
-              >
-                <el-icon><ArrowLeft /></el-icon>
-                上一课时
-              </el-button>
-              <el-button
-                  :disabled="!nextLesson"
-                  type="primary"
-                  @click="navigateLesson(nextLesson)"
-              >
-                下一课时
-                <el-icon><ArrowRight /></el-icon>
-              </el-button>
             </div>
           </div>
 
@@ -46,13 +31,6 @@
                 <el-icon><Timer /></el-icon>
                 {{ formatDuration(currentLesson.duration) }}
               </span>
-              <el-button
-                  type="primary"
-                  :icon="isCompleted ? 'Check' : 'CircleCheck'"
-                  @click="toggleComplete"
-              >
-                {{ isCompleted ? '已完成' : '标记完成' }}
-              </el-button>
             </div>
             <div class="description">
               {{ currentLesson.description }}
@@ -67,7 +45,6 @@
           <template #header>
             <div class="card-header">
               <span>课时列表</span>
-              <span class="total-lessons">共 {{ totalLessons }} 课时</span>
             </div>
           </template>
 
@@ -275,7 +252,6 @@ const initVideoPlayer = async () => {
       setTimeout(tryInitPlayer, 200)
     } else {
       console.warn('播放器初始化失败，已达到最大重试次数')
-      ElMessage.warning('视频加载失败，请刷新页面重试')
     }
   }
 
@@ -307,8 +283,6 @@ const loadLesson = async () => {
       ElMessage.warning('暂无课时数据')
     }
   } catch (error) {
-    console.error('加载课时失败', error)
-    ElMessage.error('加载课时失败，请稍后重试')
   }
 }
 
@@ -319,7 +293,7 @@ const fetchChapters = async () => {
     if (response.data.success) {
       chapters.value = response.data.data
       // 找到当前课时所在的章节并展开
-      const chapter = chapters.value.find(chapter => 
+      const chapter = chapters.value.find(chapter =>
         chapter.lessons.some(lesson => lesson.id === lessonId.value)
       )
       if (chapter) {
@@ -329,8 +303,6 @@ const fetchChapters = async () => {
       fetchCompletedLessons()
     }
   } catch (error) {
-    console.error('获取章节列表失败:', error)
-    ElMessage.error('获取章节列表失败')
   }
 }
 
@@ -342,7 +314,6 @@ const fetchCompletedLessons = async () => {
       completedLessons.value = new Set(response.data.data)
     }
   } catch (error) {
-    console.error('获取已完成课时列表失败:', error)
   }
 }
 

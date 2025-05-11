@@ -8,14 +8,7 @@ import com.sen.web.controller.sen.domain.Course;
 import com.sen.web.controller.sen.service.ICourseService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.sen.common.annotation.Log;
 import com.sen.common.core.controller.BaseController;
 import com.sen.common.core.domain.AjaxResult;
@@ -29,6 +22,7 @@ import com.sen.common.core.page.TableDataInfo;
  * @author sen
  * @date 2025-03-05
  */
+@CrossOrigin
 @RestController
 @RequestMapping("/system/course")
 public class CourseController extends BaseController
@@ -131,4 +125,5 @@ public class CourseController extends BaseController
         
         return toAjax(courseService.updateCourse(course));
     }
+
 }

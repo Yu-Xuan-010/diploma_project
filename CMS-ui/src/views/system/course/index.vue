@@ -9,22 +9,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="课程种类" prop="categoryId">
-        <el-input
-          v-model="queryParams.categoryId"
-          placeholder="请输入课程种类"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="教师ID" prop="teacherId">
-        <el-input
-          v-model="queryParams.teacherId"
-          placeholder="请输入教师ID"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
+
       <el-form-item label="审核状态" prop="status">
         <el-select
           v-model="queryParams.status"
@@ -418,7 +403,7 @@ export default {
             rejectReason: this.reviewForm.status === "rejected" ? this.reviewForm.rejectReason : null
           };
           request({
-            url: `/api/courses/${this.reviewForm.id}/status`,
+            url: `/system/course/status/${this.reviewForm.id}`,
             method: 'put',
             data: data
           }).then(response => {

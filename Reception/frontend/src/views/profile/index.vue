@@ -24,7 +24,7 @@
             <el-icon>
               <Star/>
             </el-icon>
-            <span>课程收藏</span>
+            <span>已选择课程</span>
           </el-menu-item>
           <el-menu-item v-if="isTeacher" index="upload">
             <el-icon>
@@ -205,7 +205,7 @@
         </div>
 
         <!-- 学习记录 -->
-        <el-tabs v-model="activeTab">
+        <el-tabs v-model="activeTab" v-if="activeTab==='learning'">
           <el-tab-pane label="学习记录" name="learning">
             <el-table :data="learningRecords" stripe style="width: 100%">
               <el-table-column prop="courseName" label="课程名称" width="180" />
@@ -216,13 +216,6 @@
                 </template>
               </el-table-column>
               <el-table-column prop="lastStudyTime" label="最后学习时间" />
-              <el-table-column prop="status" label="状态" width="100">
-                <template #default="{ row }">
-                  <el-tag :type="row.status === 1 ? 'success' : 'warning'">
-                    {{ row.status === 1 ? '已完成' : '未完成' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
               <el-table-column label="操作" width="120">
                 <template #default="{ row }">
                   <el-button type="primary" link @click="continueLearning(row)">
@@ -238,30 +231,39 @@
 
 
 
-
         <!-- 课程收藏 -->
         <div v-if="activeTab === 'favorites'" class="content-section">
-          <h2>课程收藏</h2>
-          <el-row :gutter="20">
-            <el-col :span="8" v-for="course in favoriteCourses" :key="course.id">
-              <el-card class="course-card" shadow="hover">
-                <img :src="course.coverImage || '/default-course.jpg'" class="course-image">
-                <div class="course-info">
-                  <h3>{{ course.name }}</h3>
-                  <p>{{ course.description }}</p>
-                  <div class="course-footer">
-                    <el-button type="primary" link @click="viewCourse(course.id)">
-                      查看详情
-                    </el-button>
-                    <el-button type="danger" link @click="removeFavorite(course.id)">
-                      取消收藏
-                    </el-button>
+          <h2>已选择课程</h2>
+
+          <!-- 判断是否有收藏的课程 -->
+          <div v-if="favoriteCourses.length > 0">
+            <el-row :gutter="20">
+              <el-col :span="8" v-for="course in favoriteCourses" :key="course.id">
+                <el-card class="course-card" shadow="hover">
+                  <img :src="course.coverImage || '/default-course.jpg'" class="course-image">
+                  <div class="course-info">
+                    <h3>{{ course.name }}</h3>
+                    <p>{{ course.description }}</p>
+                    <div class="course-footer">
+                      <el-button type="primary" link @click="viewCourse(course.id)">
+                        查看详情
+                      </el-button>
+                      <el-button type="danger" link @click="removeFavorite(course.id)">
+                        取消选择
+                      </el-button>
+                    </div>
                   </div>
-                </div>
-              </el-card>
-            </el-col>
-          </el-row>
+                </el-card>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- 如果没有收藏的课程 -->
+          <div v-else class="no-course-message">
+            暂无选择课程
+          </div>
         </div>
+
 
 
         <!-- 上传课程（仅教师可见） -->
@@ -992,16 +994,16 @@ export default {
 
           ElMessage({
             type: 'success',
-            message: '已取消收藏',
+            message: '已取消选择',
             duration: 2000,
             showClose: true
           })
         } else {
-          ElMessage.error(response.data.message || '取消收藏失败')
+          ElMessage.error(response.data.message || '取消选择失败')
         }
       } catch (error) {
-        console.error('取消收藏失败:', error)
-        ElMessage.error('取消收藏失败：' + (error.response?.data?.message || '未知错误'))
+        console.error('取消选择失败:', error)
+        ElMessage.error('取消选择失败：' + (error.response?.data?.message || '未知错误'))
       }
     }
 
@@ -1572,12 +1574,7 @@ export default {
         }
         videoUploadProgress.value = 100
 
-        ElMessage({
-          type: 'success',
-          message: '视频上传成功',
-          duration: 2000,
-          showClose: true
-        })
+        ElMessage.success("视频上传成功")
 
         // 延迟重置进度条
         setTimeout(() => {
@@ -1662,7 +1659,7 @@ export default {
           }
         })
 
-        if (response.data.code === 200) {
+        if (response.data.success) {
           ElMessage.success(editingLesson.value ? '更新成功' : '添加成功')
           lessonFormDialogVisible.value = false
           // 重新获取课时列表
@@ -1763,8 +1760,6 @@ export default {
           ElMessage.error(response.data.message || '获取收藏课程失败')
         }
       } catch (error) {
-        console.error('获取收藏课程出错:', error)
-        ElMessage.error('获取收藏课程失败，请稍后重试')
       }
     }
 
@@ -2216,4 +2211,11 @@ export default {
   margin-top: 8px;
   width: 100%;
 }
+.no-course-message {
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+  padding: 40px 0;
+}
+
 </style>

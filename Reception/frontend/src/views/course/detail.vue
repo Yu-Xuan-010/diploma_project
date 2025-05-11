@@ -26,7 +26,7 @@
                 :icon="isFavorited ? 'Star' : 'StarFilled'"
                 @click="toggleFavorite"
                 class="favorite-btn">
-              {{ isFavorited ? '取消收藏' : '收藏课程' }}
+              {{ isFavorited ? '取消选择' : '选择课程' }}
             </el-button>
           </div>
         </div>
@@ -172,9 +172,6 @@
     </el-card>
     <el-card class="study-records" v-if="studyRecords.length > 0">
       <template #header>
-        <div class="card-header">
-          <span>学习记录</span>
-        </div>
       </template>
       <el-timeline>
         <el-timeline-item
@@ -557,17 +554,17 @@ export default {
 
         if (response.data.code === 200) {
           isFavorited.value = !isFavorited.value
-          ElMessage.success(isFavorited.value ? '收藏成功' : '已取消收藏')
+          ElMessage.success(isFavorited.value ? '选择成功' : '已取消选择')
 
           // 更新 Vuex store 中的收藏状态
           if (store.state.user) {
             store.dispatch('user/updateFavoriteCourses')
           }
         } else {
-          ElMessage.error(response.data.message || (isFavorited.value ? '取消收藏失败' : '收藏失败'))
+          ElMessage.error(response.data.message || (isFavorited.value ? '取消选择失败' : '选择失败'))
         }
       } catch (error) {
-        console.error('收藏操作失败:', error)
+        console.error('选择操作失败:', error)
         ElMessage.error('操作失败：' + (error.response?.data?.message || '未知错误'))
       }
     }

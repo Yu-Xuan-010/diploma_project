@@ -100,7 +100,7 @@ export default {
         if (valid) {
           this.loading = true;
           try {
-            await axios.post('/api/user/register', this.registerForm, {
+            await axios.post('/api/auth/register', this.registerForm, {
               headers: {'Content-Type': 'application/json'}
             });
             this.$message.success('注册成功，请登录');

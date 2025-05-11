@@ -38,7 +38,7 @@
 
     <el-table v-loading="loading" :data="favoritesList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="收藏记录" align="center" prop="id" />
+      <el-table-column label="选择记录" align="center" prop="id" />
       <el-table-column label="用户名" align="center" prop="userName" />
       <el-table-column label="课程名称" align="center" prop="courseName" />
     </el-table>

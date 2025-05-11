@@ -6,18 +6,7 @@
       </router-link>
     </div>
 
-    <div class="search-box">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索课程..."
-        clearable
-        @keyup.enter="handleSearch"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
-    </div>
+
 
     <el-menu mode="horizontal" :router="true" class="nav-menu" background-color="#fff">
       <el-menu-item index="/home">课程中心</el-menu-item>
